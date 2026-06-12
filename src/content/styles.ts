@@ -74,6 +74,9 @@ button.btn {
   cursor: pointer; border: 1px solid #d1d5db; background: #fff; color: #1f2937;
 }
 button.btn:hover { background: #f9fafb; }
+button.btn:active:not(:disabled) { transform: translateY(1px); }
+button.btn:disabled { opacity: .55; cursor: not-allowed; }
+button.btn.on { border-color: #166534; background: #f0fdf4; color: #166534; font-weight: 700; }
 button.btn.primary { background: #166534; border-color: #166534; color: #fff; }
 button.btn.primary:hover { background: #14532d; }
 button.btn.primary:disabled { background: #9ca3af; border-color: #9ca3af; cursor: not-allowed; }
@@ -109,6 +112,7 @@ button.btn.rate { flex: none; width: 40px; font-variant-numeric: tabular-nums; }
   .attest { color: #d1d5db; }
   button.btn { background: #374151; color: #f3f4f6; border-color: #4b5563; }
   button.btn:hover { background: #4b5563; }
+  button.btn.on { background: #052e16; color: #bbf7d0; border-color: #166534; }
   .ft { border-color: #374151; color: #9ca3af; }
   .ft a { color: #86efac; }
   .hint { color: #9ca3af; }

@@ -118,11 +118,20 @@ const practiceStatus = h('p', { class: 'muted' })
 shell.append(
   h('section', { class: 'step practice' },
     h('h2', {}, h('span', { class: 'num' }, '3'), 'Try it — safely'),
+    h('p', {}, h('strong', {}, 'Two ways to open Double Check on any field:')),
+    h('ul', {},
+      h('li', {}, 'Keyboard: click into the field and press ', shortcutLabel, shortcutSpelled, '.'),
+      h('li', {},
+        'Toolbar: click into the field, then click the green Double Check icon and choose ',
+        h('em', {}, '“Check focused field”'),
+        '. Chrome hides new extensions at first — click the puzzle-piece menu at the right end of the ' +
+        'toolbar, find Double Check, and click the pin so the icon stays visible.'),
+    ),
     h('p', {}, 'This is a fake wire-transfer field. Your “source document” says the routing number is:'),
     h('div', { class: 'source' }, '021 000 021'),
     h('label', { for: 'practice' }, 'Routing number'),
     practiceField,
-    h('p', {}, 'Click into the field, then press ', shortcutLabel, shortcutSpelled, ' — or use the button. ',
+    h('p', {}, 'Open Double Check on the field using either way above — or the button below. ' +
       'Type the number (try getting one digit wrong on purpose to see the red diff).'),
     h('div', {}, tryBtn),
     practiceStatus,

@@ -278,6 +278,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       const useCandidate = (c: string) => {
         if (source === 'voice') usedVoice = true
         else usedOcr = true
+        setStatus('') // the "reading/listening" progress line is done
         if (onValue) onValue(c)
         else compare(c)
       }
@@ -318,14 +319,19 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     async function runOcr(imageDataUrl: string): Promise<void> {
       setStatus('Reading image locally…')
       cands.textContent = ''
-      const res = await chrome.runtime
-        .sendMessage({ kind: 'dc-ocr', imageDataUrl })
-        .catch(() => null)
-      if (!res?.ok) {
-        setStatus(res?.error ? `OCR failed: ${res.error}` : 'OCR failed')
-        return
+      setBusy(true)
+      try {
+        const res = await chrome.runtime
+          .sendMessage({ kind: 'dc-ocr', imageDataUrl })
+          .catch(() => null)
+        if (!res?.ok) {
+          setStatus(res?.error ? `OCR failed: ${res.error}` : 'OCR failed')
+          return
+        }
+        await handleText(res.text as string, 'ocr')
+      } finally {
+        setBusy(false)
       }
-      await handleText(res.text as string, 'ocr')
     }
     activeOcr = runOcr
 
@@ -363,23 +369,49 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       ;(root.querySelector('.entry') as HTMLElement | null)?.focus()
     })
 
+    const LISTENING_MSG = 'Listening — read the value out loud, digit by digit. Tap again to stop.'
+    let listening = false
     const mic = h('button', { class: 'btn' }, '🎤 Speak it')
+    const resetMic = () => {
+      listening = false
+      mic.classList.remove('on')
+      mic.textContent = '🎤 Speak it'
+    }
     mic.addEventListener('click', () => {
+      if (listening) {
+        stopRecognition() // 'ended' status resets the button
+        return
+      }
       setStatus('Starting microphone…')
       onVoiceStatus = (state, detail) => {
         switch (state) {
-          case 'listening': setStatus('Listening — read the value out loud, digit by digit'); break
+          case 'listening':
+            listening = true
+            mic.classList.add('on')
+            mic.textContent = '■ Stop listening'
+            setStatus(LISTENING_MSG)
+            break
           case 'downloading': setStatus(detail ?? 'Downloading the on-device speech model…'); break
           case 'unavailable':
+            resetMic()
             setStatus(detail ?? 'Voice input isn’t available on this Chrome')
             mic.setAttribute('disabled', '')
             break
           case 'denied':
+            resetMic()
             setStatus(
               'Microphone access is blocked for this site — Chrome’s permission prompt names the website ' +
               '(that’s how extensions work here). Click the mic icon in the address bar to allow it, then try again.')
             break
-          case 'error': setStatus(detail ?? 'Voice input failed'); break
+          case 'error':
+            resetMic()
+            setStatus(detail ?? 'Voice input failed')
+            break
+          case 'ended':
+            resetMic()
+            // don't clobber a result/error message that already landed
+            if (status.textContent === LISTENING_MSG || status.textContent === 'Starting microphone…') setStatus('')
+            break
         }
       }
       onVoiceResult = (alternatives) => {
@@ -389,6 +421,14 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       }
       startVoice()
     })
+
+    // while OCR runs, the assist buttons can't start a second job
+    function setBusy(busy: boolean): void {
+      for (const b of [scan, paste, mic]) {
+        if (busy) b.setAttribute('disabled', '')
+        else b.removeAttribute('disabled')
+      }
+    }
 
     const row = h('div', { class: 'btnrow' })
     if (canScan) row.append(scan)

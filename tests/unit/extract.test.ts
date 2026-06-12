@@ -40,4 +40,13 @@ describe('extractCandidates (OCR text → format candidates)', () => {
     const { matches } = extractCandidates(text, v('currency-amount'))
     expect(matches).toContain('1234567.89')
   })
+
+  it('digit-format nears are digits, never word mash', () => {
+    // a spoken transcript line plus its digit conversion (the voice path)
+    const text = 'One two three\n123'
+    const { matches, nears } = extractCandidates(text, v('us-bank-account'))
+    expect(matches).toEqual([]) // 123 is too short for an account number
+    expect(nears).toContain('123') // shown so the length error can explain
+    expect(nears.join(' ')).not.toMatch(/onetwothree/i)
+  })
 })

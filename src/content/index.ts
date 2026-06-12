@@ -41,7 +41,12 @@ async function buildContext(field: ReturnType<typeof findFocusedField> & object)
 }
 
 function activate(): boolean {
-  if (!document.hasFocus()) return false
+  // Why the top-frame exception: when activation comes from the toolbar
+  // popup, the POPUP holds focus, not the page — document.hasFocus() is
+  // false even though the user's field is right there (activeElement
+  // persists). Subframes still require real focus so only the frame the
+  // user is working in mounts a card.
+  if (!document.hasFocus() && window !== window.top) return false
   const field = findFocusedField()
   if (!field) return false
   if (isCardMounted(field)) return true

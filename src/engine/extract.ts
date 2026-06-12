@@ -45,8 +45,13 @@ export function extractCandidates(text: string, v: Validator): { matches: string
         }
       }
     }
-    // close in length to the expected shape → worth showing as a near-miss
-    if (v.length && r.normalized.length >= v.length.min && r.normalized.length <= v.length.max && r.normalized.length >= 4) {
+    // near-misses: shown to the user, never auto-used. For digit formats
+    // only digit strings qualify — a transcript like "One two three" must
+    // surface as its digits ("123", even if too short, so the validation
+    // error can explain why), not as the word-mash "Onetwothree".
+    if (digitFormat) {
+      if (/^\d{2,}$/.test(r.normalized)) nears.add(r.normalized)
+    } else if (v.length && r.normalized.length >= v.length.min && r.normalized.length <= v.length.max && r.normalized.length >= 4) {
       nears.add(r.normalized)
     }
   }
