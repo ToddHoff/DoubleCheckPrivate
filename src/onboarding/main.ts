@@ -134,6 +134,14 @@ shell.append(
     practiceField,
     h('p', {}, 'Open Double Check on the field using either way above — or the button below. ' +
       'Type the number (try getting one digit wrong on purpose to see the red diff).'),
+    h('div', { class: 'demo-note' },
+      h('strong', {}, 'Heads up — this practice page is slightly hobbled. '),
+      'It’s one of the extension’s own pages, and Chrome restricts a couple of things here that work ' +
+      'normally everywhere else: “Scan screen region” isn’t available on this page (use Paste image or ' +
+      'Speak it instead), and the microphone needs a one-time grant via the voice setup rather than a ' +
+      'simple prompt. On real websites — where you’ll actually use Double Check — scanning works, the mic ' +
+      'asks once per site, and the shortcut is handled natively by Chrome. Everything else you see here ' +
+      '(checksums, blind double entry, the red diff, the badge, the log) is exactly the real product.'),
     h('div', {}, tryBtn),
     practiceStatus,
   ),

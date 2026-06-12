@@ -40,6 +40,11 @@ section.features > p { color: #4b5563; margin: 0 0 16px; }
   background: #fef3c7; border: 1px solid #fcd34d; border-radius: 9999px;
   padding: 1px 7px; margin-left: 6px; vertical-align: 2px;
 }
+.demo-note {
+  background: #fffbeb; border: 1px solid #fcd34d; border-radius: 9px;
+  padding: 10px 14px; font-size: 13.5px; color: #92400e; margin-top: 14px;
+}
+.demo-note strong { color: #78350f; }
 .practice label { display: block; font-weight: 600; margin: 16px 0 6px; }
 .practice input {
   width: 100%; max-width: 380px; padding: 10px 12px; font: 16px ui-monospace, Menlo, monospace;
