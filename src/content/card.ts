@@ -455,13 +455,16 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     const input = entryInput('Type the value from your source')
     if (firstEntry) input.value = firstEntry
     const liveChips = h('div', {})
-    const next = h('button', { class: 'btn primary', disabled: '' }, 'Next: type it again') as HTMLButtonElement
+    const next = h('button', { class: 'btn primary', disabled: '' }, 'Continue to step 2') as HTMLButtonElement
     const update = () => {
       const r = validate(validator(), input.value)
       liveChips.textContent = ''
       if (input.value.trim()) liveChips.appendChild(chipRow(r))
       if (r.valid) {
-        input.className = 'entry good'
+        // Why blue, not green: green means "verified" everywhere else in this
+        // product. Step 1 only means "format looks right" — the value isn't
+        // confirmed until the blind re-type matches.
+        input.className = 'entry ok-shape'
         next.removeAttribute('disabled')
       } else {
         input.className = input.value.trim() ? 'entry bad' : 'entry'

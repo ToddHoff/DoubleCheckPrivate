@@ -49,6 +49,7 @@ export const CARD_CSS = `
 .entry:focus { outline: none; border-color: #166534; }
 .card.state-match .entry, .entry.good { border-color: #16a34a; background: #f0fdf4; }
 .card.state-mismatch .entry, .entry.bad { border-color: #dc2626; background: #fef2f2; }
+.entry.ok-shape { border-color: #2563eb; background: #eff6ff; }
 .big {
   font: 700 22px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace;
   letter-spacing: 1px; word-break: break-all; padding: 10px 12px; border-radius: 8px;
@@ -98,6 +99,7 @@ button.btn.speak { flex: none; width: 38px; }
   .entry { background: #111827; color: #f9fafb; border-color: #4b5563; }
   .entry.good { background: #052e16; }
   .entry.bad { background: #450a0a; }
+  .entry.ok-shape { background: #172554; border-color: #3b82f6; }
   .big.good { background: #052e16; color: #bbf7d0; border-color: #166534; }
   .words { color: #d1d5db; }
   .panel.bad { background: #450a0a; border-color: #b91c1c; color: #fecaca; }
