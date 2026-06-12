@@ -15,7 +15,7 @@ Click into the field and press the keyboard shortcut (or right-click → "Double
 
 REAL VALIDATION, NOT JUST PATTERNS
 
-• 22 built-in formats: US routing numbers (ABA), IBAN, payment cards, SSN, EIN, SWIFT/BIC, UK sort codes, CLABE, CUSIP, ISIN, VIN, Bitcoin and Ethereum addresses, phone numbers, email, dates, and currency amounts
+• 23 built-in formats: US routing numbers (ABA), IBAN, payment cards, SSN, EIN, SWIFT/BIC, UK sort codes, CLABE, CUSIP, ISIN, VIN, Bitcoin and Ethereum addresses, phone numbers, email, dates, and currency amounts
 • Formats with check digits are verified mathematically — a single wrong digit in a routing number, IBAN, or card number is caught instantly, often before you re-type anything
 • Currency amounts parse US and European separators, refuse genuinely ambiguous ones ("1,234" could be two different numbers — Double Check won't guess), and confirm in words: 1,200,000.00 — one million two hundred thousand and 00/100
 

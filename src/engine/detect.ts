@@ -35,6 +35,7 @@ const KEYWORD_RULES: Rule[] = [
   { re: /amount|total|price|payment|\bamt\b|\bsum\b/, formatId: 'currency-amount', score: 75 },
   { re: /bitcoin|\bbtc\b/, formatId: 'btc-address', score: 90 },
   { re: /ethereum|\beth\b|wallet/, formatId: 'eth-address', score: 70 },
+  { re: /\bip\b|ip.?(address|addr)|ipv4|ipv6/, formatId: 'ip-address', score: 90 },
   { re: /e.?mail/, formatId: 'email', score: 80 },
   { re: /phone|mobile|\btel\b|\bfax\b/, formatId: 'phone-e164', score: 75 },
   { re: /account.?(number|no|num|#)|beneficiary|acct/, formatId: 'us-bank-account', score: 60 },

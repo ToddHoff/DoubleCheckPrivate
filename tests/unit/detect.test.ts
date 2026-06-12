@@ -14,6 +14,7 @@ describe('suggestFormats', () => {
     expect(suggest({ label: 'IBAN' })[0]).toBe('iban')
     expect(suggest({ id: 'beneficiary-account-no' })[0]).toBe('us-bank-account')
     expect(suggest({ label: 'Wire amount' })[0]).toBe('currency-amount')
+    expect(suggest({ name: 'server_ip_address' })[0]).toBe('ip-address')
   })
 
   it('a passing checksum in the value outranks weak keyword evidence', () => {

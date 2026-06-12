@@ -52,7 +52,7 @@ shell.append(
     h('p', {}, 'One keyboard shortcut on any field opens all of this.'),
     h('div', { class: 'fgrid' },
       feat('Real checksum math, not just patterns',
-        '22 built-in formats. Routing numbers, IBANs, card numbers, CLABE, CUSIP, ISIN, VINs, and crypto ' +
+        '23 built-in formats. Routing numbers, IBANs, card numbers, CLABE, CUSIP, ISIN, VINs, and crypto ' +
         'addresses carry internal check digits — Double Check computes them, so a single wrong digit is often ' +
         'caught before you re-type anything.'),
       feat('Blind double entry',

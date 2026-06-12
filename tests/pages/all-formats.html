@@ -104,6 +104,11 @@
           <div class="hint">format picker: MM/DD/YYYY vs DD/MM/YYYY vs ISO · <code>02/29/2024</code> is real · <span class="bad">02/29/2023 isn’t</span></div>
         </div>
         <div class="f">
+          <label for="ip">IP address</label>
+          <input id="ip" name="ip_address" />
+          <div class="hint">try <code>192.168.1.1</code> or <code>2001:db8::8a2e:370:7334</code> · <span class="bad">192.168.1.256 is out of range</span></div>
+        </div>
+        <div class="f">
           <label for="vin">VIN (vehicle ID)</label>
           <input id="vin" name="vin" />
           <div class="hint">try <code>1M8GDM9AXKP042788</code> · <span class="bad">change any character and the check digit fails</span></div>

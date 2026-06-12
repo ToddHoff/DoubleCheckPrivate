@@ -30,6 +30,55 @@ const ISO_COUNTRIES = new Set(
    'UM US UY UZ VA VC VE VG VI VN VU WF WS XK YE YT ZA ZM ZW').split(' '),
 )
 
+function ipv4Check(v: string): { errors: string[]; warnings: string[] } {
+  const m = v.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
+  if (!m) return { errors: ['Expected four numbers 0–255 separated by dots'], warnings: [] }
+  const errors: string[] = []
+  const warnings: string[] = []
+  for (const octet of m.slice(1)) {
+    if (Number(octet) > 255) errors.push(`“${octet}” is more than 255`)
+    if (octet.length > 1 && octet.startsWith('0')) {
+      warnings.push(`Leading zero in “${octet}” — some systems read that as octal`)
+    }
+  }
+  return { errors, warnings }
+}
+
+function ipv6Check(v: string): { errors: string[]; warnings: string[] } {
+  const value = v.toLowerCase()
+  if ((value.match(/::/g) ?? []).length > 1) return { errors: ['“::” can appear at most once'], warnings: [] }
+  const countGroups = (side: string): number | null => {
+    if (side === '') return 0
+    let count = 0
+    const parts = side.split(':')
+    for (let i = 0; i < parts.length; i++) {
+      const p = parts[i]
+      if (i === parts.length - 1 && p.includes('.')) {
+        // IPv4-mapped tail, e.g. ::ffff:192.168.0.1 — counts as two groups
+        if (ipv4Check(p).errors.length) return null
+        count += 2
+      } else if (/^[0-9a-f]{1,4}$/.test(p)) {
+        count += 1
+      } else {
+        return null
+      }
+    }
+    return count
+  }
+  if (value.includes('::')) {
+    const [left, right] = value.split('::')
+    const l = countGroups(left)
+    const r = countGroups(right)
+    if (l === null || r === null) return { errors: ['Not a valid IPv6 address'], warnings: [] }
+    if (l + r > 7) return { errors: ['Too many groups for an address using “::”'], warnings: [] }
+  } else {
+    const n = countGroups(value)
+    if (n === null) return { errors: ['Not a valid IPv6 address'], warnings: [] }
+    if (n !== 8) return { errors: [`IPv6 needs 8 groups, got ${n} (use “::” to compress zeros)`], warnings: [] }
+  }
+  return { errors: [], warnings: [] }
+}
+
 export function cardBrand(digits: string): string | null {
   if (/^4/.test(digits)) return 'Visa'
   if (/^(5[1-5]|2(2[2-9]|[3-6]\d|7[01]|720))/.test(digits)) return 'Mastercard'
@@ -276,6 +325,21 @@ export const BUILTIN_VALIDATORS: Validator[] = [
     checksum: { algo: 'vin' },
     grouping: [3, 6, 8],
     speech: 'char-by-char',
+  },
+  {
+    id: 'ip-address',
+    name: 'IP address (v4 or v6)',
+    builtin: true,
+    normalize: ['trim', 'strip-spaces'],
+    checksum: null,
+    speech: 'natural',
+    extraCheck: (v) => {
+      const result = v.includes(':') ? ipv6Check(v) : ipv4Check(v)
+      if (result.errors.length === 0) {
+        result.warnings.push('IP addresses have no checksum — double entry is the real check')
+      }
+      return result
+    },
   },
   {
     id: 'phone-e164',

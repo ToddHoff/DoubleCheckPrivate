@@ -159,6 +159,28 @@ describe('date validators', () => {
   })
 })
 
+describe('ip-address validator', () => {
+  it.each(['192.168.1.1', '10.0.0.255', '8.8.8.8'])('accepts IPv4 %s', (s) =>
+    expect(validate(v('ip-address'), s).valid).toBe(true))
+  it.each(['2001:db8::8a2e:370:7334', '::1', 'fe80::1', '2001:0db8:0000:0000:0000:ff00:0042:8329', '::ffff:192.168.0.1'])(
+    'accepts IPv6 %s', (s) => expect(validate(v('ip-address'), s).valid).toBe(true))
+  it('rejects out-of-range octets and malformed addresses', () => {
+    expect(validate(v('ip-address'), '192.168.1.256').valid).toBe(false)
+    expect(validate(v('ip-address'), '192.168.1').valid).toBe(false)
+    expect(validate(v('ip-address'), '2001:db8::1::2').valid).toBe(false)
+    expect(validate(v('ip-address'), '1:2:3:4:5:6:7').valid).toBe(false)
+    expect(validate(v('ip-address'), '1:2:3:4:5:6:7:8:9').valid).toBe(false)
+  })
+  it('warns on leading-zero octets (octal ambiguity)', () => {
+    const r = validate(v('ip-address'), '192.168.01.1')
+    expect(r.valid).toBe(true)
+    expect(r.warnings.join(' ')).toMatch(/octal/)
+  })
+  it('is honest about having no checksum', () => {
+    expect(validate(v('ip-address'), '8.8.8.8').warnings.join(' ')).toMatch(/no checksum/i)
+  })
+})
+
 describe('phone-e164 validator', () => {
   it('accepts formatted numbers', () => {
     const r = validate(v('phone-e164'), '+1 (415) 555-2671')
