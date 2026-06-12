@@ -1,4 +1,5 @@
 import ExtPay from 'extpay'
+import { getTosAcceptance } from '../shared/storage'
 import { STORAGE_KEYS, type LicenseStatus } from '../shared/types'
 
 export const EXTPAY_ID = 'double-check'
@@ -68,6 +69,14 @@ export async function getLicenseStatus(): Promise<LicenseStatus> {
 }
 
 export async function handlePaymentAction(action: string): Promise<void> {
+  // click-wrap gate: trials and purchases require affirmative ToS acceptance
+  // first. Every surface funnels through here, so none can skip it — the
+  // onboarding page hosts the "I agree" checkbox.
+  const needsAcceptance = ['trial', 'pay-monthly', 'pay-yearly', 'pay-lifetime', 'choose-plan'].includes(action)
+  if (needsAcceptance && !(await getTosAcceptance())) {
+    await chrome.tabs.create({ url: `${chrome.runtime.getURL('src/onboarding/index.html')}#accept` })
+    return
+  }
   switch (action) {
     case 'trial': return extpay.openTrialPage(`${TRIAL_DAYS}-day`)
     case 'pay-monthly': return extpay.openPaymentPage(PLAN_MONTHLY)

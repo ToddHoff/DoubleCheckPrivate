@@ -33,7 +33,9 @@ numbers, amounts, IDs) entered into web forms. It is built on one principle:
 - **The verification log** stores metadata only: when and on which site a
   check happened, the field's label, the format used, the methods used, the
   outcome, and your attestation. It never contains the verified value. It
-  lives in your browser's extension storage and is never transmitted.
+  lives in your browser's extension storage, on your device only, and is
+  never transmitted — we have no servers it could be sent to and no ability
+  to access, see, or retrieve it.
 - **Optional fingerprinting** (off by default): if you enable it, the log
   stores an HMAC-SHA-256 of the verified value, keyed with a random secret
   that never leaves your device. This lets you later prove a logged check

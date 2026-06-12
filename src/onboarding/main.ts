@@ -3,7 +3,7 @@ import { mountCard } from '../content/card'
 import { fieldSignals } from '../content/field'
 import { h } from '../shared/dom'
 import { getShortcut } from '../shared/shortcut'
-import { getSettings } from '../shared/storage'
+import { getSettings, getTosAcceptance, saveTosAcceptance } from '../shared/storage'
 
 const app = document.getElementById('app')!
 const shell = h('div', { class: 'shell' })
@@ -148,19 +148,39 @@ shell.append(
       return h('div', {}, open)
     })(),
   ),
-  h('section', { class: 'step' },
+  h('section', { class: 'step', id: 'accept' },
     h('h2', {}, h('span', { class: 'num' }, '5'), 'Start your free trial'),
     h('p', {},
       '7 days, full features, no card required to try. After that it’s a small subscription — ' +
       'core double-entry checking keeps working either way.'),
     (() => {
-      const trial = h('button', { class: 'btn primary' }, 'Start 7-day free trial')
+      const box = h('input', { type: 'checkbox' }) as HTMLInputElement
+      const accept = h('label', { style: 'display:flex;gap:8px;align-items:flex-start;margin-bottom:14px;font-size:14.5px' },
+        box,
+        h('span', {},
+          'I agree to the ',
+          h('a', { href: 'https://doublecheck.possibility.com/terms.html', target: '_blank', rel: 'noopener' }, 'Terms of Service'),
+          ' and ',
+          h('a', { href: 'https://doublecheck.possibility.com/privacy.html', target: '_blank', rel: 'noopener' }, 'Privacy Policy'),
+          '.'),
+      )
+      const trial = h('button', { class: 'btn primary', disabled: '' }, 'Start 7-day free trial')
       trial.addEventListener('click', () =>
         void chrome.runtime.sendMessage({ kind: 'dc-payment-action', action: 'trial' }))
       const login = h('button', { class: 'btn' }, 'I already have a license')
       login.addEventListener('click', () =>
         void chrome.runtime.sendMessage({ kind: 'dc-payment-action', action: 'login' }))
-      return h('div', { style: 'display:flex;gap:10px' }, trial, login)
+      const sync = (accepted: boolean) => {
+        box.checked = accepted
+        if (accepted) trial.removeAttribute('disabled')
+        else trial.setAttribute('disabled', '')
+      }
+      void getTosAcceptance().then((a) => sync(a !== null))
+      box.addEventListener('change', async () => {
+        if (box.checked) await saveTosAcceptance()
+        sync(box.checked)
+      })
+      return h('div', {}, accept, h('div', { style: 'display:flex;gap:10px' }, trial, login))
     })(),
   ),
 )

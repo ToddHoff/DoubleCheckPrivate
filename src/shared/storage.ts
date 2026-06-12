@@ -112,6 +112,22 @@ export async function saveTtsRate(rate: number): Promise<void> {
   await chrome.storage.local.set({ 'dc:ttsRate': rate })
 }
 
+// ---- terms acceptance (click-wrap) ----
+// Why affirmative acceptance: "continued use constitutes acceptance" is the
+// weakest form of assent; an "I agree" click recorded with version + time
+// is what makes the ToS (and its liability shields) actually enforceable.
+export const TOS_VERSION = '2026-06'
+
+export async function getTosAcceptance(): Promise<{ version: string; at: string } | null> {
+  return get<{ version: string; at: string } | null>('dc:tosAccepted', null)
+}
+
+export async function saveTosAcceptance(): Promise<void> {
+  await chrome.storage.local.set({
+    'dc:tosAccepted': { version: TOS_VERSION, at: new Date().toISOString() },
+  })
+}
+
 // ---- opt-in HMAC fingerprint ----
 
 // Why: lets a user later prove "the value I verified equals the one on this

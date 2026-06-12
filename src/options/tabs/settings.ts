@@ -1,11 +1,14 @@
 import { h } from '../../shared/dom'
-import { getSettings, getStats, saveSettings } from '../../shared/storage'
+import { getSettings, getStats, getTosAcceptance, saveSettings, saveTosAcceptance } from '../../shared/storage'
 import { STORAGE_KEYS, type LicenseStatus } from '../../shared/types'
 
-function licensePanel(lic: LicenseStatus | null): HTMLElement {
+function licensePanel(lic: LicenseStatus | null, tosAccepted: boolean): HTMLElement {
+  const payBtns: HTMLButtonElement[] = []
   const pay = (label: string, action: string, primary = false) => {
-    const b = h('button', { class: primary ? 'btn primary' : 'btn' }, label)
+    const b = h('button', { class: primary ? 'btn primary' : 'btn' }, label) as HTMLButtonElement
     b.addEventListener('click', () => void chrome.runtime.sendMessage({ kind: 'dc-payment-action', action }))
+    // trials/purchases require ToS acceptance; manage/login don't
+    if (action !== 'manage' && action !== 'login') payBtns.push(b)
     return b
   }
   const panel = h('section', { class: 'panel' }, h('h2', {}, 'License'))
@@ -31,6 +34,33 @@ function licensePanel(lic: LicenseStatus | null): HTMLElement {
         pay('Lifetime — pay once', 'pay-lifetime'), pay('Already paid? Log in', 'login')),
     )
   }
+  // click-wrap: trials/purchases stay disabled until the ToS is accepted
+  if (payBtns.length > 0 && !tosAccepted) {
+    for (const b of payBtns) b.setAttribute('disabled', '')
+    const box = h('input', { type: 'checkbox' }) as HTMLInputElement
+    box.addEventListener('change', async () => {
+      if (box.checked) {
+        await saveTosAcceptance()
+        for (const b of payBtns) b.removeAttribute('disabled')
+      } else {
+        for (const b of payBtns) b.setAttribute('disabled', '')
+      }
+    })
+    panel.append(h('div', { class: 'row' }, box,
+      h('div', {},
+        h('label', { class: 'main' }, 'I agree to the Terms of Service and Privacy Policy'),
+        (() => {
+          const sub = h('div', { class: 'sub' })
+          sub.append(
+            h('a', { href: 'https://doublecheck.possibility.com/terms.html', target: '_blank', rel: 'noopener' }, 'Terms of Service'),
+            ' · ',
+            h('a', { href: 'https://doublecheck.possibility.com/privacy.html', target: '_blank', rel: 'noopener' }, 'Privacy Policy'),
+          )
+          return sub
+        })(),
+      )))
+  }
+
   // dev/tester override — only possible on unpacked installs (store builds
   // have an update_url, so this section never renders for real customers)
   if (!chrome.runtime.getManifest().update_url) {
@@ -56,6 +86,7 @@ export async function renderSettingsTab(rootEl: HTMLElement): Promise<void> {
   const license = (await chrome.runtime
     .sendMessage({ kind: 'dc-license-status' })
     .catch(() => null)) as LicenseStatus | null
+  const tosAccepted = (await getTosAcceptance()) !== null
 
   const save = () => void saveSettings(settings)
 
@@ -85,7 +116,7 @@ export async function renderSettingsTab(rootEl: HTMLElement): Promise<void> {
   shortcutBtn.addEventListener('click', () => void chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }))
 
   rootEl.append(
-    licensePanel(license),
+    licensePanel(license, tosAccepted),
     h('section', { class: 'panel' },
       h('h2', {}, 'Your numbers'),
       h('div', { class: 'stats' },
