@@ -8,8 +8,10 @@ export default defineManifest({
   manifest_version: 3,
   name: 'Double Check',
   version: pkg.version,
+  // Why this exact wording: Chrome Web Store caps the manifest description
+  // at 132 characters; longer uploads are rejected.
   description:
-    'A second pair of eyes for the numbers that can’t be wrong. Verify account numbers, amounts and IDs locally — values never leave your device.',
+    'A second pair of eyes for numbers that can’t be wrong. Verify account numbers, amounts and IDs — values never leave your device.',
   minimum_chrome_version: '116',
   icons: {
     '16': 'icons/icon16.png',

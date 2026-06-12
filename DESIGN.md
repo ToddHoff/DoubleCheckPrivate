@@ -313,6 +313,17 @@ A future Windows native app (same engine, system-wide) is a natural
 $9.99/mo "Pro/Desktop" tier and a reason to keep the extension's brand
 name format-agnostic.
 
+**Site licenses (decided June 2026, deferred post-launch):** when the
+first whole-office request arrives, the mechanism is a signed site key
+via `chrome.storage.managed` — IT deploys the extension by Google Admin
+policy and pastes an Ed25519-signed key (company, seat count, expiry)
+into the extension's managed policy; `getLicenseStatus()` checks managed
+storage before ExtPay, fully offline. Needs only a key-signing script,
+~30 lines in license.ts, a managed-storage schema, and an IT-admin doc;
+invoice manually through Stripe. Flat tiers (e.g. ≤10 seats / ≤50 seats /
+custom). Until then, shared-email activation or ExtPay discount codes
+cover small offices.
+
 ## 10. Liability posture
 
 - Attestation copy does the legal work: "**I have personally compared
