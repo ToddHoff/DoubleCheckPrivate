@@ -25,6 +25,15 @@ button.primary:hover {
   color: #6b7280;
   font-size: 12px;
 }
+kbd {
+  font: 600 11px ui-monospace, Menlo, monospace;
+  background: #f9fafb;
+  border: 1px solid #d1d5db;
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: 1px 5px;
+  color: #1f2937;
+}
 .links {
   margin-top: 10px;
   font-size: 12px;

@@ -1,3 +1,4 @@
+import { getShortcut } from '../shared/shortcut'
 import type { LicenseStatus } from '../shared/types'
 
 export {}
@@ -6,11 +7,24 @@ const app = document.getElementById('app')!
 
 app.innerHTML = `
   <button class="primary" id="check">Check focused field</button>
-  <p class="hint">Tip: focus the field on the page, then press the keyboard
-  shortcut (<a href="#" id="shortcuts">change it</a>).</p>
+  <p class="hint">Tip: focus the field on the page, then press
+  <span id="kbd">the keyboard shortcut</span> (<a href="#" id="shortcuts">change it</a>).</p>
   <div id="license" class="hint"></div>
   <p class="links"><a href="#" id="options">Settings &amp; log</a> · <a href="#" id="welcome">Welcome &amp; practice page</a></p>
 `
+
+void getShortcut('check-field').then((sc) => {
+  const el = document.getElementById('kbd')!
+  if (!sc) {
+    el.textContent = 'the keyboard shortcut — none set'
+    return
+  }
+  el.innerHTML = ''
+  const kbd = document.createElement('kbd')
+  kbd.textContent = sc.display
+  el.append(kbd)
+  if (sc.spelled) el.append(` — that’s ${sc.spelled}`)
+})
 
 document.getElementById('check')!.addEventListener('click', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })

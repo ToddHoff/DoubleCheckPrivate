@@ -2,6 +2,7 @@ import { BUILTIN_VALIDATORS, suggestFormats } from '../engine'
 import { mountCard } from '../content/card'
 import { fieldSignals } from '../content/field'
 import { h } from '../shared/dom'
+import { getShortcut } from '../shared/shortcut'
 import { getSettings } from '../shared/storage'
 
 const app = document.getElementById('app')!
@@ -100,19 +101,6 @@ const practiceField = h('input', {
 }) as HTMLInputElement
 const shortcutLabel = h('kbd', {}, '…')
 const shortcutSpelled = h('span', {})
-
-// Chrome displays Mac shortcuts as bare symbols (⇧⌘Space) — spell them out,
-// because not everyone knows ⇧ is the Shift key
-function spellOutShortcut(display: string): string {
-  const parts: string[] = []
-  if (/⌃/.test(display)) parts.push('Control')
-  if (/⌥/.test(display)) parts.push('Option')
-  if (/⇧/.test(display)) parts.push('Shift')
-  if (/⌘/.test(display)) parts.push('Command')
-  const key = display.replace(/[⌃⌥⇧⌘]/g, '').split('+').filter(Boolean).pop()?.trim()
-  if (key) parts.push(key)
-  return parts.join(' + ')
-}
 const tryBtn = h('button', { class: 'btn primary' }, 'Open Double Check on this field')
 const practiceStatus = h('p', { class: 'muted' })
 
@@ -212,16 +200,13 @@ shell.append(
 )
 
 // show the user's actual shortcut binding, spelled out when it uses symbols
-void chrome.commands.getAll().then((commands) => {
-  const shortcut = commands.find((c) => c.name === 'check-field')?.shortcut
-  if (!shortcut) {
+void getShortcut('check-field').then((sc) => {
+  if (!sc) {
     shortcutLabel.textContent = 'the shortcut (unassigned — set one at chrome://extensions/shortcuts)'
     return
   }
-  shortcutLabel.textContent = shortcut
-  if (/[⌃⌥⇧⌘]/.test(shortcut)) {
-    shortcutSpelled.textContent = ` (that’s ${spellOutShortcut(shortcut)})`
-  }
+  shortcutLabel.textContent = sc.display
+  if (sc.spelled) shortcutSpelled.textContent = ` (that’s ${sc.spelled})`
 })
 
 async function openCardOnPractice(): Promise<void> {
