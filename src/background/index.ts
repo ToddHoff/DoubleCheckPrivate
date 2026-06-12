@@ -94,6 +94,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     void chrome.runtime.openOptionsPage()
     sendResponse({ ok: true })
   }
+  if (msg?.kind === 'dc-open-mic-setup') {
+    void chrome.tabs.create({ url: chrome.runtime.getURL('src/mic/index.html') })
+    sendResponse({ ok: true })
+  }
   if (msg?.kind === 'dc-license-status') {
     void getLicenseStatus().then(sendResponse)
     return true

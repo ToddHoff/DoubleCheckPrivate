@@ -355,6 +355,12 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     }
     activeOcr = runOcr
 
+    // Why scan is conditional: captureVisibleTab needs the activeTab grant
+    // from a real invocation (shortcut / toolbar click). The onboarding
+    // practice page mounts the card with a plain button, so no grant can
+    // ever exist there — showing a button that always fails teaches users
+    // that scanning is broken.
+    const canScan = location.protocol !== 'chrome-extension:'
     const scan = h('button', { class: 'btn' }, '📷 Scan screen region')
     scan.addEventListener('click', async () => {
       host.style.visibility = 'hidden'
@@ -364,7 +370,9 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         await new Promise((r) => setTimeout(r, 80)) // let the overlay repaint away
         const res = await chrome.runtime.sendMessage({ kind: 'dc-capture-visible-tab' }).catch(() => null)
         if (!res?.ok) {
-          setStatus('Couldn’t capture the screen on this page')
+          setStatus(
+            'Couldn’t capture this page — re-open Double Check with the keyboard shortcut or the toolbar ' +
+            'button (that grants one-time page access), or paste a screenshot instead (⌘V / Ctrl+V).')
           return
         }
         const cropped = await cropToRegion(res.dataUrl as string, region)
@@ -392,6 +400,17 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
             setStatus(detail ?? 'Voice input isn’t available on this Chrome')
             mic.setAttribute('disabled', '')
             break
+          case 'denied': {
+            // embedded extension frames can't prompt for the mic — send the
+            // user to the top-level setup page for the one-time grant
+            setStatus('Microphone access needs a one-time setup:')
+            cands.textContent = ''
+            const grant = h('button', { class: 'chip warn cand' }, 'Grant microphone access')
+            grant.addEventListener('click', () =>
+              void chrome.runtime.sendMessage({ kind: 'dc-open-mic-setup' }).catch(() => {}))
+            cands.appendChild(grant)
+            break
+          }
           case 'error': setStatus(detail ?? 'Voice input failed'); break
         }
       }
@@ -403,12 +422,20 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       startVoice()
     })
 
+    const row = h('div', { class: 'btnrow' })
+    if (canScan) row.append(scan)
+    row.append(paste, mic)
     wrap.append(
       h('div', { class: 'lbl' },
         onValue ? 'Or read the value in from an image or your voice' : 'Or compare against an image or your voice'),
-      h('div', { class: 'btnrow' }, scan, paste, mic),
-      status, cands,
+      row,
     )
+    if (!canScan) {
+      wrap.append(h('div', { class: 'hint' },
+        'Screen scanning works on regular web pages (it uses the one-time access granted by the shortcut). ' +
+        'On this page, paste a screenshot instead.'))
+    }
+    wrap.append(status, cands)
     return wrap
   }
 

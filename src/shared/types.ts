@@ -64,6 +64,7 @@ export type RuntimeMessage =
   | { kind: 'dc-payment-action'; action: string }
   | { kind: 'dc-ocr'; imageDataUrl: string }
   | { kind: 'dc-capture-visible-tab' }
+  | { kind: 'dc-open-mic-setup' }
   | { kind: 'dc-voice-start'; nonce: string; lang: string }
   | { kind: 'dc-voice-stop'; nonce: string }
   | { kind: 'dc-voice-status'; nonce: string; seq: number; state: string; detail?: string }
