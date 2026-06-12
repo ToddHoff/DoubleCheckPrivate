@@ -67,4 +67,4 @@ uninstalling the extension. All of this is local to your browser.
 
 ## Contact
 
-Questions: [YOUR SUPPORT EMAIL]
+Questions: tmh@possibility.com

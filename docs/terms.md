@@ -58,4 +58,4 @@ release notes. Continued use after a change constitutes acceptance.
 
 ## Contact
 
-[YOUR LEGAL ENTITY NAME] · [YOUR SUPPORT EMAIL]
+Possibility Outpost Inc · tmh@possibility.com
