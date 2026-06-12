@@ -89,12 +89,15 @@ export interface BadgeHandle {
   remove(): void
 }
 
-export function attachBadge(el: CheckableField, onTamper: () => void): BadgeHandle {
+// verifiedDetail: shown alongside the check for formats where the raw field
+// value doesn't speak for itself — e.g. an amount's interpretation "12,345.00"
+export function attachBadge(el: CheckableField, onTamper: () => void, verifiedDetail?: string): BadgeHandle {
+  const okText = verifiedDetail ? `✓ Double-Checked · ${verifiedDetail}` : '✓ Double-Checked'
   const host = document.createElement('div')
   host.setAttribute('data-double-check-badge', '')
   const root = host.attachShadow({ mode: 'closed' })
   const chip = document.createElement('span')
-  chip.textContent = '✓ Double-Checked'
+  chip.textContent = okText
   chip.style.cssText = [
     'position:fixed', 'z-index:2147483646', 'font:600 11px/1 system-ui,sans-serif',
     'padding:3px 7px', 'border-radius:9999px', 'background:#dcfce7', 'color:#166534',
@@ -130,7 +133,7 @@ export function attachBadge(el: CheckableField, onTamper: () => void): BadgeHand
       onTamper()
     } else if (tampered && el.value === verifiedValue) {
       tampered = false
-      chip.textContent = '✓ Double-Checked'
+      chip.textContent = okText
       chip.style.background = '#dcfce7'
       chip.style.color = '#166534'
       chip.style.borderColor = '#86efac'

@@ -92,15 +92,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     void chrome.tabs.create({ url: chrome.runtime.getURL('src/mic/index.html') })
     sendResponse({ ok: true })
   }
-  if (msg?.kind === 'dc-arm-guard' && typeof msg.tabId === 'number') {
-    // inject (no activate message) so the just-enabled guard arms on this
-    // page right away; activeTab was granted by opening the popup
-    void chrome.scripting
-      .executeScript({ target: { tabId: msg.tabId }, files: [contentScript] })
-      .then(() => sendResponse({ ok: true }))
-      .catch(() => sendResponse({ ok: false }))
-    return true
-  }
   if (msg?.kind === 'dc-license-status') {
     void getLicenseStatus().then(sendResponse)
     return true

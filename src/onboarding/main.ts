@@ -87,9 +87,9 @@ shell.append(
         'lengths, and a menu of checksum algorithms. Formats are data, never code, and they export as files ' +
         'your whole team can import.'),
       feat('Submit Guard',
-        'Flip it on for the site you’re on from the toolbar popup. Forms there won’t submit while a field ' +
-        'you normally double-check is unverified or was edited after checking. A seatbelt on top of the ' +
-        'workflow, honest about its limits.', 'beta'),
+        'A toggle at the bottom of the check card, naming the site you’re on. Forms there won’t submit ' +
+        'while a field you normally double-check is unverified or was edited after checking. A seatbelt ' +
+        'on top of the workflow, honest about its limits.', 'beta'),
     ),
   ),
 )

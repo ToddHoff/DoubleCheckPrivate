@@ -4,7 +4,7 @@ import { cropToRegion, fileToDataUrl, selectRegion } from './capture'
 import type { LicenseStatus, LogEntry, Settings } from '../shared/types'
 import {
   appendLogEntry, bumpStats, fingerprintValue, getTtsRate, markLogEntryStale,
-  rememberFormat, saveTtsRate, TTS_RATES,
+  rememberFormat, saveSettings, saveTtsRate, TTS_RATES,
 } from '../shared/storage'
 import { CARD_CSS } from './styles'
 import { speakValue, speechAvailable, stopSpeaking } from './speech'
@@ -13,7 +13,7 @@ import {
   attachBadge, fieldDescription, fieldSignature, writeFieldValue,
   type BadgeHandle, type CheckableField,
 } from './field'
-import { markTampered, markVerified } from './submit-guard'
+import { installSubmitGuard, markTampered, markVerified } from './submit-guard'
 
 export interface CardContext {
   validators: Validator[]
@@ -166,7 +166,29 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       return right
     })(),
   )
-  card.append(header, body, footer)
+  // Submit Guard toggle, right where the user is working: enabling it arms
+  // the guard on this page instantly (we ARE the content script). Hidden on
+  // the extension's own pages, where guarding has nothing to protect.
+  if (location.protocol !== 'chrome-extension:') {
+    const box = h('input', { type: 'checkbox' }) as HTMLInputElement
+    box.checked = ctx.settings.submitGuardOrigins.includes(location.origin)
+    box.addEventListener('change', async () => {
+      ctx.settings.submitGuardOrigins = box.checked
+        ? [...new Set([...ctx.settings.submitGuardOrigins, location.origin])]
+        : ctx.settings.submitGuardOrigins.filter((o) => o !== location.origin)
+      await saveSettings(ctx.settings)
+      if (box.checked) await installSubmitGuard(ctx.settings.submitGuardOrigins)
+      else box.title = 'Off — this page stays guarded until reloaded'
+    })
+    card.append(header, body,
+      h('label', { class: 'guardrow', title: 'Blocks form submits on this site while a field you normally double-check is unverified (beta)' },
+        box,
+        h('span', {}, 'Submit Guard on ', h('strong', {}, location.host), ' ', h('em', {}, '(beta)')),
+      ),
+      footer)
+  } else {
+    card.append(header, body, footer)
+  }
 
   // ---- shared view pieces ----
   const chipRow = (r: ValidationResult): HTMLElement => {
@@ -487,10 +509,13 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     await rememberFormat(location.origin, fieldSignature(field), formatId)
     badges.get(field)?.remove()
     markVerified(field)
+    // for amounts, the badge shows the verified interpretation — "12345" in
+    // a money field doesn't speak for itself the way a routing number does
+    const detail = formatId === 'currency-amount' ? r.formatted.split(' — ')[0] : undefined
     badges.set(field, attachBadge(field, () => {
       markTampered(field)
       void markLogEntryStale(entry.id)
-    }))
+    }, detail))
     step = 'done'
     render()
     setTimeout(() => destroy(true), 1600)

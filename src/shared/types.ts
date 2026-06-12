@@ -65,7 +65,6 @@ export type RuntimeMessage =
   | { kind: 'dc-ocr'; imageDataUrl: string }
   | { kind: 'dc-capture-visible-tab' }
   | { kind: 'dc-open-mic-setup' }
-  | { kind: 'dc-arm-guard'; tabId: number }
 
 export interface LicenseStatus {
   active: boolean

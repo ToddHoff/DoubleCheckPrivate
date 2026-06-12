@@ -1,4 +1,3 @@
-import { getSettings, saveSettings } from '../shared/storage'
 import type { LicenseStatus } from '../shared/types'
 
 export {}
@@ -9,50 +8,9 @@ app.innerHTML = `
   <button class="primary" id="check">Check focused field</button>
   <p class="hint">Tip: focus the field on the page, then press the keyboard
   shortcut (<a href="#" id="shortcuts">change it</a>).</p>
-  <div id="guard"></div>
   <div id="license" class="hint"></div>
   <p class="links"><a href="#" id="options">Settings &amp; log</a> · <a href="#" id="welcome">Welcome &amp; practice page</a></p>
 `
-
-// Submit Guard: a per-site toggle for the site you're on right now
-void (async () => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-  let origin: string | null = null
-  try {
-    const url = new URL(tab?.url ?? '')
-    if (url.protocol === 'http:' || url.protocol === 'https:') origin = url.origin
-  } catch {
-    /* chrome:// pages etc. — no guard toggle */
-  }
-  if (!origin || !tab?.id) return
-  const tabId = tab.id
-  const settings = await getSettings()
-
-  const wrap = document.getElementById('guard')!
-  const label = document.createElement('label')
-  label.className = 'guard'
-  const box = document.createElement('input')
-  box.type = 'checkbox'
-  box.checked = settings.submitGuardOrigins.includes(origin)
-  const text = document.createElement('span')
-  text.innerHTML = `<strong>Submit Guard</strong> on ${origin.replace(/^https?:\/\//, '')} <em>(beta)</em><br>
-    <small>Blocks form submits here while a field you normally double-check is unverified.</small>`
-  label.append(box, text)
-  wrap.appendChild(label)
-
-  box.addEventListener('change', async () => {
-    settings.submitGuardOrigins = box.checked
-      ? [...new Set([...settings.submitGuardOrigins, origin])]
-      : settings.submitGuardOrigins.filter((o) => o !== origin)
-    await saveSettings(settings)
-    if (box.checked) {
-      // arm it on this page immediately (popup open = activeTab granted)
-      await chrome.runtime.sendMessage({ kind: 'dc-arm-guard', tabId }).catch(() => null)
-    } else {
-      text.querySelector('small')!.textContent = 'Off — already-armed pages stay guarded until reloaded.'
-    }
-  })
-})()
 
 document.getElementById('check')!.addEventListener('click', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
