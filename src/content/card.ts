@@ -4,7 +4,7 @@ import { cropToRegion, fileToDataUrl, selectRegion } from './capture'
 import type { LicenseStatus, LogEntry, Settings } from '../shared/types'
 import { appendLogEntry, bumpStats, fingerprintValue, markLogEntryStale, rememberFormat } from '../shared/storage'
 import { CARD_CSS } from './styles'
-import { canSpeakLocally, speakValue, stopSpeaking } from './speech'
+import { speakValue, speechAvailable, stopSpeaking } from './speech'
 import {
   attachBadge, fieldDescription, fieldSignature, writeFieldValue,
   type BadgeHandle, type CheckableField,
@@ -153,11 +153,17 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   // per-card, click-to-speak: each read-aloud is an explicit opt-in, so no
   // global setting — the user decides case by case (e.g. not in open offices)
   const speakButton = (text: () => string): HTMLElement | null => {
-    if (!canSpeakLocally()) return null
+    if (!speechAvailable()) return null
     const btn = h('button', { class: 'btn speak', title: 'Read aloud (local voice)' }, '🔊')
     btn.addEventListener('click', () => {
-      usedTts = true
-      speakValue(text(), validator())
+      void speakValue(text(), validator()).then((spoke) => {
+        if (spoke) {
+          usedTts = true
+        } else {
+          btn.setAttribute('disabled', '')
+          btn.title = 'No local on-device voice available — network voices are never used'
+        }
+      })
     })
     return btn
   }
@@ -449,7 +455,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     const input = entryInput('Type the value from your source')
     if (firstEntry) input.value = firstEntry
     const liveChips = h('div', {})
-    const next = h('button', { class: 'btn primary', disabled: '' }, 'Continue → re-type to confirm') as HTMLButtonElement
+    const next = h('button', { class: 'btn primary', disabled: '' }, 'Next: type it again') as HTMLButtonElement
     const update = () => {
       const r = validate(validator(), input.value)
       liveChips.textContent = ''
@@ -474,7 +480,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     })
     next.addEventListener('click', advance)
     body.append(
-      h('div', { class: 'lbl' }, 'This field is empty — enter the value, then confirm it blind'),
+      h('div', { class: 'lbl' }, 'Step 1 of 2 — type the value from your source'),
       input, liveChips, h('div', { class: 'btnrow' }, next),
     )
     update()
@@ -491,9 +497,9 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     const compareBtn = h('button', { class: 'btn primary' }, 'Compare')
     compareBtn.addEventListener('click', () => compare(input.value))
     body.append(
-      h('div', { class: 'lbl' }, 'Re-type it from the source to confirm'),
+      h('div', { class: 'lbl' }, 'Step 2 of 2 — type it again to confirm'),
       input,
-      h('div', { class: 'hint' }, 'Read from your source again — the first entry stays hidden on purpose.'),
+      h('div', { class: 'hint' }, 'Read from your source again — your first entry stays hidden on purpose.'),
       h('div', { class: 'btnrow' }, compareBtn),
       ocrSection(),
     )
