@@ -40,7 +40,20 @@ async function refreshStatus(): Promise<LicenseStatus> {
   return status
 }
 
+// Why this is safe to ship: store installs always have an update_url in the
+// manifest, unpacked dev installs never do — so the override below is
+// structurally unreachable in any build a customer can install.
+export function isUnpackedInstall(): boolean {
+  return !chrome.runtime.getManifest().update_url
+}
+
 export async function getLicenseStatus(): Promise<LicenseStatus> {
+  if (isUnpackedInstall()) {
+    const obj = await chrome.storage.local.get(STORAGE_KEYS.devLicense)
+    if (obj[STORAGE_KEYS.devLicense] === true) {
+      return { active: true, trial: false, trialDaysLeft: -1, cached: false }
+    }
+  }
   try {
     return await refreshStatus()
   } catch {

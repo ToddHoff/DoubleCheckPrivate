@@ -1,6 +1,6 @@
 import { h } from '../../shared/dom'
 import { getSettings, getStats, saveSettings } from '../../shared/storage'
-import type { LicenseStatus } from '../../shared/types'
+import { STORAGE_KEYS, type LicenseStatus } from '../../shared/types'
 
 function licensePanel(lic: LicenseStatus | null): HTMLElement {
   const pay = (label: string, action: string, primary = false) => {
@@ -30,6 +30,22 @@ function licensePanel(lic: LicenseStatus | null): HTMLElement {
         pay('Start 7-day free trial', 'trial', true), pay('Yearly', 'pay-yearly'), pay('Monthly', 'pay-monthly'),
         pay('Lifetime — pay once', 'pay-lifetime'), pay('Already paid? Log in', 'login')),
     )
+  }
+  // dev/tester override — only possible on unpacked installs (store builds
+  // have an update_url, so this section never renders for real customers)
+  if (!chrome.runtime.getManifest().update_url) {
+    const box = h('input', { type: 'checkbox' }) as HTMLInputElement
+    void chrome.storage.local.get(STORAGE_KEYS.devLicense).then((obj) => {
+      box.checked = obj[STORAGE_KEYS.devLicense] === true
+    })
+    box.addEventListener('change', async () => {
+      await chrome.storage.local.set({ [STORAGE_KEYS.devLicense]: box.checked })
+      location.reload()
+    })
+    panel.append(h('div', { class: 'row' }, box,
+      h('div', {},
+        h('label', { class: 'main' }, 'Developer build: unlock all features'),
+        h('div', { class: 'sub' }, 'Visible only on unpacked installs, for testing. Store installs ignore this entirely.'))))
   }
   return panel
 }

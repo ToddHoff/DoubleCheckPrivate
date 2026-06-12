@@ -47,6 +47,7 @@ export const STORAGE_KEYS = {
   stats: 'dc:stats',
   hmacKey: 'dc:hmacKey',
   license: 'dc:license',
+  devLicense: 'dc:devLicense',
 } as const
 
 /** runtime messages — NOTE: no message type ever carries a field value */
