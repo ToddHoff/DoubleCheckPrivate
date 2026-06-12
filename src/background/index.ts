@@ -9,6 +9,21 @@ chrome.runtime.onInstalled.addListener((details) => {
     void chrome.tabs.create({ url: chrome.runtime.getURL('src/onboarding/index.html') })
   }
   void chrome.alarms.create('dc-log-purge', { periodInMinutes: 60 * 24 })
+  // right-click invocation on editable fields; recreate idempotently
+  // (onInstalled also fires on updates, and duplicate ids throw)
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: 'dc-check-field',
+      title: 'Double-check this field',
+      contexts: ['editable'],
+    })
+  })
+})
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  // the menu click is the user gesture that grants activeTab, same as the
+  // shortcut; right-clicking the field also focuses it
+  if (info.menuItemId === 'dc-check-field' && tab?.id) void injectCard(tab.id)
 })
 
 chrome.alarms.onAlarm.addListener((alarm) => {

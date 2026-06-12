@@ -37,7 +37,7 @@ export default defineManifest({
   },
   // Why no 'tts': read-aloud uses the page's speechSynthesis (local voices
   // only) from the content script, so the value never crosses contexts.
-  permissions: ['activeTab', 'scripting', 'storage', 'offscreen', 'alarms'],
+  permissions: ['activeTab', 'scripting', 'storage', 'offscreen', 'alarms', 'contextMenus'],
   // Why: MV3's DEFAULT extension CSP lacks 'wasm-unsafe-eval', so the bundled
   // Tesseract WASM can't even instantiate without declaring it. This is the
   // only loosening MV3 permits and it covers wasm only — no JS eval.

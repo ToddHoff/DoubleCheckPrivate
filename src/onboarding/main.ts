@@ -119,9 +119,10 @@ const practiceStatus = h('p', { class: 'muted' })
 shell.append(
   h('section', { class: 'step practice' },
     h('h2', {}, h('span', { class: 'num' }, '3'), 'Try it — safely'),
-    h('p', {}, h('strong', {}, 'Two ways to open Double Check on any field:')),
+    h('p', {}, h('strong', {}, 'Three ways to open Double Check on any field:')),
     h('ul', {},
       h('li', {}, 'Keyboard: click into the field and press ', shortcutLabel, shortcutSpelled, '.'),
+      h('li', {}, 'Right-click: right-click the field and choose ', h('em', {}, '“Double-check this field”'), '.'),
       h('li', {},
         'Toolbar: click into the field, then click the green Double Check icon and choose ',
         h('em', {}, '“Check focused field”'),

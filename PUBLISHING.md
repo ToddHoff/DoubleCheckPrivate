@@ -53,6 +53,8 @@ or Workflow), language. Lead the description with the privacy promise.
     icon."
   - `storage`: "Stores settings, user-defined format validators, and an
     audit log that never contains the verified values."
+  - `contextMenus`: "Adds a right-click 'Double-check this field' item on
+    editable fields, as an alternative to the keyboard shortcut."
   - `tts`: "Optionally reads a value aloud using local device voices."
   - `offscreen`: "Runs on-device OCR (bundled Tesseract WASM) so images
     are never uploaded."

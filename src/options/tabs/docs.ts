@@ -21,7 +21,8 @@ try everything on.</p>
   <li>Click into the field that holds (or will hold) the critical value.</li>
   <li>Press the shortcut — <kbd>Shift+Command+Space</kbd> on a Mac (Chrome
       shows it as <kbd>⇧⌘Space</kbd>; ⇧ is the Shift key, ⌘ is Command),
-      <kbd>Ctrl+Shift+Space</kbd> elsewhere.</li>
+      <kbd>Ctrl+Shift+Space</kbd> elsewhere. Or right-click the field and
+      choose <em>Double-check this field</em>, or use the toolbar icon.</li>
   <li>Confirm the detected format, or pick one. Formats with real checksums
       (routing numbers, IBANs, cards…) are verified mathematically on the
       spot — a wrong digit often turns the card red before you do anything.</li>
