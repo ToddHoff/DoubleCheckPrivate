@@ -47,6 +47,15 @@ your machine. Anything the OCR finds that passes format validation is offered
 as a candidate; values that look close but fail validation are shown as
 warnings, never silently used.</p>
 
+<h2>Voice input</h2>
+<p><em>Speak it</em> lets you read the value aloud from your source —
+digit by digit works best. Recognition uses Chrome's on-device speech model
+(Chrome 139+); the first use downloads the model once, and your audio and
+transcript never leave the machine. If on-device recognition isn't available,
+the feature disables itself — it never falls back to a cloud service. The
+microphone permission is requested by Double Check itself, not by the website
+you're on.</p>
+
 <h2>What the log proves (and doesn't)</h2>
 <p>Each entry records when and where a check happened, the field, the format,
 the methods used, the outcome, and that you personally attested it. It does

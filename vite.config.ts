@@ -15,6 +15,7 @@ export default defineConfig({
       input: {
         onboarding: 'src/onboarding/index.html',
         offscreen: 'src/offscreen/index.html',
+        mic: 'src/mic/index.html',
       },
     },
   },

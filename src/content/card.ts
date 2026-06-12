@@ -1,5 +1,5 @@
 import type { Diagnosis, ValidationResult, Validator } from '../engine'
-import { diagnose, extractCandidates, groupValue, validate } from '../engine'
+import { diagnose, extractCandidates, groupValue, normalizeSpoken, validate } from '../engine'
 import { cropToRegion, fileToDataUrl, selectRegion } from './capture'
 import type { LicenseStatus, LogEntry, Settings } from '../shared/types'
 import {
@@ -73,6 +73,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   let mismatchSeen = false
   let usedTts = false
   let usedOcr = false
+  let usedVoice = false
 
   const validator = () =>
     ctx.validators.find((v) => v.id === formatId) ?? ctx.validators.find((v) => v.id === 'generic-text')!
@@ -238,7 +239,50 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   // ---- OCR (scan a region / paste an image — all local) ----
   let activeOcr: ((imageDataUrl: string) => Promise<void>) | null = null
 
-  function ocrSection(): HTMLElement {
+  // ---- voice input (on-device only, via a hidden extension-origin iframe;
+  // transcripts come back over chrome.runtime so the page can't see them) ----
+  const voiceNonce = crypto.randomUUID()
+  let voiceIframe: HTMLIFrameElement | null = null
+  let voiceReady = false
+  let lastVoiceSeq = 0
+  let onVoiceResult: ((alternatives: string[]) => void) | null = null
+  let onVoiceStatus: ((state: string, detail?: string) => void) | null = null
+
+  const voiceListener = (msg: {
+    kind?: string; nonce?: string; seq?: number; alternatives?: string[]; state?: string; detail?: string
+  }) => {
+    if (msg?.nonce !== voiceNonce) return
+    // on extension pages the iframe's message arrives directly AND via the
+    // background relay — the sequence number drops the duplicate
+    if (typeof msg.seq === 'number') {
+      if (msg.seq <= lastVoiceSeq) return
+      lastVoiceSeq = msg.seq
+    }
+    if (msg.kind === 'dc-voice-result' && Array.isArray(msg.alternatives)) onVoiceResult?.(msg.alternatives)
+    if (msg.kind === 'dc-voice-status' && typeof msg.state === 'string') onVoiceStatus?.(msg.state, msg.detail)
+  }
+  chrome.runtime.onMessage.addListener(voiceListener)
+
+  function startVoice(): void {
+    if (!voiceIframe) {
+      voiceIframe = document.createElement('iframe')
+      voiceIframe.src = `${chrome.runtime.getURL('src/mic/index.html')}?nonce=${voiceNonce}`
+      voiceIframe.setAttribute('allow', 'microphone')
+      voiceIframe.style.display = 'none'
+      voiceIframe.addEventListener('load', () => {
+        voiceReady = true
+        void chrome.runtime.sendMessage({ kind: 'dc-voice-start', nonce: voiceNonce, lang: 'en-US' }).catch(() => {})
+      })
+      root.appendChild(voiceIframe)
+    } else if (voiceReady) {
+      void chrome.runtime.sendMessage({ kind: 'dc-voice-start', nonce: voiceNonce, lang: 'en-US' }).catch(() => {})
+    }
+  }
+
+  // Without onValue, OCR candidates are compared against the subject value
+  // (verify mode / step 2). With onValue, they fill an entry instead
+  // (input-mode step 1, where there's nothing to compare against yet).
+  function ocrSection(onValue?: (value: string) => void): HTMLElement {
     // paid feature — but expiry degrades, never bricks: double entry above
     // stays fully functional without a license
     if (!ctx.license.active) {
@@ -253,18 +297,22 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     const cands = h('div', { class: 'chips' })
     const setStatus = (t: string) => { status.textContent = t }
 
-    async function handleText(text: string): Promise<void> {
+    async function handleText(text: string, source: 'ocr' | 'voice'): Promise<void> {
       const v = validator()
       const { matches, nears } = extractCandidates(text, v)
-      const expected = validate(v, subjectRaw()).normalized
       cands.textContent = ''
       const useCandidate = (c: string) => {
-        usedOcr = true
-        compare(c)
+        if (source === 'voice') usedVoice = true
+        else usedOcr = true
+        if (onValue) onValue(c)
+        else compare(c)
       }
-      if (matches.includes(expected)) {
-        useCandidate(expected)
-        return
+      if (!onValue) {
+        const expected = validate(v, subjectRaw()).normalized
+        if (matches.includes(expected)) {
+          useCandidate(expected)
+          return
+        }
       }
       if (matches.length === 1) {
         useCandidate(matches[0])
@@ -280,7 +328,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         return
       }
       if (nears.length) {
-        setStatus(`Nothing in the image passes ${v.name} validation. Close-but-failing reads:`)
+        setStatus(`Nothing ${source === 'voice' ? 'heard' : 'in the image'} passes ${v.name} validation. Close-but-failing reads:`)
         for (const n of nears) {
           const chip = h('button', { class: 'chip err cand' }, n)
           chip.addEventListener('click', () => useCandidate(n))
@@ -288,7 +336,9 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         }
         return
       }
-      setStatus(`Couldn’t find a ${v.name} in the image — try a tighter crop.`)
+      setStatus(source === 'voice'
+        ? `Couldn’t hear a ${v.name} — try reading it digit by digit.`
+        : `Couldn’t find a ${v.name} in the image — try a tighter crop.`)
     }
 
     async function runOcr(imageDataUrl: string): Promise<void> {
@@ -301,7 +351,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         setStatus(res?.error ? `OCR failed: ${res.error}` : 'OCR failed')
         return
       }
-      await handleText(res.text as string)
+      await handleText(res.text as string, 'ocr')
     }
     activeOcr = runOcr
 
@@ -331,9 +381,32 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       ;(root.querySelector('.entry') as HTMLElement | null)?.focus()
     })
 
+    const mic = h('button', { class: 'btn' }, '🎤 Speak it')
+    mic.addEventListener('click', () => {
+      setStatus('Starting microphone…')
+      onVoiceStatus = (state, detail) => {
+        switch (state) {
+          case 'listening': setStatus('Listening — read the value out loud, digit by digit'); break
+          case 'downloading': setStatus(detail ?? 'Downloading the on-device speech model…'); break
+          case 'unavailable':
+            setStatus(detail ?? 'Voice input isn’t available on this Chrome')
+            mic.setAttribute('disabled', '')
+            break
+          case 'error': setStatus(detail ?? 'Voice input failed'); break
+        }
+      }
+      onVoiceResult = (alternatives) => {
+        // scan both the raw transcripts and their digit-word conversions
+        const text = alternatives.flatMap((a) => [a, normalizeSpoken(a)]).join('\n')
+        void handleText(text, 'voice')
+      }
+      startVoice()
+    })
+
     wrap.append(
-      h('div', { class: 'lbl' }, 'Or compare against an image of the source'),
-      h('div', { class: 'btnrow' }, scan, paste),
+      h('div', { class: 'lbl' },
+        onValue ? 'Or read the value in from an image or your voice' : 'Or compare against an image or your voice'),
+      h('div', { class: 'btnrow' }, scan, paste, mic),
       status, cands,
     )
     return wrap
@@ -341,7 +414,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
   // card-wide image-paste: works whenever the card has focus during entry
   card.addEventListener('paste', (e) => {
-    if (step !== 'verify-entry' && step !== 'input-confirm') return
+    if (step !== 'verify-entry' && step !== 'input-first' && step !== 'input-confirm') return
     const items = (e as ClipboardEvent).clipboardData?.items ?? []
     for (const item of items) {
       if (item.type.startsWith('image/')) {
@@ -366,6 +439,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         ...(r.checksumPassed ? ['checksum'] : []),
         ...(usedTts ? ['read-aloud'] : []),
         ...(usedOcr ? ['ocr'] : []),
+        ...(usedVoice ? ['voice'] : []),
       ],
       result: mismatchSeen ? 'mismatch-resolved' : 'match',
       attested: true,
@@ -534,6 +608,11 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     body.append(
       h('div', { class: 'lbl' }, 'Step 1 of 2 — type the value from your source'),
       input, liveChips, h('div', { class: 'btnrow' }, next),
+      ocrSection((value) => {
+        input.value = value
+        update()
+        input.focus()
+      }),
     )
     update()
     if (focusOnRender) input.focus()
@@ -615,6 +694,8 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
   function destroy(refocus = false): void {
     stopSpeaking()
+    if (voiceReady) void chrome.runtime.sendMessage({ kind: 'dc-voice-stop', nonce: voiceNonce }).catch(() => {})
+    chrome.runtime.onMessage.removeListener(voiceListener)
     field.removeEventListener('input', onFieldInput)
     window.removeEventListener('scroll', reposition, { capture: true })
     window.removeEventListener('resize', reposition)

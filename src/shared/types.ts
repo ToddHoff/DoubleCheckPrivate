@@ -50,15 +50,24 @@ export const STORAGE_KEYS = {
   devLicense: 'dc:devLicense',
 } as const
 
-/** runtime messages — NOTE: no message type ever carries a field value */
+/**
+ * runtime messages — NOTE: no message ever leaves the extension's own
+ * contexts. dc-ocr carries image bytes (discarded after OCR) and the
+ * dc-voice-* messages carry on-device transcripts (relayed through the
+ * background to reach the content script); pages can't observe either.
+ */
 export type RuntimeMessage =
   | { kind: 'dc-activate' }
   | { kind: 'dc-activate-from-popup'; tabId: number }
   | { kind: 'dc-open-options'; section?: string }
   | { kind: 'dc-license-status' }
-  | { kind: 'dc-open-payment'; plan?: string }
-  | { kind: 'dc-ocr'; imageDataUrl: string } // image bytes only, discarded after OCR
+  | { kind: 'dc-payment-action'; action: string }
+  | { kind: 'dc-ocr'; imageDataUrl: string }
   | { kind: 'dc-capture-visible-tab' }
+  | { kind: 'dc-voice-start'; nonce: string; lang: string }
+  | { kind: 'dc-voice-stop'; nonce: string }
+  | { kind: 'dc-voice-status'; nonce: string; seq: number; state: string; detail?: string }
+  | { kind: 'dc-voice-result'; nonce: string; seq: number; alternatives: string[] }
 
 export interface LicenseStatus {
   active: boolean

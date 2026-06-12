@@ -22,6 +22,10 @@ numbers, amounts, IDs) entered into web forms. It is built on one principle:
   extraction. They are never uploaded anywhere.
 - **Read-aloud** uses your device's local text-to-speech voice. Voices that
   would send text to a network service are never used.
+- **Voice input** uses Chrome's on-device speech recognition (the model is
+  downloaded once by Chrome itself). Your audio and the transcript never
+  leave your device; if on-device recognition isn't available, the feature
+  is disabled rather than falling back to any cloud service.
 - **The verification log** stores metadata only: when and on which site a
   check happened, the field's label, the format used, the methods used, the
   outcome, and your attestation. It never contains the verified value. It

@@ -47,4 +47,13 @@ export default defineManifest({
       run_at: 'document_start',
     },
   ],
+  // Why: voice input runs in a hidden extension-origin iframe inside the
+  // card, so the mic permission belongs to Double Check rather than the
+  // page. The frame URL must be web-accessible to be embeddable.
+  web_accessible_resources: [
+    {
+      resources: ['src/mic/index.html'],
+      matches: ['http://*/*', 'https://*/*'],
+    },
+  ],
 })
