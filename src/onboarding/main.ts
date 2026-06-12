@@ -110,19 +110,28 @@ async function openCardOnPractice(): Promise<void> {
 tryBtn.addEventListener('click', () => void openCardOnPractice())
 
 // the real keyboard shortcut also works here: the background can't inject
-// into extension pages, so we listen for the bound combo locally
+// into extension pages, so we listen for the bound combo locally.
+// Why the odd parsing: chrome.commands.getAll() returns a DISPLAY string —
+// "⇧⌘Space" on macOS (symbols, no separators), "Ctrl+Shift+Space" elsewhere.
 void chrome.commands.getAll().then((commands) => {
-  const shortcut = commands.find((c) => c.name === 'check-field')?.shortcut
-  if (!shortcut) return
-  const parts = shortcut.split('+')
-  const key = parts[parts.length - 1].toLowerCase()
+  const raw = commands.find((c) => c.name === 'check-field')?.shortcut
+  if (!raw) return
+  const wantShift = raw.includes('⇧') || raw.includes('Shift')
+  const wantMeta = raw.includes('⌘') || raw.includes('Command') || raw.includes('Search')
+  const wantCtrl = raw.includes('⌃') || /(?:^|\+)Ctrl(?:\+|$)/.test(raw)
+  const wantAlt = raw.includes('⌥') || raw.includes('Alt')
+  const key = raw
+    .replace(/[⇧⌘⌃⌥]/g, '')
+    .split('+')
+    .map((s) => s.trim())
+    .filter((s) => s && !['Ctrl', 'Shift', 'Alt', 'Command', 'MacCtrl', 'Search'].includes(s))
+    .pop()
+    ?.toLowerCase()
+  if (!key) return
   document.addEventListener('keydown', (e) => {
-    const wantCtrl = parts.includes('Ctrl'), wantCmd = parts.includes('⌘') || parts.includes('Command')
-    const wantShift = parts.includes('Shift'), wantAlt = parts.includes('Alt') || parts.includes('⌥')
     const keyMatch = key === 'space' ? e.code === 'Space' : e.key.toLowerCase() === key
     if (keyMatch && e.shiftKey === wantShift && e.altKey === wantAlt &&
-        (e.ctrlKey === wantCtrl || e.metaKey === wantCmd) &&
-        document.activeElement === practiceField) {
+        e.metaKey === wantMeta && e.ctrlKey === wantCtrl) {
       e.preventDefault()
       void openCardOnPractice()
     }
