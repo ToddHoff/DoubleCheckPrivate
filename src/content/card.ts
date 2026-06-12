@@ -59,7 +59,12 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   // ---- state ----
   const startedAt = Date.now()
   let step: Step = field.value.trim() ? 'verify-entry' : 'input-first'
-  const inputMode = step === 'input-first'
+  let inputMode = step === 'input-first'
+  // suppress the field listener during our own programmatic writes, or
+  // input mode would reset itself the moment it fills the field on match
+  let suppressFieldEvents = false
+  // don't yank focus into the card while the user is typing in the field
+  let focusOnRender = true
   let formatId = ctx.remembered ?? ctx.suggestions[0] ??
     (/^[\d\s().+-]*$/.test(field.value) ? 'generic-number' : 'generic-text')
   let firstEntry = '' // input mode: the value typed from the source
@@ -71,6 +76,33 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
   const validator = () =>
     ctx.validators.find((v) => v.id === formatId) ?? ctx.validators.find((v) => v.id === 'generic-text')!
+
+  const writeField = (value: string) => {
+    suppressFieldEvents = true
+    writeFieldValue(field, value)
+    suppressFieldEvents = false
+  }
+
+  // react when the user edits the field while the card is open: cleared →
+  // input mode, value (re)typed → verify mode, and any in-progress
+  // comparison result is stale and restarts
+  const onFieldInput = () => {
+    if (suppressFieldEvents || step === 'done') return
+    const hasValue = !!field.value.trim()
+    focusOnRender = false
+    if (!hasValue === inputMode && (step === 'verify-entry' || step === 'input-first')) {
+      if (step === 'verify-entry') render() // refresh chips for the new value
+    } else {
+      inputMode = !hasValue
+      step = hasValue ? 'verify-entry' : 'input-first'
+      firstEntry = ''
+      lastDiagnosis = null
+      lastEntered = ''
+      render()
+    }
+    focusOnRender = true
+  }
+  field.addEventListener('input', onFieldInput)
 
   /** the value being verified: field value in verify mode, first entry in input mode */
   const subjectRaw = () => (inputMode ? firstEntry : field.value)
@@ -377,7 +409,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       input, hint, rowEl,
       ocrSection(),
     )
-    input.focus()
+    if (focusOnRender) input.focus()
   }
 
   function compare(entered: string): void {
@@ -408,7 +440,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     body.append(chipRow(r))
 
     if (inputMode) {
-      writeFieldValue(field, firstEntry.trim())
+      writeField(firstEntry.trim())
     }
 
     const checkbox = h('input', { type: 'checkbox', id: 'attest' })
@@ -428,7 +460,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     const speak = speakButton(() => r.normalized)
     if (speak) rowEl.append(speak)
     body.append(attest, rowEl)
-    checkbox.focus()
+    if (focusOnRender) checkbox.focus()
   }
 
   function renderMismatch(): void {
@@ -447,7 +479,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       if (enteredResult.valid) {
         const useTyped = h('button', { class: 'btn' }, 'The field is wrong — use what I typed')
         useTyped.addEventListener('click', () => {
-          writeFieldValue(field, lastEntered.trim())
+          writeField(lastEntered.trim())
           step = 'verify-entry'
           render()
         })
@@ -463,7 +495,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       rowEl.append(startOver)
     }
     body.append(panel, h('div', { class: 'hint' }, 'One of the two entries is wrong — check your source before choosing.'), rowEl)
-    retry.focus()
+    if (focusOnRender) retry.focus()
   }
 
   function renderInputFirst(): void {
@@ -504,7 +536,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       input, liveChips, h('div', { class: 'btnrow' }, next),
     )
     update()
-    input.focus()
+    if (focusOnRender) input.focus()
   }
 
   function renderInputConfirm(): void {
@@ -523,7 +555,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       h('div', { class: 'btnrow' }, compareBtn),
       ocrSection(),
     )
-    input.focus()
+    if (focusOnRender) input.focus()
   }
 
   function renderDone(): void {
@@ -583,6 +615,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
   function destroy(refocus = false): void {
     stopSpeaking()
+    field.removeEventListener('input', onFieldInput)
     window.removeEventListener('scroll', reposition, { capture: true })
     window.removeEventListener('resize', reposition)
     host.remove()
