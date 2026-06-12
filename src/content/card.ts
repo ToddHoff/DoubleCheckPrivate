@@ -716,6 +716,9 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       case 'mismatch': renderMismatch(); break
       case 'done': renderDone(); break
     }
+    // observable state for tests/automation; the card's contents stay in a
+    // closed shadow root, this exposes only the step name
+    host.setAttribute('data-dc-step', step)
     position()
   }
 

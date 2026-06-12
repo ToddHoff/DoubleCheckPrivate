@@ -104,3 +104,16 @@ for (const size of [16, 32, 48, 128]) {
   writeFileSync(`public/icons/icon${size}.png`, png(size, render(size)))
   console.log(`icon${size}.png`)
 }
+
+// Store icon: Chrome Web Store wants 128x128 with ~96x96 artwork inside a
+// 16px transparent margin (full-bleed icons look cramped in store UI).
+// Lives outside public/ so it doesn't ship in the extension package.
+const ART = 96, CANVAS = 128, MARGIN = (CANVAS - ART) / 2
+const art = render(ART)
+const padded = Buffer.alloc(CANVAS * CANVAS * 4)
+for (let y = 0; y < ART; y++) {
+  art.copy(padded, ((y + MARGIN) * CANVAS + MARGIN) * 4, y * ART * 4, (y + 1) * ART * 4)
+}
+mkdirSync('store-assets', { recursive: true })
+writeFileSync('store-assets/icon-128-store.png', png(CANVAS, padded))
+console.log('store-assets/icon-128-store.png (96px artwork, 16px padding)')

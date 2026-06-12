@@ -119,6 +119,18 @@ test('OCR pipeline works end-to-end (offscreen Tesseract, WASM CSP)', async () =
   expect((res.text as string).replace(/\s/g, '')).toContain(ROUTING)
 })
 
+test('verify mode: Enter in the entry input triggers compare', async () => {
+  const page = await context.newPage()
+  await page.goto(`chrome-extension://${extensionId}/src/onboarding/index.html`)
+  await page.locator('#practice').fill(ROUTING) // pre-filled → verify mode
+  await page.getByRole('button', { name: 'Open Double Check on this field' }).click()
+  await page.waitForSelector('[data-double-check][data-dc-step="verify-entry"]', { state: 'attached' })
+  await settle(page)
+  await page.keyboard.type(ROUTING)
+  await page.keyboard.press('Enter')
+  await page.waitForSelector('[data-double-check][data-dc-step="match"]', { state: 'attached', timeout: 5000 })
+})
+
 test('mismatch is caught and nothing is logged', async () => {
   const page = await context.newPage()
   await page.goto(`chrome-extension://${extensionId}/src/onboarding/index.html`)
