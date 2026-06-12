@@ -1,6 +1,6 @@
 {
   "name": "double-check",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "A second pair of eyes for the numbers that can't be wrong.",
