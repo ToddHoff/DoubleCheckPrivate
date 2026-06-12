@@ -38,11 +38,80 @@ shell.append(
   ),
 )
 
+// feature tour — everything it can do, at a glance
+function feat(title: string, body: string, tag?: string): HTMLElement {
+  const heading = h('h3', {}, title)
+  if (tag) heading.append(h('span', { class: 'tag' }, tag))
+  return h('div', { class: 'feat' }, heading, h('p', {}, body))
+}
+
+shell.append(
+  h('section', { class: 'features' },
+    h('h2', {}, 'Everything Double Check can do'),
+    h('p', {}, 'One keyboard shortcut on any field opens all of this.'),
+    h('div', { class: 'fgrid' },
+      feat('Real checksum math, not just patterns',
+        '22 built-in formats. Routing numbers, IBANs, card numbers, CLABE, CUSIP, ISIN, VINs, and crypto ' +
+        'addresses carry internal check digits — Double Check computes them, so a single wrong digit is often ' +
+        'caught before you re-type anything.'),
+      feat('Blind double entry',
+        'Re-type the value from your source — not from the field. Two independent readings must agree before ' +
+        'anything is confirmed. Empty fields get a safe two-step entry flow.'),
+      feat('Mismatches explained, not just flagged',
+        'A red result names the error: “characters 5 and 6 appear swapped,” one wrong digit, a missing or ' +
+        'extra character — with a character-level diff. Transposition is the classic transcription error, ' +
+        'and it gets called out by name.'),
+      feat('Amounts taken seriously',
+        'US and European separators both parse; genuinely ambiguous amounts like “1,234” are refused rather ' +
+        'than guessed. Matches confirm in words: 1,200,000.00 — one million two hundred thousand and 00/100.'),
+      feat('Compare against an image',
+        'Scan a screen region or paste a screenshot or phone photo. A bundled OCR engine reads it on your ' +
+        'device — images are never uploaded — and common misreads like O-for-0 are repaired automatically.'),
+      feat('Speak it',
+        'Read the value aloud from the paper in your hand; Chrome’s on-device speech recognition transcribes ' +
+        'it (nothing leaves the machine) and it’s validated like any other entry.', 'Chrome 139+'),
+      feat('Hear it read back',
+        'A speaker button reads the value digit by digit with grouping pauses, using a local on-device voice ' +
+        'only, at the speed you choose — read along on your source.'),
+      feat('A badge that stays honest',
+        'Verified fields get a “Double-Checked” badge. If the value changes afterwards — any reason, any ' +
+        'keystroke — the badge flips to a warning and the log entry is marked stale.'),
+      feat('Proof without the value',
+        'Every attested check is logged: when, where, what format, which methods, and your attestation. ' +
+        'Never the value itself. Export CSV/JSON for your records; retention is yours to set.'),
+      feat('It remembers each site',
+        'Confirm that a field is an IBAN once, and the right format is preselected on that site forever ' +
+        'after. Second use is zero-configuration.'),
+      feat('Your own formats',
+        'Vendor IDs, policy numbers, internal account schemes — define them with clean-up rules, patterns, ' +
+        'lengths, and a menu of checksum algorithms. Formats are data, never code, and they export as files ' +
+        'your whole team can import.'),
+      feat('Submit Guard',
+        'On sites you choose, forms won’t submit while a field you normally double-check there is unverified ' +
+        'or was edited after checking. A seatbelt on top of the workflow, honest about its limits.', 'beta'),
+    ),
+  ),
+)
+
 // step 3: practice form
 const practiceField = h('input', {
   id: 'practice', name: 'routing_number', inputmode: 'numeric', autocomplete: 'off',
 }) as HTMLInputElement
 const shortcutLabel = h('kbd', {}, '…')
+const shortcutSpelled = h('span', {})
+
+// Chrome displays Mac shortcuts as bare symbols (⇧⌘Space) — spell them out,
+// because not everyone knows ⇧ is the Shift key
+function spellOutShortcut(display: string): string {
+  const parts: string[] = []
+  if (/⌃/.test(display)) parts.push('Control')
+  if (/⌥/.test(display)) parts.push('Option')
+  if (/⇧/.test(display)) parts.push('Shift')
+  if (/⌘/.test(display)) parts.push('Command')
+  const key = display.replace(/[⌃⌥⇧⌘]/g, '').split('+').filter(Boolean).pop()?.trim()
+  if (key) parts.push(key)
+  return parts.join(' + ')
+}
 const tryBtn = h('button', { class: 'btn primary' }, 'Open Double Check on this field')
 const practiceStatus = h('p', { class: 'muted' })
 
@@ -53,7 +122,7 @@ shell.append(
     h('div', { class: 'source' }, '021 000 021'),
     h('label', { for: 'practice' }, 'Routing number'),
     practiceField,
-    h('p', {}, 'Click into the field, then press ', shortcutLabel, ' — or use the button. ',
+    h('p', {}, 'Click into the field, then press ', shortcutLabel, shortcutSpelled, ' — or use the button. ',
       'Type the number (try getting one digit wrong on purpose to see the red diff).'),
     h('div', {}, tryBtn),
     practiceStatus,
@@ -89,10 +158,17 @@ shell.append(
   ),
 )
 
-// show the user's actual shortcut binding
+// show the user's actual shortcut binding, spelled out when it uses symbols
 void chrome.commands.getAll().then((commands) => {
-  const cmd = commands.find((c) => c.name === 'check-field')
-  shortcutLabel.textContent = cmd?.shortcut || 'the shortcut (unassigned — set one at chrome://extensions/shortcuts)'
+  const shortcut = commands.find((c) => c.name === 'check-field')?.shortcut
+  if (!shortcut) {
+    shortcutLabel.textContent = 'the shortcut (unassigned — set one at chrome://extensions/shortcuts)'
+    return
+  }
+  shortcutLabel.textContent = shortcut
+  if (/[⌃⌥⇧⌘]/.test(shortcut)) {
+    shortcutSpelled.textContent = ` (that’s ${spellOutShortcut(shortcut)})`
+  }
 })
 
 async function openCardOnPractice(): Promise<void> {

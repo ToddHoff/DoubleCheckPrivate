@@ -25,6 +25,21 @@ section.step .num {
 section.step h2 { display: flex; align-items: center; font-size: 19px; margin: 0 0 10px; }
 section.step p, section.step li { color: #374151; }
 .promise { background: #f0fdf4; border-color: #86efac; }
+section.features { margin-bottom: 22px; }
+section.features h2 { font-size: 19px; margin: 0 0 4px; }
+section.features > p { color: #4b5563; margin: 0 0 16px; }
+.fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 600px) { .fgrid { grid-template-columns: 1fr; } }
+.feat {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px;
+}
+.feat h3 { font-size: 14.5px; margin: 0 0 4px; color: #166534; }
+.feat p { font-size: 13.5px; color: #374151; margin: 0; line-height: 1.5; }
+.feat .tag {
+  display: inline-block; font: 600 10.5px system-ui, sans-serif; color: #92400e;
+  background: #fef3c7; border: 1px solid #fcd34d; border-radius: 9999px;
+  padding: 1px 7px; margin-left: 6px; vertical-align: 2px;
+}
 .practice label { display: block; font-weight: 600; margin: 16px 0 6px; }
 .practice input {
   width: 100%; max-width: 380px; padding: 10px 12px; font: 16px ui-monospace, Menlo, monospace;

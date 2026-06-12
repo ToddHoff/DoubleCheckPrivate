@@ -52,5 +52,6 @@ endpoint is extensionpay.com (licensing).
 - [ ] `npm run build` green, `npm test` green, `npx playwright test` green
 - [ ] `npm run check:privacy` clean
 - [ ] Version bumped in `package.json` (manifest version derives from it)
-- [ ] Manual pass on `tests/pages/plain.html` + one real SPA form
+- [ ] Manual pass on `tests/pages/all-formats.html` (every built-in format,
+      valid + invalid samples inline) + one real SPA form
 - [ ] `npm run zip`, upload, update store listing if screenshots changed

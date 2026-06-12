@@ -102,7 +102,9 @@ export async function renderSettingsTab(rootEl: HTMLElement): Promise<void> {
       h('div', { class: 'row' },
         h('div', {},
           h('label', { class: 'main' }, 'Keyboard shortcut'),
-          h('div', { class: 'sub' }, 'Focus a field on any page and press the shortcut to open Double Check (default Ctrl/⌘+Shift+Space).'),
+          h('div', { class: 'sub' },
+            'Focus a field on any page and press the shortcut to open Double Check. Default: Shift+Command+Space ' +
+            'on a Mac (Chrome shows it as ⇧⌘Space — ⇧ is the Shift key, ⌘ is Command), Ctrl+Shift+Space elsewhere.'),
           h('div', { class: 'btnrow' }, shortcutBtn),
         ),
       ),

@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Fixture: every Double Check format</title>
+    <style>
+      body { font: 15px/1.5 system-ui, sans-serif; max-width: 980px; margin: 32px auto; padding: 0 20px; color: #1f2937; }
+      h1 { font-size: 22px; }
+      .how { background: #f0fdf4; border: 1px solid #86efac; border-radius: 10px; padding: 12px 16px; font-size: 14px; }
+      h2 { font-size: 16px; margin: 28px 0 6px; border-bottom: 2px solid #e5e7eb; padding-bottom: 4px; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; }
+      @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+      .f label { display: block; font-weight: 600; margin-bottom: 3px; }
+      .f input { width: 100%; padding: 8px 10px; font-size: 15px; box-sizing: border-box; border: 1px solid #d1d5db; border-radius: 7px; }
+      .hint { font-size: 12px; color: #6b7280; margin-top: 3px; }
+      .hint code { font-family: ui-monospace, Menlo, monospace; background: #f3f4f6; padding: 0 4px; border-radius: 4px; }
+      .bad { color: #991b1b; }
+      button { margin-top: 26px; padding: 10px 22px; font-size: 15px; border-radius: 8px; border: 1px solid #166534; background: #166534; color: #fff; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <h1>Double Check — all-formats fixture</h1>
+    <p class="how">
+      Focus any field and press the shortcut (Shift+Command+Space on a Mac — shown by Chrome as ⇧⌘Space —
+      or Ctrl+Shift+Space elsewhere). Pre-filled fields open in verify mode; empty ones in input mode.
+      Each field lists a <code>valid</code> sample to type and an <span class="bad">invalid</span> one to
+      see the red diagnosis. For screen-region scanning, serve this page over http
+      (<code>python3 -m http.server</code> in the repo root, then
+      <code>localhost:8000/tests/pages/all-formats.html</code>) — or enable
+      “Allow access to file URLs” for the extension if you open it as a file.
+      To exercise Submit Guard: add this page’s origin in Settings, verify a field, then try Send.
+    </p>
+
+    <form action="#" method="post">
+      <h2>Banking</h2>
+      <div class="grid">
+        <div class="f">
+          <label for="routing">Routing number (ABA)</label>
+          <input id="routing" name="routing_number" inputmode="numeric" value="021000021" />
+          <div class="hint">pre-filled valid · also <code>026009593</code> · <span class="bad">021000022 fails the checksum instantly</span></div>
+        </div>
+        <div class="f">
+          <label for="account">Beneficiary account number</label>
+          <input id="account" name="account_number" inputmode="numeric" />
+          <div class="hint">no public checksum — the card says so · try <code>123456789012</code></div>
+        </div>
+        <div class="f">
+          <label for="iban">IBAN</label>
+          <input id="iban" name="iban" value="gb82 west 1234 5698 7654 32" />
+          <div class="hint">pre-filled lowercase + spaces (tests normalization) · also <code>DE89370400440532013000</code> · <span class="bad">GB82WEST12345698765431</span></div>
+        </div>
+        <div class="f">
+          <label for="amount">Wire amount</label>
+          <input id="amount" name="amount" />
+          <div class="hint">try <code>$1,234,567.89</code> or <code>1.234.567,89</code> (same number) · <span class="bad">1,234 is refused as ambiguous</span></div>
+        </div>
+        <div class="f">
+          <label for="swift">SWIFT / BIC</label>
+          <input id="swift" name="swift_bic" />
+          <div class="hint">try <code>NWBKGB2L</code> or <code>CHASUS33XXX</code> · <span class="bad">DEUTZZFF has a bad country code</span></div>
+        </div>
+        <div class="f">
+          <label for="sort">Sort code (UK)</label>
+          <input id="sort" name="sort_code" inputmode="numeric" />
+          <div class="hint">try <code>20-00-00</code></div>
+        </div>
+        <div class="f">
+          <label for="clabe">CLABE (Mexico)</label>
+          <input id="clabe" name="clabe" inputmode="numeric" value="032180000118359718" />
+          <div class="hint"><span class="bad">pre-filled with a checksum FAILURE</span> — open the card to see it go red before typing · valid: <code>032180000118359719</code></div>
+        </div>
+        <div class="f">
+          <label for="card">Card number</label>
+          <input id="card" name="card_number" autocomplete="cc-number" inputmode="numeric" />
+          <div class="hint">try <code>4111 1111 1111 1111</code> (Visa) or <code>5555555555554444</code> (Mastercard) · <span class="bad">4111111111111112</span></div>
+        </div>
+      </div>
+
+      <h2>Identity</h2>
+      <div class="grid">
+        <div class="f">
+          <label for="ssn">Social Security number</label>
+          <input id="ssn" name="ssn" inputmode="numeric" />
+          <div class="hint">try <code>212-09-9999</code> · <span class="bad">666-12-3456 is never issued</span></div>
+        </div>
+        <div class="f">
+          <label for="ein">EIN (employer ID)</label>
+          <input id="ein" name="ein" inputmode="numeric" />
+          <div class="hint">try <code>12-3456789</code> · <span class="bad">07-3456789 has a never-issued prefix</span></div>
+        </div>
+        <div class="f">
+          <label for="phone">Phone</label>
+          <input id="phone" name="phone" type="tel" />
+          <div class="hint">try <code>+1 (415) 555-2671</code></div>
+        </div>
+        <div class="f">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" />
+          <div class="hint">try <code>ap@vendor-example.com</code></div>
+        </div>
+        <div class="f">
+          <label for="date">Date</label>
+          <input id="date" name="payment_date" />
+          <div class="hint">format picker: MM/DD/YYYY vs DD/MM/YYYY vs ISO · <code>02/29/2024</code> is real · <span class="bad">02/29/2023 isn’t</span></div>
+        </div>
+        <div class="f">
+          <label for="vin">VIN (vehicle ID)</label>
+          <input id="vin" name="vin" />
+          <div class="hint">try <code>1M8GDM9AXKP042788</code> · <span class="bad">change any character and the check digit fails</span></div>
+        </div>
+      </div>
+
+      <h2>Securities</h2>
+      <div class="grid">
+        <div class="f">
+          <label for="cusip">CUSIP</label>
+          <input id="cusip" name="cusip" />
+          <div class="hint">try <code>037833100</code> (Apple) or <code>594918104</code> (Microsoft) · <span class="bad">037833101</span></div>
+        </div>
+        <div class="f">
+          <label for="isin">ISIN</label>
+          <input id="isin" name="isin" />
+          <div class="hint">try <code>US0378331005</code> or <code>GB0002634946</code> · <span class="bad">US0378331006</span></div>
+        </div>
+      </div>
+
+      <h2>Crypto</h2>
+      <div class="grid">
+        <div class="f">
+          <label for="btc">Bitcoin address</label>
+          <input id="btc" name="btc_address" />
+          <div class="hint">try <code>bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq</code> or <code>1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2</code> · <span class="bad">change one character — checksum fails</span></div>
+        </div>
+        <div class="f">
+          <label for="eth">Ethereum address</label>
+          <input id="eth" name="eth_address" />
+          <div class="hint">try <code>0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed</code> (EIP-55 ✓) · all-lowercase gives a “no checksum” warning, wrong capitalization fails</div>
+        </div>
+      </div>
+
+      <h2>Generic</h2>
+      <div class="grid">
+        <div class="f">
+          <label for="ref">Reference number (no known format)</label>
+          <input id="ref" name="reference" />
+          <div class="hint">pick “Number (any)” or “Text (exact match)” from the format menu — pure double entry</div>
+        </div>
+        <div class="f">
+          <label for="custom">Vendor ID (for a custom format)</label>
+          <input id="custom" name="vendor_id" />
+          <div class="hint">make a custom format in Settings → Formats (e.g. pattern <code>V\d{7}</code>), then try <code>V1234567</code></div>
+        </div>
+      </div>
+
+      <button type="submit">Send (tests Submit Guard)</button>
+    </form>
+  </body>
+</html>
