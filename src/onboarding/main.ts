@@ -30,6 +30,11 @@ shell.append(
       'Reading aloud uses your device’s local voice; image scanning runs a bundled, offline OCR engine. ' +
       'The extension can’t even see a page until you invoke it there — it has no standing access to any website. ' +
       'The only network traffic is license checking (your email and payment status, nothing else).'),
+    h('p', {},
+      h('a', { href: 'https://github.com/ToddHoff/DoubleCheckPublic/blob/main/privacy-policy.md', target: '_blank', rel: 'noopener' }, 'Full privacy policy'),
+      ' · ',
+      h('a', { href: 'https://github.com/ToddHoff/DoubleCheckPublic/blob/main/terms.md', target: '_blank', rel: 'noopener' }, 'Terms of service'),
+    ),
   ),
 )
 

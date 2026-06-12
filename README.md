@@ -37,8 +37,12 @@ endpoint is extensionpay.com (licensing).
 1. **ExtensionPay**: register the extension at extensionpay.com with id
    `double-check`; create plans `double-check-monthly` and
    `double-check-yearly`. Test with Stripe test cards (see ExtPay README).
-2. **Host the docs**: publish `docs/privacy-policy.md` and `docs/terms.md` on
-   a public URL; fill in the placeholders (support email, legal entity).
+2. **Hosted docs** (done): the public copies live at
+   [DoubleCheckPublic/privacy-policy.md](https://github.com/ToddHoff/DoubleCheckPublic/blob/main/privacy-policy.md)
+   and [DoubleCheckPublic/terms.md](https://github.com/ToddHoff/DoubleCheckPublic/blob/main/terms.md).
+   Still TODO there: fill in the support-email / legal-entity placeholders and
+   drop the "Host this page publicly" editor note from the privacy policy.
+   Keep them in sync with `docs/` in this repo.
 3. **Chrome Web Store**: follow [PUBLISHING.md](PUBLISHING.md) — register the
    $5 developer account, complete trader (DSA) verification early, then
    upload `double-check.zip`.

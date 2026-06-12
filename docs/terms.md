@@ -2,6 +2,9 @@
 
 _Draft — have a lawyer review before launch. Last updated: June 2026._
 
+<!-- Canonical hosted copy (keep in sync with this file):
+     https://github.com/ToddHoff/DoubleCheckPublic/blob/main/terms.md -->
+
 ## 1. The service
 
 Double Check ("the Software") is a browser extension that assists users in

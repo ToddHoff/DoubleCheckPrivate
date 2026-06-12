@@ -65,11 +65,15 @@ or Workflow), language. Lead the description with the privacy promise.
   **Personally identifiable information** (email, transmitted to
   ExtensionPay/Stripe for payment only). Certify the three checkboxes
   (no sale, no unrelated use, no creditworthiness use).
-- **Privacy policy URL: required.** Host a static page stating: all
-  verification happens on-device; values are never transmitted, logged,
-  or stored; the audit log stores metadata only; the only network
-  traffic is licensing with ExtensionPay (email + payment status, via
-  Stripe); no analytics. This page is also your best marketing copy.
+- **Privacy policy URL: required.** Ours is hosted at
+  `https://github.com/ToddHoff/DoubleCheckPublic/blob/main/privacy-policy.md`
+  (terms: `https://github.com/ToddHoff/DoubleCheckPublic/blob/main/terms.md`).
+  Before submission, in the hosted copies: fill in the support-email and
+  legal-entity placeholders, and remove the "Host this page publicly"
+  editor note from the privacy policy. A public GitHub blob URL satisfies
+  the store requirement (no login needed to view); GitHub Pages renders
+  prettier if you ever want that. Keep the hosted copies in sync with
+  `docs/` in this repo — this page is also your best marketing copy.
 
 ## 5. Distribution tab
 

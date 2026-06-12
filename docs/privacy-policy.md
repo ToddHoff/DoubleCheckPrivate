@@ -1,7 +1,10 @@
 # Double Check — Privacy Policy
 
-_Last updated: June 2026. Host this page publicly and link it from the Chrome
-Web Store listing's Privacy tab._
+_Last updated: June 2026._
+
+<!-- Canonical hosted copy (keep in sync with this file):
+     https://github.com/ToddHoff/DoubleCheckPublic/blob/main/privacy-policy.md
+     This URL goes in the Chrome Web Store listing's Privacy tab. -->
 
 Double Check helps you verify high-stakes values (account numbers, routing
 numbers, amounts, IDs) entered into web forms. It is built on one principle:

@@ -70,6 +70,13 @@ validate values.</p>
       look before you click Submit is still yours.</li>
 </ul>
 
+<h2>Policies</h2>
+<p>The hosted, canonical copies of our policies:
+<a href="https://github.com/ToddHoff/DoubleCheckPublic/blob/main/privacy-policy.md" target="_blank" rel="noopener">privacy policy</a>
+·
+<a href="https://github.com/ToddHoff/DoubleCheckPublic/blob/main/terms.md" target="_blank" rel="noopener">terms of service</a>.
+</p>
+
 <h2>Responsibility</h2>
 <p>Double Check is an assistive tool. It helps you verify; it does not and
 cannot guarantee correctness, and it accepts no liability for the outcome of
