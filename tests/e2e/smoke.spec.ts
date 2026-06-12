@@ -97,6 +97,28 @@ test('full check flow on the practice form, with privacy regression', async () =
   expect(externalRequests).toEqual([])
 })
 
+test('OCR pipeline works end-to-end (offscreen Tesseract, WASM CSP)', async () => {
+  test.setTimeout(120_000) // first OCR spins up the worker + loads traineddata
+  const page = await context.newPage()
+  await page.goto(`chrome-extension://${extensionId}/src/onboarding/index.html`)
+
+  const res = await page.evaluate(async (routing) => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 600
+    canvas.height = 120
+    const ctx = canvas.getContext('2d')!
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.fillStyle = '#000'
+    ctx.font = '48px monospace'
+    ctx.fillText(routing, 40, 75)
+    return chrome.runtime.sendMessage({ kind: 'dc-ocr', imageDataUrl: canvas.toDataURL('image/png') })
+  }, ROUTING)
+
+  expect(res?.ok, `OCR failed: ${res?.error}`).toBe(true)
+  expect((res.text as string).replace(/\s/g, '')).toContain(ROUTING)
+})
+
 test('mismatch is caught and nothing is logged', async () => {
   const page = await context.newPage()
   await page.goto(`chrome-extension://${extensionId}/src/onboarding/index.html`)

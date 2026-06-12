@@ -38,6 +38,12 @@ export default defineManifest({
   // Why no 'tts': read-aloud uses the page's speechSynthesis (local voices
   // only) from the content script, so the value never crosses contexts.
   permissions: ['activeTab', 'scripting', 'storage', 'offscreen', 'alarms'],
+  // Why: MV3's DEFAULT extension CSP lacks 'wasm-unsafe-eval', so the bundled
+  // Tesseract WASM can't even instantiate without declaring it. This is the
+  // only loosening MV3 permits and it covers wasm only — no JS eval.
+  content_security_policy: {
+    extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
+  },
   // Why: the ONLY host entry. ExtPay needs its relay on extensionpay.com for
   // payment/trial callbacks. No user-page host permissions exist anywhere.
   content_scripts: [

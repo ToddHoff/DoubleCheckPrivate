@@ -63,7 +63,7 @@ chrome-flavored stays thin.
 |---|---|
 | Shortcut → inject, zero host permissions | `commands` event counts as the user gesture that grants `activeTab`; `scripting.executeScript` then works. Officially documented pattern; avoids the slow-review track. |
 | `_execute_action` not used; named command `check-field` | We need the service worker to run injection logic, not just open the popup. Suggested default `Ctrl+Shift+Space` (≤4 suggested shortcuts allowed; users rebind at `chrome://extensions/shortcuts`). |
-| OCR in offscreen document | Service worker has no DOM/canvas; offscreen doc is the MV3 home for WASM+canvas work. CSP `wasm-unsafe-eval` is in the MV3 default — Tesseract v4+ needs nothing more. |
+| OCR in offscreen document | Service worker has no DOM/canvas; offscreen doc is the MV3 home for WASM+canvas work. NOTE: `'wasm-unsafe-eval'` is NOT in the MV3 default CSP — it must be declared in `content_security_policy.extension_pages` (it's the only loosening MV3 permits, wasm-only, no JS eval). |
 | Image paste = `paste` event in card input | Zero permissions, works for files and phone screenshots. `navigator.clipboard.read()` (programmatic) deliberately avoided — needs more permission and adds nothing. |
 | Region capture via `chrome.tabs.captureVisibleTab` | Allowed under `activeTab`. Crop with OffscreenCanvas before handing to Tesseract. |
 | TTS via page `speechSynthesis`, filter `voice.localService === true` | (Revised from `chrome.tts` during implementation.) Same local-voice guarantee, but the value never leaves the content script and the `tts` permission is dropped entirely. If no local voice exists, the feature hides itself. |
