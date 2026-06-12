@@ -158,6 +158,40 @@ shell.append(
   ),
 )
 
+// troubleshooting — every issue is one users have actually hit
+function trouble(question: string, ...answers: string[]): HTMLElement {
+  return h('details', {}, h('summary', {}, question), ...answers.map((a) => {
+    const p = h('p', {})
+    p.innerHTML = a
+    return p
+  }))
+}
+
+shell.append(
+  h('section', { class: 'trouble' },
+    h('h2', {}, 'Troubleshooting'),
+    trouble('The keyboard shortcut does nothing',
+      'Check it’s actually bound: <code>chrome://extensions/shortcuts</code> — Chrome silently leaves it blank if another extension claimed the combo. On a Mac, also make sure macOS itself doesn’t own it (System Settings → Keyboard → Keyboard Shortcuts).',
+      'The shortcut can’t work on Chrome’s own pages (<code>chrome://…</code>, the Web Store) — use the toolbar button there. For files opened from disk, enable “Allow access to file URLs” on the extension’s card in <code>chrome://extensions</code>.'),
+    trouble('I updated the extension and something behaves oddly or looks stale',
+      'Updates need two reloads: the ↻ refresh arrow on the extension’s card in <code>chrome://extensions</code>, and then close and reopen any tabs that were already open — including this page. A page keeps running the code it loaded originally.'),
+    trouble('There’s no Compare button',
+      'An empty field opens in input mode, which is two steps: step 1 enters the value, step 2 re-types it blind — Compare appears in step 2. A field that already has a value opens in verify mode with Compare on the first screen.'),
+    trouble('The field turned blue, not green',
+      'Blue in step 1 means “the format looks right” — the value isn’t confirmed yet. Green is reserved for an actual match between your two independent entries.'),
+    trouble('“Microphone access is blocked” the first time I use Speak it',
+      'Chrome can’t show a microphone prompt from inside the card, so the first use needs a one-time grant: click <strong>Grant microphone access</strong> when the card offers it, allow the prompt on the page that opens, and try again.',
+      'If that page is blocked too: click the mic icon in its address bar, or check <code>chrome://settings/content/microphone</code>, and on a Mac confirm Chrome is allowed under System Settings → Privacy &amp; Security → Microphone.'),
+    trouble('It’s listening but says it didn’t hear anything',
+      'Chrome is probably listening to a different microphone than the one you’re speaking into — common with Bluetooth earbuds. Check System Settings → Sound → Input (does the level meter move when you speak?) and Chrome’s own device choice at the top of <code>chrome://settings/content/microphone</code>.',
+      'Also: start reading the digits as soon as “Listening” appears — it gives up after a few seconds of silence. Quickest isolation test: take the earbuds out and speak at the computer directly.'),
+    trouble('“Couldn’t capture this page” when scanning a screen region',
+      'Screen scanning uses the one-time page access Chrome grants when you open Double Check with the shortcut or the toolbar button. If the card was opened another way (like the practice button on this page), there’s no grant — re-open it with the shortcut, or paste a screenshot instead (⌘V / Ctrl+V works anywhere).'),
+    trouble('The read-aloud speaker button is missing',
+      'It appears in verify mode and on the green match screen — not during blind entry, where hearing the value would defeat the purpose. If it’s disabled with a “no local voice” note, your device has no on-device voice; network voices are deliberately never used.'),
+  ),
+)
+
 // show the user's actual shortcut binding, spelled out when it uses symbols
 void chrome.commands.getAll().then((commands) => {
   const shortcut = commands.find((c) => c.name === 'check-field')?.shortcut
