@@ -64,5 +64,14 @@ Productivity → Workflow & Planning
 
 ## Listing URLs
 
-- Support URL: https://github.com/ToddHoff/DoubleCheckPublic/blob/main/support.md
-- Privacy policy URL: https://github.com/ToddHoff/DoubleCheckPublic/blob/main/privacy-policy.md
+- Homepage URL: https://doublecheck.possibility.com/
+- Support URL: https://doublecheck.possibility.com/support.html
+- Privacy policy URL: https://doublecheck.possibility.com/privacy.html
+  (the older github.com/…/blob/main/*.md URLs keep working; the extension
+  links to those and they remain canonical. toddhoff.github.io redirects
+  to the custom domain.)
+
+After the listing is public: replace CHROME_STORE_URL_TODO in the site's
+index.html (two places) with the real store URL. For the verified-publisher
+badge: verify possibility.com (or the subdomain) in Google Search Console,
+then set the verified site in the CWS dashboard account settings.
