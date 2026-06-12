@@ -109,50 +109,6 @@ export async function renderSettingsTab(rootEl: HTMLElement): Promise<void> {
         ),
       ),
     ),
-    (() => {
-      const panel = h('section', { class: 'panel' },
-        h('h2', {}, 'Submit Guard (beta)'),
-        h('p', { class: 'muted' },
-          'On listed sites, forms won’t submit while a field you normally double-check there is unverified. ' +
-          'Limits: it arms only after you’ve opened Double Check on the page, and some single-page apps ' +
-          'submit in ways no extension can intercept — the attestation, not the guard, is the real control.'),
-      )
-      const list = h('div', { class: 'vlist' })
-      const renderList = () => {
-        list.textContent = ''
-        for (const origin of settings.submitGuardOrigins) {
-          const rm = h('button', { class: 'btn danger' }, 'Remove')
-          rm.addEventListener('click', () => {
-            settings.submitGuardOrigins = settings.submitGuardOrigins.filter((o) => o !== origin)
-            save()
-            renderList()
-          })
-          list.appendChild(h('div', { class: 'vitem' }, h('span', { class: 'name' }, origin), h('span', { class: 'meta' }), rm))
-        }
-        if (!settings.submitGuardOrigins.length) {
-          list.appendChild(h('p', { class: 'muted' }, 'No guarded sites yet.'))
-        }
-      }
-      renderList()
-      const input = h('input', { type: 'text', class: 'mono', placeholder: 'https://wires.examplebank.com', style: 'flex:1' }) as HTMLInputElement
-      const add = h('button', { class: 'btn' }, 'Add site')
-      add.addEventListener('click', () => {
-        try {
-          const origin = new URL(input.value.trim()).origin
-          if (!settings.submitGuardOrigins.includes(origin)) {
-            settings.submitGuardOrigins = [...settings.submitGuardOrigins, origin]
-            save()
-            renderList()
-          }
-          input.value = ''
-        } catch {
-          input.value = ''
-          input.placeholder = 'Enter a full URL, e.g. https://wires.examplebank.com'
-        }
-      })
-      panel.append(list, h('div', { class: 'btnrow', style: 'display:flex' }, input, add))
-      return panel
-    })(),
     h('section', { class: 'panel' },
       h('h2', {}, 'Audit log'),
       h('div', { class: 'row' },

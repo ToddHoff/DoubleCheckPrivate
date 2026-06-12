@@ -60,6 +60,16 @@ page); allow it once per site. You can
 <a href="../mic/index.html" target="_blank" rel="noopener">pre-download the
 speech model here</a> so the first use doesn't wait on it.</p>
 
+<h2>Submit Guard (beta)</h2>
+<p>Flip it on for the site you're on from the toolbar popup — click the
+Double Check icon and tick <em>Submit Guard</em>. While it's on, forms on
+that site won't submit while a field you normally double-check there is
+unverified or was edited after checking. Its limits, honestly: it arms when
+Double Check is active on the page (enabling it from the popup arms the
+current page immediately), and some single-page apps submit in ways no
+extension can intercept — the attestation, not the guard, is the real
+control.</p>
+
 <h2>What the log proves (and doesn't)</h2>
 <p>Each entry records when and where a check happened, the field, the format,
 the methods used, the outcome, and that you personally attested it. It does

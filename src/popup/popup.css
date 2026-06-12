@@ -29,3 +29,16 @@ button.primary:hover {
   margin-top: 10px;
   font-size: 12px;
 }
+label.guard {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 12px;
+  padding: 9px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+label.guard input { margin-top: 2px; accent-color: #166534; }
+label.guard small { color: #6b7280; }

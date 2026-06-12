@@ -54,13 +54,15 @@ function activate(): boolean {
   return true
 }
 
+// Why no activate() on load: the background always follows injection with a
+// dc-activate message, and the popup's Submit Guard toggle injects this
+// script purely to arm the guard — mounting a card then would be a surprise.
 if (!window.__doubleCheckLoaded) {
   window.__doubleCheckLoaded = true
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg?.kind === 'dc-activate') sendResponse({ mounted: activate() })
   })
   void getSettings().then((s) => installSubmitGuard(s.submitGuardOrigins))
-  activate()
 }
 
 export {}
