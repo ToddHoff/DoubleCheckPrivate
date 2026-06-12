@@ -181,9 +181,13 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       else box.title = 'Off — this page stays guarded until reloaded'
     })
     card.append(header, body,
-      h('label', { class: 'guardrow', title: 'Blocks form submits on this site while a field you normally double-check is unverified (beta)' },
+      h('label', { class: 'guardrow' },
         box,
-        h('span', {}, 'Submit Guard on ', h('strong', {}, location.host), ' ', h('em', {}, '(beta)')),
+        h('span', { class: 'gtext' },
+          h('span', {}, 'Submit Guard on ', h('strong', {}, location.host), ' ', h('em', {}, '(beta)')),
+          h('span', { class: 'gcap' },
+            'Blocks form submits on this site while a field you double-check is unverified or was changed after checking.'),
+        ),
       ),
       footer)
   } else {
