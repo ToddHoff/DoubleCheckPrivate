@@ -97,11 +97,14 @@ validate values.</p>
       look before you click Submit is still yours.</li>
 </ul>
 
-<h2>Policies</h2>
+<h2>Policies &amp; support</h2>
 <p>The hosted, canonical copies of our policies:
 <a href="https://github.com/ToddHoff/DoubleCheckPublic/blob/main/privacy-policy.md" target="_blank" rel="noopener">privacy policy</a>
 ·
-<a href="https://github.com/ToddHoff/DoubleCheckPublic/blob/main/terms.md" target="_blank" rel="noopener">terms of service</a>.
+<a href="https://github.com/ToddHoff/DoubleCheckPublic/blob/main/terms.md" target="_blank" rel="noopener">terms of service</a>
+·
+<a href="https://github.com/ToddHoff/DoubleCheckPublic/blob/main/support.md" target="_blank" rel="noopener">support</a>.
+When reporting a problem, never include the actual values you were verifying.
 </p>
 
 <h2>Responsibility</h2>

@@ -61,3 +61,8 @@ amounts, IDs) entered into web forms, locally on their device.
 ## Category
 
 Productivity → Workflow & Planning
+
+## Listing URLs
+
+- Support URL: https://github.com/ToddHoff/DoubleCheckPublic/blob/main/support.md
+- Privacy policy URL: https://github.com/ToddHoff/DoubleCheckPublic/blob/main/privacy-policy.md
