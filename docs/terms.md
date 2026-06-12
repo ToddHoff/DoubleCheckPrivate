@@ -24,6 +24,10 @@ not that it is the right value. A verification "match" means your two
 readings of your source agreed — it does not mean the source itself was
 correct, current, or authentic.
 
+The Software is a decision-support tool only and is not a substitute for
+independent verification procedures. Users must independently verify all
+information before submitting, transmitting, or relying upon it.
+
 **You remain solely responsible for every value you submit**, including
 values verified with the Software. The attestation you confirm in the
 product states this explicitly, and the verification log records that you
@@ -39,7 +43,31 @@ TO YOUR USE OF THE SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGES. WHERE LIABILITY CANNOT BE EXCLUDED, IT IS LIMITED TO THE AMOUNT YOU
 PAID FOR THE SOFTWARE IN THE TWELVE MONTHS PRECEDING THE CLAIM.
 
-## 4. Subscriptions and lifetime licenses
+## 4. Indemnification
+
+You agree to indemnify and hold harmless Possibility Outpost Inc., its
+officers, directors, employees, and contractors from claims, losses,
+liabilities, and expenses (including reasonable attorneys' fees) arising
+out of your use of the Software or your violation of these Terms.
+
+## 5. Governing law and dispute resolution
+
+These Terms are governed by the laws of the State of California, without
+regard to its conflict-of-laws principles.
+
+Before filing any claim, you agree to contact us at tmh@possibility.com
+and attempt in good faith to resolve the dispute informally for thirty
+days. Any dispute not resolved informally shall be resolved by binding
+arbitration administered by the American Arbitration Association under its
+Consumer Arbitration Rules, conducted on an individual basis. Either party
+may instead bring an individual claim in small-claims court.
+
+YOU AND POSSIBILITY OUTPOST INC. EACH WAIVE THE RIGHT TO A JURY TRIAL AND
+THE RIGHT TO PARTICIPATE IN A CLASS ACTION. Disputes may be brought only in
+an individual capacity, and not as a plaintiff or class member in any
+purported class or representative proceeding.
+
+## 6. Subscriptions and lifetime licenses
 
 Paid plans are billed through ExtensionPay/Stripe. Subscriptions renew
 automatically until cancelled; you can cancel any time via the manage page in
@@ -52,12 +80,12 @@ as long as it is offered. It does not extend to separate products (for
 example, future native desktop applications), which may be licensed and
 priced independently.
 
-## 5. Acceptable use
+## 7. Acceptable use
 
 Don't reverse the Software's privacy protections, don't use it to violate
 law or third-party rights, and don't resell it.
 
-## 6. Changes
+## 8. Changes
 
 We may update these terms; material changes will be noted in the extension's
 release notes. Continued use after a change constitutes acceptance.

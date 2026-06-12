@@ -53,10 +53,57 @@ Accountants and bookkeepers entering wire details. Accounts-payable and treasury
 
 Double Check assists verification; responsibility for submitted values remains yours. It's the second pair of eyes — you're still the first.
 
-## Single-purpose statement (Privacy tab)
+## Privacy practices tab — paste-ready
 
-Helps users verify high-stakes values (account numbers, routing numbers,
-amounts, IDs) entered into web forms, locally on their device.
+**Single purpose description:** Helps users verify high-stakes values
+(account numbers, routing numbers, amounts, IDs) entered into web forms —
+locally on their device, with checksum validation and double-entry
+comparison.
+
+**activeTab:** Lets the user open the verification card on the page they
+are viewing, only at the moment they invoke the extension via the keyboard
+shortcut, the right-click menu, or the toolbar button. The extension has no
+standing access to any website.
+
+**scripting:** Injects the verification card's content script into the
+active tab when — and only when — the user invokes the extension. Used
+together with activeTab; no content scripts run on user pages otherwise.
+
+**Host permission use (https://extensionpay.com/*):** A content script on
+extensionpay.com (our payment provider) relays payment and trial
+confirmations back to the extension after checkout. This is the only host
+permission; the extension requests no access to any other website.
+
+**storage:** Stores the user's settings, their user-defined format
+validators, per-site format preferences, and a verification audit log
+containing metadata only (time, site, field label, format, outcome). The
+verified values themselves are never stored.
+
+**offscreen:** Runs the bundled Tesseract OCR engine in an offscreen
+document so that images the user scans or pastes are read entirely
+on-device and never uploaded.
+
+**alarms:** A daily alarm deletes audit-log entries older than the user's
+chosen retention period.
+
+**contextMenus:** Adds a right-click "Double-check this field" item on
+editable fields, as an alternative to the keyboard shortcut and toolbar
+button for invoking the extension.
+
+**Remote code:** No. (If text is demanded: All code ships inside the
+extension package, including the bundled OCR engine (WASM). The extension
+loads no scripts from the network and uses no eval. Its only network
+traffic is license verification with ExtensionPay.)
+
+**Data usage disclosures:** tick "Personally identifiable information"
+(checkout email, handled by ExtensionPay/Stripe for licensing) and
+"Financial and payment information" (payment status via the payment
+provider; card details never seen by the extension; verified values are
+processed locally and never transmitted or stored). Certify all three
+program-policy statements.
+
+**Settings page:** publisher contact email tmh@possibility.com — must be
+entered AND verified (click the link in Google's email) before publishing.
 
 ## Category
 
