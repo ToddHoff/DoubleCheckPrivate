@@ -52,9 +52,9 @@ export const STORAGE_KEYS = {
 
 /**
  * runtime messages — NOTE: no message ever leaves the extension's own
- * contexts. dc-ocr carries image bytes (discarded after OCR) and the
- * dc-voice-* messages carry on-device transcripts (relayed through the
- * background to reach the content script); pages can't observe either.
+ * contexts, and none carries a verified value. dc-ocr carries image bytes,
+ * discarded after local OCR. Voice transcripts never appear here at all:
+ * recognition runs inside the content script (see content/voice-rec.ts).
  */
 export type RuntimeMessage =
   | { kind: 'dc-activate' }
@@ -65,10 +65,6 @@ export type RuntimeMessage =
   | { kind: 'dc-ocr'; imageDataUrl: string }
   | { kind: 'dc-capture-visible-tab' }
   | { kind: 'dc-open-mic-setup' }
-  | { kind: 'dc-voice-start'; nonce: string; lang: string }
-  | { kind: 'dc-voice-stop'; nonce: string }
-  | { kind: 'dc-voice-status'; nonce: string; seq: number; state: string; detail?: string }
-  | { kind: 'dc-voice-result'; nonce: string; seq: number; alternatives: string[] }
 
 export interface LicenseStatus {
   active: boolean

@@ -52,11 +52,13 @@ warnings, never silently used.</p>
 <h2>Voice input</h2>
 <p><em>Speak it</em> lets you read the value aloud from your source —
 digit by digit works best. Recognition uses Chrome's on-device speech model
-(Chrome 139+); the first use downloads the model once, and your audio and
-transcript never leave the machine. If on-device recognition isn't available,
-the feature disables itself — it never falls back to a cloud service. The
-microphone permission is requested by Double Check itself, not by the website
-you're on.</p>
+(Chrome 139+); your audio and transcript never leave the machine, and if
+on-device recognition isn't available the feature disables itself — it never
+falls back to a cloud service. Chrome's microphone prompt names the website
+you're on (that's how browsers attribute extension features running in a
+page); allow it once per site. You can
+<a href="../mic/index.html" target="_blank" rel="noopener">pre-download the
+speech model here</a> so the first use doesn't wait on it.</p>
 
 <h2>What the log proves (and doesn't)</h2>
 <p>Each entry records when and where a check happened, the field, the format,

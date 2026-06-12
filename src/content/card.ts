@@ -8,6 +8,7 @@ import {
 } from '../shared/storage'
 import { CARD_CSS } from './styles'
 import { speakValue, speechAvailable, stopSpeaking } from './speech'
+import { startRecognition, stopRecognition } from './voice-rec'
 import {
   attachBadge, fieldDescription, fieldSignature, writeFieldValue,
   type BadgeHandle, type CheckableField,
@@ -239,44 +240,17 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   // ---- OCR (scan a region / paste an image — all local) ----
   let activeOcr: ((imageDataUrl: string) => Promise<void>) | null = null
 
-  // ---- voice input (on-device only, via a hidden extension-origin iframe;
-  // transcripts come back over chrome.runtime so the page can't see them) ----
-  const voiceNonce = crypto.randomUUID()
-  let voiceIframe: HTMLIFrameElement | null = null
-  let voiceReady = false
-  let lastVoiceSeq = 0
+  // ---- voice input: on-device recognition, directly in this document.
+  // (Chrome forbids speech recognition in cross-origin iframes, so the
+  // earlier extension-iframe design could never work on real pages.) ----
   let onVoiceResult: ((alternatives: string[]) => void) | null = null
   let onVoiceStatus: ((state: string, detail?: string) => void) | null = null
 
-  const voiceListener = (msg: {
-    kind?: string; nonce?: string; seq?: number; alternatives?: string[]; state?: string; detail?: string
-  }) => {
-    if (msg?.nonce !== voiceNonce) return
-    // on extension pages the iframe's message arrives directly AND via the
-    // background relay — the sequence number drops the duplicate
-    if (typeof msg.seq === 'number') {
-      if (msg.seq <= lastVoiceSeq) return
-      lastVoiceSeq = msg.seq
-    }
-    if (msg.kind === 'dc-voice-result' && Array.isArray(msg.alternatives)) onVoiceResult?.(msg.alternatives)
-    if (msg.kind === 'dc-voice-status' && typeof msg.state === 'string') onVoiceStatus?.(msg.state, msg.detail)
-  }
-  chrome.runtime.onMessage.addListener(voiceListener)
-
   function startVoice(): void {
-    if (!voiceIframe) {
-      voiceIframe = document.createElement('iframe')
-      voiceIframe.src = `${chrome.runtime.getURL('src/mic/index.html')}?nonce=${voiceNonce}`
-      voiceIframe.setAttribute('allow', 'microphone')
-      voiceIframe.style.display = 'none'
-      voiceIframe.addEventListener('load', () => {
-        voiceReady = true
-        void chrome.runtime.sendMessage({ kind: 'dc-voice-start', nonce: voiceNonce, lang: 'en-US' }).catch(() => {})
-      })
-      root.appendChild(voiceIframe)
-    } else if (voiceReady) {
-      void chrome.runtime.sendMessage({ kind: 'dc-voice-start', nonce: voiceNonce, lang: 'en-US' }).catch(() => {})
-    }
+    void startRecognition('en-US', {
+      onStatus: (state, detail) => onVoiceStatus?.(state, detail),
+      onResult: (alternatives) => onVoiceResult?.(alternatives),
+    })
   }
 
   // Without onValue, OCR candidates are compared against the subject value
@@ -400,17 +374,11 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
             setStatus(detail ?? 'Voice input isn’t available on this Chrome')
             mic.setAttribute('disabled', '')
             break
-          case 'denied': {
-            // embedded extension frames can't prompt for the mic — send the
-            // user to the top-level setup page for the one-time grant
-            setStatus('Microphone access needs a one-time setup:')
-            cands.textContent = ''
-            const grant = h('button', { class: 'chip warn cand' }, 'Grant microphone access')
-            grant.addEventListener('click', () =>
-              void chrome.runtime.sendMessage({ kind: 'dc-open-mic-setup' }).catch(() => {}))
-            cands.appendChild(grant)
+          case 'denied':
+            setStatus(
+              'Microphone access is blocked for this site — Chrome’s permission prompt names the website ' +
+              '(that’s how extensions work here). Click the mic icon in the address bar to allow it, then try again.')
             break
-          }
           case 'error': setStatus(detail ?? 'Voice input failed'); break
         }
       }
@@ -721,8 +689,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
   function destroy(refocus = false): void {
     stopSpeaking()
-    if (voiceReady) void chrome.runtime.sendMessage({ kind: 'dc-voice-stop', nonce: voiceNonce }).catch(() => {})
-    chrome.runtime.onMessage.removeListener(voiceListener)
+    stopRecognition()
     field.removeEventListener('input', onFieldInput)
     window.removeEventListener('scroll', reposition, { capture: true })
     window.removeEventListener('resize', reposition)

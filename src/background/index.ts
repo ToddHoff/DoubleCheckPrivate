@@ -71,12 +71,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     })()
     return true
   }
-  // voice frames are extension pages whose runtime messages don't reach
-  // content scripts directly — relay them to the tab they live in
-  if ((msg?.kind === 'dc-voice-result' || msg?.kind === 'dc-voice-status') && sender.tab?.id) {
-    void chrome.tabs.sendMessage(sender.tab.id, msg).catch(() => {})
-    return
-  }
   if (msg?.kind === 'dc-capture-visible-tab') {
     void (async () => {
       try {

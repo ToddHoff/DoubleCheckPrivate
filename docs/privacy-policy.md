@@ -25,7 +25,11 @@ numbers, amounts, IDs) entered into web forms. It is built on one principle:
 - **Voice input** uses Chrome's on-device speech recognition (the model is
   downloaded once by Chrome itself). Your audio and the transcript never
   leave your device; if on-device recognition isn't available, the feature
-  is disabled rather than falling back to any cloud service.
+  is disabled rather than falling back to any cloud service. Chrome's
+  microphone permission prompt names the website you're on — that is how
+  browsers attribute extension features running in a page — but the audio
+  is processed only on-device and the transcript is seen only by Double
+  Check, never by the website.
 - **The verification log** stores metadata only: when and on which site a
   check happened, the field's label, the format used, the methods used, the
   outcome, and your attestation. It never contains the verified value. It
