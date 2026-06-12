@@ -296,9 +296,14 @@ too steeply (37% off; the norm is ~2 months free ≈ 17%).
   product.
 
 **Recommendation:** **$4.99/month, $39/year** (≈35% off — keep yearly
-attractive since retention is the business), 7-day trial. Consider
-adding a one-time plan later (ExtPay supports `once`) at ~$99 "lifetime"
-for trust-sensitive buyers who hate subscriptions. If install volume
+attractive since retention is the business), 7-day trial, plus a
+**$99 lifetime** one-time plan (`double-check-lifetime`) — 2.5–3× annual
+is the standard lifetime multiple, it slightly exceeds expected
+subscriber LTV (18–30 month typical retention), and it captures the
+subscription-averse segment while anchoring the yearly price. Optional
+launch promo: $79 "founding user" for the first cohort. The ToS scopes
+"lifetime" to this product (the extension + updates), not future
+products like the Windows app. If install volume
 matters more than near-term revenue, a freemium split is the strongest
 funnel: free = double entry + built-in formats; paid = OCR, TTS, audit
 log export, custom validators, submit guard. Freemium maximizes reviews

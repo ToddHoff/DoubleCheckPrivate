@@ -19,14 +19,16 @@ function licensePanel(lic: LicenseStatus | null): HTMLElement {
   } else if (lic.trial) {
     panel.append(
       h('p', {}, `Free trial — ${lic.trialDaysLeft} day${lic.trialDaysLeft === 1 ? '' : 's'} left.`),
-      h('div', { class: 'btnrow' }, pay('Upgrade — yearly (best value)', 'pay-yearly', true), pay('Monthly', 'pay-monthly')),
+      h('div', { class: 'btnrow' },
+        pay('Upgrade — yearly (best value)', 'pay-yearly', true), pay('Monthly', 'pay-monthly'),
+        pay('Lifetime — pay once', 'pay-lifetime')),
     )
   } else {
     panel.append(
       h('p', {}, 'No active license. Core double-entry checking keeps working; image compare and custom formats need a plan.'),
       h('div', { class: 'btnrow' },
         pay('Start 7-day free trial', 'trial', true), pay('Yearly', 'pay-yearly'), pay('Monthly', 'pay-monthly'),
-        pay('Already paid? Log in', 'login')),
+        pay('Lifetime — pay once', 'pay-lifetime'), pay('Already paid? Log in', 'login')),
     )
   }
   return panel

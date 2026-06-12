@@ -46,7 +46,7 @@ async function getLocalVoice(): Promise<SpeechSynthesisVoice | null> {
 }
 
 /** speak the value with a LOCAL voice only; resolves false if none exists */
-export async function speakValue(normalized: string, validator: Validator): Promise<boolean> {
+export async function speakValue(normalized: string, validator: Validator, rate = 0.75): Promise<boolean> {
   const voice = await getLocalVoice()
   if (!voice) return false
   window.speechSynthesis.cancel()
@@ -62,7 +62,7 @@ export async function speakValue(normalized: string, validator: Validator): Prom
   }
   const u = new SpeechSynthesisUtterance(text)
   u.voice = voice
-  u.rate = 0.8
+  u.rate = rate
   window.speechSynthesis.speak(u)
   return true
 }

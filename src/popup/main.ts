@@ -56,9 +56,9 @@ void chrome.runtime.sendMessage({ kind: 'dc-license-status' }).then((lic: Licens
     el.append('Licensed', lic.cached ? ' (offline)' : '', ' · ', link('manage subscription', 'manage'))
   } else if (lic.trial) {
     el.append(`Free trial — ${lic.trialDaysLeft} day${lic.trialDaysLeft === 1 ? '' : 's'} left. `,
-      link('Upgrade', 'pay-yearly'))
+      link('Upgrade', 'choose-plan'))
   } else {
-    el.append(link('Start free trial', 'trial'), ' · ', link('Buy', 'pay-yearly'), ' · ',
+    el.append(link('Start free trial', 'trial'), ' · ', link('See plans', 'choose-plan'), ' · ',
       link('already paid?', 'login'))
   }
 })

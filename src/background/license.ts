@@ -4,6 +4,7 @@ import { STORAGE_KEYS, type LicenseStatus } from '../shared/types'
 export const EXTPAY_ID = 'double-check'
 export const PLAN_MONTHLY = 'double-check-monthly'
 export const PLAN_YEARLY = 'double-check-yearly'
+export const PLAN_LIFETIME = 'double-check-lifetime'
 const TRIAL_DAYS = 7
 // Why 7 days of grace: extensionpay.com being unreachable must never block
 // an accountant mid-wire. We honor the last known status for a week and
@@ -58,6 +59,8 @@ export async function handlePaymentAction(action: string): Promise<void> {
     case 'trial': return extpay.openTrialPage(`${TRIAL_DAYS}-day`)
     case 'pay-monthly': return extpay.openPaymentPage(PLAN_MONTHLY)
     case 'pay-yearly': return extpay.openPaymentPage(PLAN_YEARLY)
+    case 'pay-lifetime': return extpay.openPaymentPage(PLAN_LIFETIME)
+    case 'choose-plan': return extpay.openPaymentPage() // ExtPay's hosted page listing all plans
     case 'manage': return extpay.openPaymentPage() // doubles as subscription management when already paid
     case 'login': return extpay.openLoginPage()
   }

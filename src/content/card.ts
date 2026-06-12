@@ -2,7 +2,10 @@ import type { Diagnosis, ValidationResult, Validator } from '../engine'
 import { diagnose, extractCandidates, groupValue, validate } from '../engine'
 import { cropToRegion, fileToDataUrl, selectRegion } from './capture'
 import type { LicenseStatus, LogEntry, Settings } from '../shared/types'
-import { appendLogEntry, bumpStats, fingerprintValue, markLogEntryStale, rememberFormat } from '../shared/storage'
+import {
+  appendLogEntry, bumpStats, fingerprintValue, getTtsRate, markLogEntryStale,
+  rememberFormat, saveTtsRate, TTS_RATES,
+} from '../shared/storage'
 import { CARD_CSS } from './styles'
 import { speakValue, speechAvailable, stopSpeaking } from './speech'
 import {
@@ -120,7 +123,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       } else if (!ctx.license.active) {
         const up = h('a', {}, 'Upgrade')
         up.addEventListener('click', () =>
-          void chrome.runtime.sendMessage({ kind: 'dc-payment-action', action: 'pay-yearly' }))
+          void chrome.runtime.sendMessage({ kind: 'dc-payment-action', action: 'choose-plan' }))
         right.append(up)
       }
       const a = h('a', {}, 'Settings')
@@ -152,11 +155,14 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
   // per-card, click-to-speak: each read-aloud is an explicit opt-in, so no
   // global setting — the user decides case by case (e.g. not in open offices)
+  let ttsRate = 0.75
+  void getTtsRate().then((r) => (ttsRate = r))
+
   const speakButton = (text: () => string): HTMLElement | null => {
     if (!speechAvailable()) return null
     const btn = h('button', { class: 'btn speak', title: 'Read aloud (local voice)' }, '🔊')
     btn.addEventListener('click', () => {
-      void speakValue(text(), validator()).then((spoke) => {
+      void speakValue(text(), validator(), ttsRate).then((spoke) => {
         if (spoke) {
           usedTts = true
         } else {
@@ -165,7 +171,18 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         }
       })
     })
-    return btn
+    const rateLabel = () => TTS_RATES.find((r) => r.rate === ttsRate)?.label ?? '¾×'
+    const rateBtn = h('button', { class: 'btn rate', title: 'Reading speed' }, rateLabel())
+    rateBtn.addEventListener('click', () => {
+      const i = TTS_RATES.findIndex((r) => r.rate === ttsRate)
+      ttsRate = TTS_RATES[(i + 1) % TTS_RATES.length].rate
+      rateBtn.textContent = rateLabel()
+      void saveTtsRate(ttsRate)
+      void speakValue(text(), validator(), ttsRate).then((spoke) => {
+        if (spoke) usedTts = true
+      })
+    })
+    return h('span', { style: 'display:flex;gap:4px;flex:none' }, btn, rateBtn)
   }
 
   const diffView = (d: Diagnosis): HTMLElement => {

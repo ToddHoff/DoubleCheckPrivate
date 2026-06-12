@@ -78,6 +78,7 @@ button.btn.primary { background: #166534; border-color: #166534; color: #fff; }
 button.btn.primary:hover { background: #14532d; }
 button.btn.primary:disabled { background: #9ca3af; border-color: #9ca3af; cursor: not-allowed; }
 button.btn.speak { flex: none; width: 38px; }
+button.btn.rate { flex: none; width: 40px; font-variant-numeric: tabular-nums; }
 .ocr { display: flex; flex-direction: column; gap: 8px; border-top: 1px dashed #e5e7eb; padding-top: 10px; }
 .chip.cand { cursor: pointer; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 .chip.cand:hover { filter: brightness(.95); }

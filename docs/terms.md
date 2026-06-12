@@ -39,12 +39,18 @@ TO YOUR USE OF THE SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGES. WHERE LIABILITY CANNOT BE EXCLUDED, IT IS LIMITED TO THE AMOUNT YOU
 PAID FOR THE SOFTWARE IN THE TWELVE MONTHS PRECEDING THE CLAIM.
 
-## 4. Subscriptions
+## 4. Subscriptions and lifetime licenses
 
 Paid plans are billed through ExtensionPay/Stripe. Subscriptions renew
 automatically until cancelled; you can cancel any time via the manage page in
 the extension, effective at the end of the paid period. Core double-entry
 verification continues to work without an active subscription.
+
+A "lifetime" license is a one-time purchase covering the lifetime of **this
+product** — the Double Check browser extension, including its updates — for
+as long as it is offered. It does not extend to separate products (for
+example, future native desktop applications), which may be licensed and
+priced independently.
 
 ## 5. Acceptable use
 

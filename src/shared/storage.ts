@@ -95,6 +95,23 @@ export async function getStats(): Promise<Stats> {
   return get<Stats>(STORAGE_KEYS.stats, { checked: 0, mismatchesCaught: 0 })
 }
 
+// ---- read-aloud speed (sticky, controlled from the card) ----
+
+export const TTS_RATES = [
+  { rate: 1.0, label: '1×' },
+  { rate: 0.75, label: '¾×' },
+  { rate: 0.5, label: '½×' },
+] as const
+
+export async function getTtsRate(): Promise<number> {
+  const stored = await get<number>('dc:ttsRate', 0.75)
+  return TTS_RATES.some((r) => r.rate === stored) ? stored : 0.75
+}
+
+export async function saveTtsRate(rate: number): Promise<void> {
+  await chrome.storage.local.set({ 'dc:ttsRate': rate })
+}
+
 // ---- opt-in HMAC fingerprint ----
 
 // Why: lets a user later prove "the value I verified equals the one on this
