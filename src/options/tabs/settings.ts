@@ -78,11 +78,9 @@ export async function renderSettingsTab(rootEl: HTMLElement): Promise<void> {
     ),
     h('section', { class: 'panel' },
       h('h2', {}, 'Verification'),
-      toggle(
-        'Read values aloud',
-        'Uses a local on-device voice only — if no local voice exists, the button is hidden. Off by default for open-plan offices.',
-        () => settings.ttsEnabled, (v) => (settings.ttsEnabled = v),
-      ),
+      h('p', { class: 'muted' },
+        'Read-aloud is a 🔊 button on each check card — per value, your call, using a local on-device voice only. ' +
+        'If your device has no local voice, the button hides itself.'),
       h('div', { class: 'row' },
         h('div', {},
           h('label', { class: 'main' }, 'Keyboard shortcut'),

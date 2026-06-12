@@ -150,8 +150,10 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     return input
   }
 
+  // per-card, click-to-speak: each read-aloud is an explicit opt-in, so no
+  // global setting — the user decides case by case (e.g. not in open offices)
   const speakButton = (text: () => string): HTMLElement | null => {
-    if (!ctx.settings.ttsEnabled || !canSpeakLocally()) return null
+    if (!canSpeakLocally()) return null
     const btn = h('button', { class: 'btn speak', title: 'Read aloud (local voice)' }, '🔊')
     btn.addEventListener('click', () => {
       usedTts = true

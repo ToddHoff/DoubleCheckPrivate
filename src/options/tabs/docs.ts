@@ -1,6 +1,10 @@
 import { h } from '../../shared/dom'
 
 const DOCS_HTML = `
+<p><a href="../onboarding/index.html" target="_blank" rel="noopener">
+Open the welcome &amp; practice page</a> — a safe fake wire-transfer form to
+try everything on.</p>
+
 <div class="note">
   <strong>The privacy promise.</strong> The values you verify never leave this
   computer. They are never transmitted, never logged, never stored — not even

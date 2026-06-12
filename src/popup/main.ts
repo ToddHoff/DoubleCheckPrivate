@@ -9,7 +9,7 @@ app.innerHTML = `
   <p class="hint">Tip: focus the field on the page, then press the keyboard
   shortcut (<a href="#" id="shortcuts">change it</a>).</p>
   <div id="license" class="hint"></div>
-  <p class="links"><a href="#" id="options">Settings &amp; log</a></p>
+  <p class="links"><a href="#" id="options">Settings &amp; log</a> · <a href="#" id="welcome">Welcome &amp; practice page</a></p>
 `
 
 document.getElementById('check')!.addEventListener('click', async () => {
@@ -23,6 +23,11 @@ document.getElementById('check')!.addEventListener('click', async () => {
 document.getElementById('options')!.addEventListener('click', (e) => {
   e.preventDefault()
   void chrome.runtime.openOptionsPage()
+})
+
+document.getElementById('welcome')!.addEventListener('click', (e) => {
+  e.preventDefault()
+  void chrome.tabs.create({ url: chrome.runtime.getURL('src/onboarding/index.html') })
 })
 
 document.getElementById('shortcuts')!.addEventListener('click', (e) => {

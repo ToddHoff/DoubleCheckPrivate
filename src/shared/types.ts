@@ -1,8 +1,6 @@
 import type { ValidatorSpec } from '../engine/types'
 
 export interface Settings {
-  /** read-aloud via local speechSynthesis voices; off by default (open-plan offices) */
-  ttsEnabled: boolean
   /** audit-log retention; 0 = keep forever */
   logRetentionDays: number
   /** origins where Submit Guard blocks submission until fields are verified */
@@ -12,7 +10,6 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  ttsEnabled: false,
   logRetentionDays: 365,
   submitGuardOrigins: [],
   hmacFingerprint: false,
