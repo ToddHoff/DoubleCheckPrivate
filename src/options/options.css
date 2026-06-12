@@ -1,0 +1,86 @@
+:root {
+  --green: #166534;
+  --green-dark: #14532d;
+  --ink: #1f2937;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --bg: #f9fafb;
+  --card: #ffffff;
+}
+body {
+  margin: 0;
+  font: 15px/1.55 system-ui, -apple-system, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+.shell { max-width: 880px; margin: 0 auto; padding: 24px 20px 80px; }
+header.top { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+header.top .logo {
+  width: 34px; height: 34px; border-radius: 9px; background: var(--green);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; letter-spacing: -2px; font-size: 14px;
+}
+header.top h1 { font-size: 20px; margin: 0; }
+nav.tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--line); margin-bottom: 20px; }
+nav.tabs button {
+  border: 0; background: none; font: 600 14px system-ui, sans-serif; color: var(--muted);
+  padding: 10px 14px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px;
+}
+nav.tabs button.active { color: var(--green); border-bottom-color: var(--green); }
+section.panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+section.panel h2 { font-size: 16px; margin: 0 0 12px; }
+section.panel h3 { font-size: 14px; margin: 18px 0 8px; }
+.row { display: flex; align-items: flex-start; gap: 10px; margin: 10px 0; }
+.row label.main { font-weight: 600; }
+.row .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.row input[type='checkbox'] { margin-top: 4px; accent-color: var(--green); }
+select, input[type='text'], input[type='number'], textarea {
+  font: 14px system-ui, sans-serif; padding: 7px 9px; border: 1px solid #d1d5db;
+  border-radius: 8px; background: #fff; color: var(--ink);
+}
+input.mono, textarea.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+button.btn {
+  padding: 8px 14px; border-radius: 8px; font: 600 13px system-ui, sans-serif;
+  cursor: pointer; border: 1px solid #d1d5db; background: #fff; color: var(--ink);
+}
+button.btn:hover { background: var(--bg); }
+button.btn.primary { background: var(--green); border-color: var(--green); color: #fff; }
+button.btn.primary:hover { background: var(--green-dark); }
+button.btn.danger { color: #991b1b; border-color: #fca5a5; }
+button.btn.danger:hover { background: #fef2f2; }
+.btnrow { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip {
+  font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 9999px;
+  border: 1px solid transparent; display: inline-flex; gap: 4px;
+}
+.chip.ok { background: #dcfce7; color: var(--green); border-color: #86efac; }
+.chip.err { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+.chip.warn { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+table.log { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.log th, table.log td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); }
+table.log th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+table.log td.mono { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+.stat { font-size: 28px; font-weight: 750; color: var(--green); }
+.statlbl { color: var(--muted); font-size: 13px; }
+.stats { display: flex; gap: 36px; }
+.vlist { display: flex; flex-direction: column; gap: 8px; }
+.vitem {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: 9px; background: var(--bg);
+}
+.vitem .name { font-weight: 650; }
+.vitem .meta { color: var(--muted); font-size: 12.5px; flex: 1; }
+.editor { display: grid; grid-template-columns: 160px 1fr; gap: 10px 14px; align-items: center; margin-top: 10px; }
+.editor label { font-weight: 600; font-size: 13.5px; }
+.editor .wide { grid-column: 2; }
+.docs h2 { font-size: 17px; margin-top: 26px; }
+.docs p, .docs li { color: #374151; }
+.docs .note {
+  background: #f0fdf4; border: 1px solid #86efac; border-radius: 9px; padding: 12px 16px;
+}
+.muted { color: var(--muted); font-size: 13px; }
+kbd {
+  font: 600 12px ui-monospace, Menlo, monospace; background: var(--bg);
+  border: 1px solid #d1d5db; border-bottom-width: 2px; border-radius: 6px; padding: 2px 6px;
+}

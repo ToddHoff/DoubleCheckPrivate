@@ -1,0 +1,31 @@
+body {
+  width: 280px;
+  margin: 0;
+  font: 14px/1.45 system-ui, -apple-system, sans-serif;
+  color: #1f2937;
+}
+main {
+  padding: 14px;
+}
+button.primary {
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: #166534;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+button.primary:hover {
+  background: #14532d;
+}
+.hint {
+  margin-top: 10px;
+  color: #6b7280;
+  font-size: 12px;
+}
+.links {
+  margin-top: 10px;
+  font-size: 12px;
+}

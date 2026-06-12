@@ -1,0 +1,52 @@
+# Double Check
+
+A second pair of eyes for the numbers that can't be wrong. Chrome extension
+(Manifest V3). Design in [DESIGN.md](DESIGN.md), build plan in
+[IMPLEMENTATION.md](IMPLEMENTATION.md), store guide in
+[PUBLISHING.md](PUBLISHING.md).
+
+## Develop
+
+```bash
+npm install
+node scripts/gen-icons.mjs   # regenerate icons (committed under public/)
+npm run build                # typecheck + vite build → dist/
+npm test                     # engine unit tests (vitest)
+npx playwright test          # E2E smoke in real Chromium (loads dist/)
+npm run check:privacy        # no console.*, no network outside src/payments
+npm run zip                  # dist → double-check.zip for store upload
+```
+
+Load unpacked: `chrome://extensions` → Developer mode → Load unpacked →
+select `dist/`.
+
+## Architecture in one paragraph
+
+No host permissions. The keyboard shortcut (or toolbar click) grants
+`activeTab`; the service worker injects the content script on demand, which
+mounts a closed-shadow-DOM card next to the focused field. All validation
+(`src/engine/` — pure, fully unit-tested) and comparison run in the content
+script; verified values never cross to other contexts, except images sent to
+the offscreen document for bundled-Tesseract OCR. The audit log
+(`chrome.storage.local`) stores metadata only, never values. Read-aloud uses
+the page's `speechSynthesis` with local voices only. The only network
+endpoint is extensionpay.com (licensing).
+
+## Before first release (one-time setup)
+
+1. **ExtensionPay**: register the extension at extensionpay.com with id
+   `double-check`; create plans `double-check-monthly` and
+   `double-check-yearly`. Test with Stripe test cards (see ExtPay README).
+2. **Host the docs**: publish `docs/privacy-policy.md` and `docs/terms.md` on
+   a public URL; fill in the placeholders (support email, legal entity).
+3. **Chrome Web Store**: follow [PUBLISHING.md](PUBLISHING.md) — register the
+   $5 developer account, complete trader (DSA) verification early, then
+   upload `double-check.zip`.
+
+## Release checklist
+
+- [ ] `npm run build` green, `npm test` green, `npx playwright test` green
+- [ ] `npm run check:privacy` clean
+- [ ] Version bumped in `package.json` (manifest version derives from it)
+- [ ] Manual pass on `tests/pages/plain.html` + one real SPA form
+- [ ] `npm run zip`, upload, update store listing if screenshots changed
