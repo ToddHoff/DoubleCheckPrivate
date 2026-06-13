@@ -45,7 +45,7 @@ Double Check has no access to any page until you invoke it there — it requests
 
 PRICING
 
-7-day free trial with full features — no card required to start. Then $4.99/month, $39/year, or a $99 one-time lifetime license. Core double-entry checking keeps working even without an active subscription, because a safety check should never be held hostage.
+7-day free trial with full features — no card required to start. Then $4.99/month, $39/year, or a $99 one-time lifetime license. Core double-entry checking keeps working even without an active subscription, because a safety check should never be held hostage. Outfitting a team? Email tmh@possibility.com about volume pricing.
 
 WHO IT'S FOR
 

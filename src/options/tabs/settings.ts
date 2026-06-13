@@ -61,6 +61,16 @@ function licensePanel(lic: LicenseStatus | null, tosAccepted: boolean): HTMLElem
       )))
   }
 
+  // gauge B2B demand without building a licensing scheme yet: a tagged
+  // mailto makes inquiries countable in the inbox
+  const teamLink = h('a', {
+    href: 'mailto:tmh@possibility.com?subject=' +
+      encodeURIComponent('Double Check — Team pricing inquiry') +
+      '&body=' + encodeURIComponent('How many people on your team?\nWhat does your team do?\n'),
+  }, 'Contact us about team pricing')
+  panel.append(h('p', { class: 'muted', style: 'margin-top:14px' },
+    'Outfitting a team? ', teamLink, '.'))
+
   // dev/tester override — only possible on unpacked installs (store builds
   // have an update_url, so this section never renders for real customers)
   if (!chrome.runtime.getManifest().update_url) {
