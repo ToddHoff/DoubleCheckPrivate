@@ -56,6 +56,8 @@ export const CARD_CSS = `
   text-align: center;
 }
 .big.good { background: #f0fdf4; color: #166534; border: 1px solid #86efac; }
+.big.masked { letter-spacing: 4px; }
+button.btn.reveal { flex: none; font-size: 12px; padding: 5px 12px; }
 .words { font-size: 13px; color: #374151; text-align: center; font-style: italic; }
 .panel { border-radius: 8px; padding: 10px 12px; }
 .panel.bad { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }

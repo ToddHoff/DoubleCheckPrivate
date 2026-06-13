@@ -59,6 +59,14 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
   // ---- state ----
   const startedAt = Date.now()
+  // Why: the site masked this field on purpose (open-office shoulder-surfing).
+  // The match screen's big bold value is the highest-exposure moment, so we
+  // keep it masked behind an explicit reveal toggle rather than un-masking
+  // what the site chose to hide.
+  const sensitive = field instanceof HTMLInputElement && field.type === 'password'
+  // harmless boolean (field type only, never the value) so automation can
+  // confirm masking engaged without piercing the closed shadow root
+  if (sensitive) host.setAttribute('data-dc-sensitive', '')
   let step: Step = field.value.trim() ? 'verify-entry' : 'input-first'
   let inputMode = step === 'input-first'
   // suppress the field listener during our own programmatic writes, or
@@ -219,7 +227,8 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   void getTtsRate().then((r) => (ttsRate = r))
 
   const speakButton = (text: () => string): HTMLElement | null => {
-    if (!speechAvailable()) return null
+    // reading a masked field's value aloud would leak it just like revealing
+    if (sensitive || !speechAvailable()) return null
     const btn = h('button', { class: 'btn speak', title: 'Read aloud (local voice)' }, '🔊')
     btn.addEventListener('click', () => {
       void speakValue(text(), validator(), ttsRate).then((spoke) => {
@@ -573,9 +582,27 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     const [bigText, words] = r.formatted.includes(' — ')
       ? [r.formatted.split(' — ')[0], r.formatted.split(' — ').slice(1).join(' — ')]
       : [groupValue(r.normalized, validator().grouping), '']
-    body.append(h('div', { class: 'big good' }, bigText))
-    if (words) body.append(h('div', { class: 'words' }, words))
-    body.append(chipRow(r))
+    if (sensitive) {
+      // masked headline + per-card reveal toggle; words/interpretation stay
+      // hidden too since they'd leak the value
+      const dots = '•'.repeat(Math.min(bigText.length, 24))
+      const big = h('div', { class: 'big good masked' }, dots)
+      const wordsEl = h('div', { class: 'words' })
+      const reveal = h('button', { class: 'btn reveal' }, '👁 Reveal')
+      let shown = false
+      reveal.addEventListener('click', () => {
+        shown = !shown
+        big.textContent = shown ? bigText : dots
+        big.classList.toggle('masked', !shown)
+        reveal.textContent = shown ? '🙈 Hide' : '👁 Reveal'
+        wordsEl.textContent = shown ? words : ''
+      })
+      body.append(big, h('div', { class: 'btnrow' }, reveal), wordsEl, chipRow(r))
+    } else {
+      body.append(h('div', { class: 'big good' }, bigText))
+      if (words) body.append(h('div', { class: 'words' }, words))
+      body.append(chipRow(r))
+    }
 
     if (inputMode) {
       writeField(firstEntry.trim())

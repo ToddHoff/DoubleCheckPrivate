@@ -215,7 +215,10 @@ shell.append(
     trouble('“Couldn’t capture this page” when scanning a screen region',
       'Screen scanning uses the one-time page access Chrome grants when you open Double Check with the shortcut or the toolbar button. If the card was opened another way (like the practice button on this page), there’s no grant — re-open it with the shortcut, or paste a screenshot instead (⌘V / Ctrl+V works anywhere).'),
     trouble('The read-aloud speaker button is missing',
-      'It appears in verify mode and on the green match screen — not during blind entry, where hearing the value would defeat the purpose. If it’s disabled with a “no local voice” note, your device has no on-device voice; network voices are deliberately never used.'),
+      'It appears in verify mode and on the green match screen — not during blind entry, where hearing the value would defeat the purpose. If it’s disabled with a “no local voice” note, your device has no on-device voice; network voices are deliberately never used. It’s also hidden on masked (password-type) fields, where reading the value aloud would leak it.'),
+    trouble('The field shows dots, not the value',
+      'There are two kinds of masking. If the field is a password-type field (the browser shows dots but the real value is in the field), Double Check works normally — and on a match it keeps the value masked behind a “Reveal” button, so it isn’t exposed to anyone looking over your shoulder.',
+      'The other kind is when the website itself replaces the value with mask characters like ••••1234 or XXX-XX-1234 — for example on a review screen showing only the last four digits. There’s nothing left to verify there: the real value is gone from the page. Verify the value at the moment you enter it, before the site masks it — a mask is not the value, and no extension can recover what the page has hidden.'),
   ),
 )
 

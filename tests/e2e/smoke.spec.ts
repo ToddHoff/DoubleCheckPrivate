@@ -131,6 +131,24 @@ test('verify mode: Enter in the entry input triggers compare', async () => {
   await page.waitForSelector('[data-double-check][data-dc-step="match"]', { state: 'attached', timeout: 5000 })
 })
 
+test('password-type fields are treated as sensitive (masked match screen)', async () => {
+  const page = await context.newPage()
+  await page.goto(`chrome-extension://${extensionId}/src/onboarding/index.html`)
+  // make the practice field masked, like a site's "confirm account number"
+  await page.evaluate((v) => {
+    const f = document.getElementById('practice') as HTMLInputElement
+    f.type = 'password'
+    f.value = v
+  }, ROUTING)
+  await page.getByRole('button', { name: 'Open Double Check on this field' }).click()
+  await page.waitForSelector('[data-double-check][data-dc-sensitive]', { state: 'attached' })
+  await settle(page)
+  await page.keyboard.type(ROUTING)
+  await page.keyboard.press('Enter')
+  // reaches the match screen without throwing on the sensitive render path
+  await page.waitForSelector('[data-double-check][data-dc-step="match"]', { state: 'attached', timeout: 5000 })
+})
+
 test('mismatch is caught and nothing is logged', async () => {
   const page = await context.newPage()
   await page.goto(`chrome-extension://${extensionId}/src/onboarding/index.html`)

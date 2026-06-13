@@ -62,6 +62,17 @@ entry, where hearing the value would defeat the purpose. If it's disabled
 with a "no local voice" note, your device has no on-device voice; network
 voices are deliberately never used.
 
+**Does it work when the number is masked (shown as dots)?**
+It depends on the kind of masking. If the field is a password-type field —
+the browser shows dots but the real value is still in the field — Double
+Check works normally, and on a match it keeps the value masked behind a
+"Reveal" button so it isn't exposed to anyone nearby. But if the website
+itself replaces the value with mask characters (••••1234, XXX-XX-1234, or a
+review screen showing only the last four digits), the real value is gone
+from the page and there is nothing left to verify. Verify the value at the
+moment you enter it, before the site masks it — a mask is not the value, and
+no extension can recover what the page has hidden.
+
 **Something looks stale after an update.**
 Reload any tabs that were open before the update — a page keeps running the
 code it loaded originally.
