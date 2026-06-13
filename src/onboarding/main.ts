@@ -15,6 +15,8 @@ shell.append(
     h('div', { class: 'logo' }, '✓✓'),
     h('h1', {}, 'Double Check'),
     h('p', {}, 'A second pair of eyes for the numbers that can’t be wrong.'),
+    h('p', { class: 'pitch' }, 'Costs less than the bank fee for a single bounced wire. ' +
+      'Saves you from the ones that don’t bounce.'),
   ),
   h('section', { class: 'step' },
     h('h2', {}, h('span', { class: 'num' }, '1'), 'What it does'),
