@@ -10,7 +10,7 @@ app.innerHTML = `
   <p class="hint">Tip: focus the field on the page, then press
   <span id="kbd">the keyboard shortcut</span> (<a href="#" id="shortcuts">change it</a>).</p>
   <div id="license" class="hint"></div>
-  <p class="links"><a href="#" id="options">Settings &amp; log</a> · <a href="#" id="welcome">Welcome &amp; practice page</a></p>
+  <p class="links"><a href="#" id="options">Settings &amp; log</a> · <a href="#" id="help">Help</a></p>
 `
 
 void getShortcut('check-field').then((sc) => {
@@ -39,9 +39,10 @@ document.getElementById('options')!.addEventListener('click', (e) => {
   void chrome.runtime.openOptionsPage()
 })
 
-document.getElementById('welcome')!.addEventListener('click', (e) => {
+document.getElementById('help')!.addEventListener('click', (e) => {
   e.preventDefault()
-  void chrome.tabs.create({ url: chrome.runtime.getURL('src/onboarding/index.html') })
+  // the Double Check page is the welcome/onboarding page; land on its Help section
+  void chrome.tabs.create({ url: chrome.runtime.getURL('src/onboarding/index.html') + '#help' })
 })
 
 document.getElementById('shortcuts')!.addEventListener('click', (e) => {

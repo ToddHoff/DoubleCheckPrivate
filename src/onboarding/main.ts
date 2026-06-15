@@ -197,8 +197,8 @@ function trouble(question: string, ...answers: string[]): HTMLElement {
 }
 
 shell.append(
-  h('section', { class: 'trouble' },
-    h('h2', {}, 'Troubleshooting'),
+  h('section', { class: 'trouble', id: 'help' },
+    h('h2', {}, 'Help'),
     trouble('The keyboard shortcut does nothing',
       'Check it’s actually bound: <code>chrome://extensions/shortcuts</code> — Chrome silently leaves it blank if another extension claimed the combo. On a Mac, also make sure macOS itself doesn’t own it (System Settings → Keyboard → Keyboard Shortcuts).',
       'The shortcut can’t work on Chrome’s own pages (<code>chrome://…</code>, the Web Store) — use the toolbar button there. For files opened from disk, enable “Allow access to file URLs” on the extension’s card in <code>chrome://extensions</code>.'),
