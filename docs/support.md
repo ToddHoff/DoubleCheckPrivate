@@ -13,6 +13,15 @@ helps, but check it doesn't show sensitive numbers before sending.
 
 ## Quick answers
 
+**How do I find which fields to double-check?**
+Right-click anywhere on a page (not on a field) and choose "Find fields to
+double-check on this page." Double Check scans the page and tags the
+high-value fields — account and routing numbers, IBANs, card numbers, SSNs,
+amounts, and the like — with a clickable pill; click one to open the card on
+that field, or press Esc to dismiss. The scan reads field labels and types
+only, never values, and runs entirely on your device. (On a field itself,
+right-click gives you "Double-check this field" directly.)
+
 **The keyboard shortcut does nothing.**
 Check it's actually bound at `chrome://extensions/shortcuts` — Chrome
 silently leaves it blank if another extension claimed the combination. On a
