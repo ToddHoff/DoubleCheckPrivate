@@ -85,6 +85,11 @@ button.btn.primary:disabled { background: #9ca3af; border-color: #9ca3af; cursor
 button.btn.speak { flex: none; width: 38px; }
 button.btn.rate { flex: none; width: 40px; font-variant-numeric: tabular-nums; }
 .ocr { display: flex; flex-direction: column; gap: 8px; border-top: 1px dashed #e5e7eb; padding-top: 10px; }
+.ocr .hint.working::after {
+  content: ''; display: inline-block; width: 1em; text-align: left;
+  animation: dc-dots 1.2s steps(4, end) infinite;
+}
+@keyframes dc-dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
 .chip.cand { cursor: pointer; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 .chip.cand:hover { filter: brightness(.95); }
 .guardrow {

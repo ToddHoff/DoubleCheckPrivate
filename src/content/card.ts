@@ -273,7 +273,9 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   }
 
   // ---- OCR (scan a region / paste an image — all local) ----
-  let activeOcr: ((imageDataUrl: string) => Promise<void>) | null = null
+  // bridge from the card-wide paste listener into the rendered OCR section,
+  // so a paste always produces visible feedback (image found OR not)
+  let onPaste: ((data: DataTransfer | null) => void) | null = null
 
   // ---- voice input: on-device recognition, directly in this document.
   // (Chrome forbids speech recognition in cross-origin iframes, so the
@@ -304,7 +306,8 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     const wrap = h('div', { class: 'ocr' })
     const status = h('div', { class: 'hint' })
     const cands = h('div', { class: 'chips' })
-    const setStatus = (t: string) => { status.textContent = t }
+    const setStatus = (t: string) => { status.textContent = t; status.classList.remove('working') }
+    let expectingPaste = false // armed by the Paste image button
 
     async function handleText(text: string, source: 'ocr' | 'voice'): Promise<void> {
       const v = validator()
@@ -351,8 +354,13 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         : `Couldn’t find a ${v.name} in the image — try a tighter crop.`)
     }
 
+    const setWorking = (t: string) => {
+      setStatus(t)
+      status.classList.add('working')
+    }
+
     async function runOcr(imageDataUrl: string): Promise<void> {
-      setStatus('Reading image locally…')
+      setWorking('Reading image locally')
       cands.textContent = ''
       setBusy(true)
       try {
@@ -365,10 +373,33 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         }
         await handleText(res.text as string, 'ocr')
       } finally {
+        status.classList.remove('working')
         setBusy(false)
       }
     }
-    activeOcr = runOcr
+
+    // every paste gives feedback: an image starts OCR immediately; a paste
+    // that the user expected to be an image but wasn't says so, instead of
+    // silently doing nothing. We only nag when the user armed it via the
+    // Paste image button, so legitimately pasting text into the entry box
+    // stays quiet.
+    onPaste = (data) => {
+      for (const item of data?.items ?? []) {
+        if (item.type.startsWith('image/')) {
+          expectingPaste = false
+          const file = item.getAsFile()
+          if (file) {
+            setWorking('Reading image locally') // instant, before the async read
+            void fileToDataUrl(file).then((dataUrl) => runOcr(dataUrl))
+          }
+          return
+        }
+      }
+      if (expectingPaste) {
+        expectingPaste = false
+        setStatus('That paste didn’t contain an image. Copy a screenshot (not text), then paste again.')
+      }
+    }
 
     // Why scan is conditional: captureVisibleTab needs the activeTab grant
     // from a real invocation (shortcut / toolbar click). The onboarding
@@ -400,7 +431,8 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
     const paste = h('button', { class: 'btn' }, '🖼 Paste image')
     paste.addEventListener('click', () => {
-      setStatus('Press ⌘V / Ctrl+V with a screenshot or photo on the clipboard')
+      expectingPaste = true
+      setStatus('Now press ⌘V (Ctrl+V on Windows) — paste a screenshot or photo of the value.')
       ;(root.querySelector('.entry') as HTMLElement | null)?.focus()
     })
 
@@ -482,18 +514,15 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     return wrap
   }
 
-  // card-wide image-paste: works whenever the card has focus during entry
+  // card-wide image-paste: works whenever the card has focus during entry.
+  // onPaste (set by the rendered OCR section) handles feedback for both the
+  // image-found and no-image cases.
   card.addEventListener('paste', (e) => {
     if (step !== 'verify-entry' && step !== 'input-first' && step !== 'input-confirm') return
-    const items = (e as ClipboardEvent).clipboardData?.items ?? []
-    for (const item of items) {
-      if (item.type.startsWith('image/')) {
-        e.preventDefault()
-        const file = item.getAsFile()
-        if (file) void fileToDataUrl(file).then((dataUrl) => activeOcr?.(dataUrl))
-        return
-      }
-    }
+    const data = (e as ClipboardEvent).clipboardData
+    const hasImage = [...(data?.items ?? [])].some((i) => i.type.startsWith('image/'))
+    if (hasImage) e.preventDefault() // don't let the image dump into the input
+    onPaste?.(data)
   })
 
   // ---- attestation + logging ----
