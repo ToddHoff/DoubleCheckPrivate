@@ -168,9 +168,11 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
           void chrome.runtime.sendMessage({ kind: 'dc-payment-action', action: 'choose-plan' }))
         right.append(up)
       }
+      const helpLink = h('a', {}, 'Help')
+      helpLink.addEventListener('click', () => void chrome.runtime.sendMessage({ kind: 'dc-open-help' }))
       const a = h('a', {}, 'Settings')
       a.addEventListener('click', () => void chrome.runtime.sendMessage({ kind: 'dc-open-options' }))
-      right.append(a)
+      right.append(helpLink, a)
       return right
     })(),
   )
@@ -505,6 +507,10 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         onValue ? 'Or read the value in from an image or your voice' : 'Or compare against an image or your voice'),
       row,
     )
+    // copying a screenshot to the clipboard isn't obvious — spell it out
+    wrap.append(h('div', { class: 'hint' },
+      'To paste an image you must copy it first — Mac: Shift+Control+Command+4, ' +
+      'Windows: Win+Shift+S — then press Paste image and ⌘V / Ctrl+V.'))
     if (!canScan) {
       wrap.append(h('div', { class: 'hint' },
         'Screen scanning works on regular web pages (it uses the one-time access granted by the shortcut). ' +
@@ -725,14 +731,19 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       if (e.key === 'Enter') advance()
     })
     next.addEventListener('click', advance)
+    // Why Continue sits last: it's the single "done entering, proceed" action
+    // regardless of how the value got in (typed, scanned, pasted, or spoken).
+    // Placing it directly under the text input made users think typing was the
+    // only path and the image/voice options below were a separate thing.
     body.append(
-      h('div', { class: 'lbl' }, 'Step 1 of 2 — type the value from your source'),
-      input, liveChips, h('div', { class: 'btnrow' }, next),
+      h('div', { class: 'lbl' }, 'Step 1 of 2 — enter the value from your source'),
+      input, liveChips,
       ocrSection((value) => {
         input.value = value
         update()
         input.focus()
       }),
+      h('div', { class: 'btnrow' }, next),
     )
     update()
     if (focusOnRender) input.focus()

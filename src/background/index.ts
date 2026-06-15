@@ -107,6 +107,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     void chrome.tabs.create({ url: chrome.runtime.getURL('src/mic/index.html') })
     sendResponse({ ok: true })
   }
+  if (msg?.kind === 'dc-open-help') {
+    void chrome.tabs.create({ url: chrome.runtime.getURL('src/onboarding/index.html') + '#help' })
+    sendResponse({ ok: true })
+  }
   if (msg?.kind === 'dc-license-status') {
     void getLicenseStatus().then(sendResponse)
     return true
