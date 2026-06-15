@@ -97,6 +97,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   // and a memoized fingerprint of the matched value (computed only on demand,
   // so the HMAC key is created only when the feature is actually used)
   let payeeLabel = ''
+  let recognizedLabel: string | null = null // set when the value already matches a saved account
   let trustedMethod: string | null = null
   let matchFpPromise: Promise<string> | null = null
   const matchFingerprint = () => (matchFpPromise ??= fingerprintValue(subjectResult().normalized))
@@ -538,10 +539,12 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     await appendLogEntry(entry)
     await bumpStats(mismatchSeen)
     await rememberFormat(location.origin, fieldSignature(field), formatId)
-    // remember the value as a trusted account for this payee (fingerprint only)
-    if (payeeLabel.trim()) {
+    // remember/refresh the trusted account: the payee the user named, or the
+    // one this value was already recognized as (bumps its use count)
+    const trustedLabel = payeeLabel.trim() || recognizedLabel
+    if (trustedLabel) {
       await saveTrustedAccount({
-        label: payeeLabel,
+        label: trustedLabel,
         format: formatId,
         fingerprint: await matchFingerprint(),
         origin: location.origin,
@@ -608,6 +611,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     body.textContent = ''
     // fresh trusted-payee state for this match
     payeeLabel = ''
+    recognizedLabel = null
     trustedMethod = null
     matchFpPromise = null
     const [bigText, words] = r.formatted.includes(' — ')
@@ -641,31 +645,39 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
     // ---- trusted payee: recognition + changed-account (BEC) warning ----
     const trustedChip = h('div', { class: 'chips' })
-    const payeeInput = h('input', {
-      class: 'payee', type: 'text', placeholder: 'e.g. Acme payroll',
-      autocomplete: 'off', list: 'dc-payees', 'aria-label': 'Payee',
-    }) as HTMLInputElement
-    const payeeList = h('datalist', { id: 'dc-payees' })
-    const payeeStatus = h('div', { class: 'hint' })
-    body.append(
-      trustedChip,
-      h('div', { class: 'lbl' }, 'Paying someone? Name them to check against the account you saved before'),
-      payeeInput, payeeList, payeeStatus,
-    )
+    const payeeSection = h('div')
+    body.append(trustedChip, payeeSection)
     void (async () => {
       const accounts = await getTrustedAccounts()
+      // recognition: this value already matches a saved account — no need to
+      // ask the user to name the payee again
+      const known = accounts.length ? recognize(await matchFingerprint(), accounts) : null
+      if (known) {
+        recognizedLabel = known.label
+        trustedMethod = 'trusted-match'
+        trustedChip.append(
+          h('span', { class: 'chip ok' }, `✓ Trusted account: ${known.label} (used ${known.useCount}×)`),
+        )
+        payeeSection.append(
+          h('div', { class: 'hint trusted-ok' }, `Recognized as ${known.label} — no need to name the payee.`),
+        )
+        return
+      }
+
+      // not recognized → offer to check against a saved payee, or save a new one
+      const payeeInput = h('input', {
+        class: 'payee', type: 'text', placeholder: 'e.g. Acme payroll',
+        autocomplete: 'off', list: 'dc-payees', 'aria-label': 'Payee',
+      }) as HTMLInputElement
+      const payeeList = h('datalist', { id: 'dc-payees' })
+      const payeeStatus = h('div', { class: 'hint' })
       for (const label of [...new Set(accounts.map((a) => a.label))]) {
         payeeList.append(h('option', { value: label }))
       }
-      // recognition: the value already matches something the user saved
-      if (accounts.length) {
-        const known = recognize(await matchFingerprint(), accounts)
-        if (known) {
-          trustedChip.append(
-            h('span', { class: 'chip ok' }, `✓ Trusted account: ${known.label} (used ${known.useCount}×)`),
-          )
-        }
-      }
+      payeeSection.append(
+        h('div', { class: 'lbl' }, 'Paying someone? Name them to check against the account you saved before'),
+        payeeInput, payeeList, payeeStatus,
+      )
       payeeInput.addEventListener('input', () => {
         void (async () => {
           payeeLabel = payeeInput.value.trim()
