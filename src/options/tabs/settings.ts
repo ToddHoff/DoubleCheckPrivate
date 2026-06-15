@@ -1,8 +1,5 @@
 import { h } from '../../shared/dom'
-import {
-  clearTrustedAccounts, getSettings, getStats, getTosAcceptance, getTrustedAccounts,
-  removeTrustedAccount, saveSettings, saveTosAcceptance,
-} from '../../shared/storage'
+import { getSettings, getStats, getTosAcceptance, saveSettings, saveTosAcceptance } from '../../shared/storage'
 import { STORAGE_KEYS, type LicenseStatus } from '../../shared/types'
 
 function licensePanel(lic: LicenseStatus | null, tosAccepted: boolean): HTMLElement {
@@ -170,46 +167,4 @@ export async function renderSettingsTab(rootEl: HTMLElement): Promise<void> {
       ),
     ),
   )
-
-  // ---- trusted accounts management ----
-  const trustedPanel = h('section', { class: 'panel' })
-  rootEl.append(trustedPanel)
-  const renderTrusted = async () => {
-    const accounts = await getTrustedAccounts()
-    trustedPanel.textContent = ''
-    trustedPanel.append(
-      h('h2', {}, 'Trusted accounts'),
-      h('p', { class: 'muted' },
-        'Accounts you’ve saved for a payee. Double Check stores a one-way fingerprint, never the value, ' +
-        'and warns when a payee’s account doesn’t match what you saved — the check that catches ' +
-        '“our bank details changed” fraud.'),
-    )
-    if (!accounts.length) {
-      trustedPanel.append(h('p', { class: 'muted' },
-        'None saved yet. On a green match, name the payee to remember its account.'))
-      return
-    }
-    const list = h('div', { class: 'vlist' })
-    for (const a of accounts) {
-      const del = h('button', { class: 'btn danger' }, 'Delete')
-      del.addEventListener('click', async () => {
-        await removeTrustedAccount(a.id)
-        await renderTrusted()
-      })
-      list.append(h('div', { class: 'vitem' },
-        h('span', { class: 'name' }, a.label),
-        h('span', { class: 'meta' },
-          `${a.format} · ${a.origin.replace(/^https?:\/\//, '')} · used ${a.useCount}× · saved ${new Date(a.createdAt).toLocaleDateString()}`),
-        del))
-    }
-    const clearBtn = h('button', { class: 'btn danger' }, 'Delete all')
-    clearBtn.addEventListener('click', async () => {
-      if (confirm('Delete all trusted accounts?')) {
-        await clearTrustedAccounts()
-        await renderTrusted()
-      }
-    })
-    trustedPanel.append(list, h('div', { class: 'btnrow' }, clearBtn))
-  }
-  await renderTrusted()
 }

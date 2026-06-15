@@ -52,7 +52,7 @@ next time you verify a value for a saved payee, it confirms <em>“matches the
 account you saved for Acme,”</em> or warns <em>“this is NOT the account you
 saved for Acme”</em> if it differs. That last warning is the one a checksum
 can't give you — it's how a fraudulent “we changed banks” request gets
-caught. Manage or delete saved accounts in the Settings tab. Nothing is
+caught. Manage or delete saved accounts in the Trusted accounts tab. Nothing is
 fingerprinted unless you name a payee, and the key never leaves your
 device.</p>
 

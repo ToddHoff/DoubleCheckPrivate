@@ -3,10 +3,12 @@ import { renderDocsTab } from './tabs/docs'
 import { renderFormatsTab } from './tabs/formats'
 import { renderLogTab } from './tabs/log'
 import { renderSettingsTab } from './tabs/settings'
+import { renderTrustedTab } from './tabs/trusted'
 
 const TABS = [
   ['settings', 'Settings'],
   ['formats', 'Formats'],
+  ['trusted', 'Trusted accounts'],
   ['log', 'Log'],
   ['docs', 'How it works'],
 ] as const
@@ -33,6 +35,7 @@ async function show(tab: TabId): Promise<void> {
   switch (tab) {
     case 'settings': await renderSettingsTab(content); break
     case 'formats': await renderFormatsTab(content); break
+    case 'trusted': await renderTrustedTab(content); break
     case 'log': await renderLogTab(content); break
     case 'docs': renderDocsTab(content); break
   }

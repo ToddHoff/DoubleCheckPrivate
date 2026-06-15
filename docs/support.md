@@ -27,8 +27,8 @@ On a green match, type the payee's name in the optional "Payee" field. Double
 Check remembers that account for that payee — as a one-way fingerprint, never
 the value. Next time you verify a value for a saved payee, it confirms it
 matches, or warns if it doesn't — the check that catches fake "our bank
-details changed" requests. Manage or delete saved accounts in Settings →
-Trusted accounts. Nothing is saved unless you name a payee.
+details changed" requests. Manage or delete saved accounts in the Trusted
+accounts tab of Settings. Nothing is saved unless you name a payee.
 
 **Can it check a whole page at once?**
 Yes — right-click anywhere on a page (not on a field) and choose "Check this
