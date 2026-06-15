@@ -57,13 +57,22 @@ button.btn.danger:hover { background: #fef2f2; }
 .chip.ok { background: #dcfce7; color: var(--green); border-color: #86efac; }
 .chip.err { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
 .chip.warn { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
-.logwrap { overflow-x: auto; }
-table.log { width: 100%; border-collapse: collapse; font-size: 13px; }
-table.log th, table.log td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-table.log td:nth-child(3) { white-space: normal; min-width: 140px; } /* field label may wrap */
-table.log td.note { white-space: normal; max-width: 260px; } /* notes may be long */
-table.log th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
-table.log td.mono { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+.logfeed { display: flex; flex-direction: column; gap: 10px; }
+.le { border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; }
+.le-top { display: flex; align-items: center; gap: 10px; }
+.le-when { color: var(--muted); font-size: 12.5px; }
+.le-fmt { margin-left: auto; color: var(--muted); font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.le-where { margin-top: 6px; font-size: 13.5px; }
+.le-site { color: var(--muted); }
+.le-meta { margin-top: 4px; color: var(--muted); font-size: 12px; font-family: ui-monospace, Menlo, monospace; }
+.le-note {
+  margin-top: 8px; padding: 7px 10px; background: #f0fdf4; border-left: 3px solid var(--green);
+  border-radius: 6px; font-size: 13px; line-height: 1.45; white-space: pre-wrap; word-break: break-word;
+}
+.le-notelbl {
+  display: block; font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .04em; color: var(--green); margin-bottom: 2px;
+}
 .stat { font-size: 28px; font-weight: 750; color: var(--green); }
 .statlbl { color: var(--muted); font-size: 13px; }
 .stats { display: flex; gap: 36px; }

@@ -46,37 +46,7 @@ export async function renderLogTab(rootEl: HTMLElement): Promise<void> {
     }
   })
 
-  // only show the Signatures column when something actually signed — otherwise
-  // it's an always-empty column that pushes every row to wrap
-  const hasSignatures = log.some((e) => e.signatures?.length)
-  const hasNotes = log.some((e) => e.note)
-  const headers = ['When', 'Site', 'Field', 'Format', 'Methods',
-    ...(hasSignatures ? ['Signatures'] : []), ...(hasNotes ? ['Note'] : []), 'Result', 'Len']
-  const table = h('table', { class: 'log' },
-    h('thead', {}, h('tr', {}, ...headers.map((t) => h('th', {}, t)))),
-  )
-  const tbody = h('tbody', {})
-  for (const e of log) {
-    const when = new Date(e.at).toLocaleString()
-    const result = e.stale
-      ? h('span', { class: 'chip warn' }, '⚠ changed after check')
-      : e.result === 'mismatch-resolved'
-        ? h('span', { class: 'chip warn' }, 'mismatch caught → resolved')
-        : h('span', { class: 'chip ok' }, '✓ match')
-    tbody.appendChild(h('tr', {},
-      h('td', {}, when),
-      h('td', {}, e.origin.replace(/^https?:\/\//, '')),
-      h('td', {}, e.fieldLabel),
-      h('td', { class: 'mono' }, e.format),
-      h('td', { class: 'mono' }, e.methods.join('+')),
-      ...(hasSignatures ? [h('td', {}, e.signatures?.join(' + ') ?? '')] : []),
-      ...(hasNotes ? [h('td', { class: 'note' }, e.note ?? '')] : []),
-      h('td', {}, result),
-      h('td', { class: 'mono' }, String(e.valueLength)),
-    ))
-  }
-  table.appendChild(tbody)
-  const tableWrap = h('div', { class: 'logwrap' }, table)
+  const feed = h('div', { class: 'logfeed' }, ...log.map(entryEl))
 
   rootEl.append(
     h('section', { class: 'panel' },
@@ -91,7 +61,37 @@ export async function renderLogTab(rootEl: HTMLElement): Promise<void> {
       integrity,
     ),
     h('section', { class: 'panel' },
-      log.length ? tableWrap : h('p', { class: 'muted' }, 'No checks logged yet. Focus a field on any page and press the shortcut.'),
+      log.length ? feed : h('p', { class: 'muted' }, 'No checks logged yet. Focus a field on any page and press the shortcut.'),
     ),
   )
+}
+
+function resultChip(e: LogEntry): HTMLElement {
+  if (e.stale) return h('span', { class: 'chip warn' }, '⚠ changed after check')
+  if (e.result === 'mismatch-resolved') return h('span', { class: 'chip warn' }, 'mismatch caught → resolved')
+  return h('span', { class: 'chip ok' }, '✓ match')
+}
+
+// one stacked card per check — notes and signatures get their own full-width
+// line instead of being squeezed into table columns
+function entryEl(e: LogEntry): HTMLElement {
+  const parts: (Node | string)[] = [
+    h('div', { class: 'le-top' },
+      resultChip(e),
+      h('span', { class: 'le-when' }, new Date(e.at).toLocaleString()),
+      h('span', { class: 'le-fmt' }, e.format),
+    ),
+    h('div', { class: 'le-where' },
+      h('strong', {}, e.fieldLabel),
+      h('span', { class: 'le-site' }, ` · ${e.origin.replace(/^https?:\/\//, '')}`),
+    ),
+    h('div', { class: 'le-meta' }, `${e.methods.join(' + ')} · ${e.valueLength} chars`),
+  ]
+  if (e.signatures?.length) {
+    parts.push(h('div', { class: 'le-meta' }, `Signed: ${e.signatures.join(' + ')}`))
+  }
+  if (e.note) {
+    parts.push(h('div', { class: 'le-note' }, h('span', { class: 'le-notelbl' }, 'Note'), e.note))
+  }
+  return h('div', { class: 'le' }, ...parts)
 }
