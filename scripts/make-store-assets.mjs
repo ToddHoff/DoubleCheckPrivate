@@ -49,6 +49,15 @@ async function main() {
   const manifest = JSON.parse(readFileSync('dist-shots/manifest.json', 'utf8'))
   manifest.host_permissions = ['<all_urls>']
   writeFileSync('dist-shots/manifest.json', JSON.stringify(manifest, null, 2))
+  // Staging-only: open the card's shadow roots so Playwright can drive it by
+  // selector (robust) instead of fragile pixel-offset clicks. Visually
+  // identical to the shipped closed-shadow build.
+  for (const f of readdirSync('dist-shots/assets')) {
+    if (!f.endsWith('.js')) continue
+    const p = `dist-shots/assets/${f}`
+    const s = readFileSync(p, 'utf8')
+    if (s.includes('"closed"')) writeFileSync(p, s.replaceAll('mode:"closed"', 'mode:"open"'))
+  }
   // inject the crxjs LOADER (what the real background injects) — the raw ES
   // module can't run as a classic script
   const contentScriptFile =
@@ -128,59 +137,66 @@ async function main() {
     console.log(`screenshot-${n}.jpg`)
   }
 
-  // click the card's entry input by geometry: the card sits 8px under the
-  // field, the entry input ~100px into it — hit-testing pierces the shadow
-  const clickEntry = async (fieldSel, offsetY = 100, offsetX = 200) => {
-    const b = await page.locator(fieldSel).boundingBox()
-    await page.mouse.click(b.x + offsetX, b.y + b.height + 8 + offsetY)
+  // open shadow (staging patch) → drive the card by selector, robust to layout
+  const entry = () => page.locator('.entry')
+  const primary = () => page.locator('.btn.primary')
+  const scanPage = async () => {
+    await worker.evaluate(
+      async ({ tabId, file }) => {
+        await chrome.scripting.executeScript({ target: { tabId }, files: [file] })
+        for (let i = 0; i < 20; i++) {
+          try {
+            await chrome.tabs.sendMessage(tabId, { kind: 'dc-scan-page' })
+            return
+          } catch {
+            await new Promise((r) => setTimeout(r, 100))
+          }
+        }
+      },
+      { tabId, file: contentScriptFile },
+    )
   }
 
   // 1: verify mode on the pre-filled routing number — instant checksum chip
-  await page.click('#routing')
+  await page.locator('#routing').fill(ROUTING_OK)
+  await page.locator('#routing').focus()
   await openCard()
   await waitStep('verify-entry')
-  await page.waitForTimeout(300) // entry input autofocus settles
+  await page.waitForTimeout(300)
   await shot(1)
 
   // 2: transposition caught — re-type with the last two digits swapped
-  await clickEntry('#routing', 147) // below the chips row, into the entry input
-  await page.keyboard.type(ROUTING_OK.slice(0, 7) + '12', { delay: 30 })
-  await clickEntry('#routing', 243, 145) // the Compare button
+  await entry().fill(ROUTING_OK.slice(0, 7) + '12')
+  await primary().click() // Compare
   await waitStep('mismatch')
   await page.waitForTimeout(200)
   await shot(2)
   await page.keyboard.press('Escape')
 
   // 3: amount match — big green value + amount in words
-  await page.click('#amount')
+  await page.locator('#amount').fill('')
+  await page.locator('#amount').focus()
   await openCard()
   await waitStep('input-first')
-  await page.waitForTimeout(300)
-  await clickEntry('#amount', 95)
-  await page.keyboard.type('$1,234,567.89', { delay: 20 })
-  await page.keyboard.press('Enter')
+  await entry().fill('$1,234,567.89')
+  await primary().click() // Continue to step 2
   await waitStep('input-confirm')
-  await page.waitForTimeout(200)
-  await clickEntry('#amount', 95)
-  await page.keyboard.type('$1,234,567.89', { delay: 20 })
-  await page.keyboard.press('Enter')
+  await entry().fill('$1,234,567.89')
+  await primary().click() // Compare
   await waitStep('match')
   await page.waitForTimeout(200)
   await shot(3)
+  // attest so a log entry exists for screenshot 5
+  await page.locator('.attest input').check()
+  await primary().click() // Confirm — log this check
+  await page.waitForTimeout(2000) // card auto-closes
 
-  // attest so the badge + a log entry exist
-  await page.keyboard.press('Space')
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Enter')
-  await page.waitForTimeout(2200) // card auto-closes, badge remains
-
-  // 4: input mode with the full assist row (scan / paste / speak) + badge visible above
-  await page.click('#account')
-  await openCard()
-  await waitStep('input-first')
-  await page.waitForTimeout(300)
+  // 4: page scan — tag the high-value fields on a real form
+  await page.goto('http://localhost:8923/all-formats.html')
+  await scanPage()
+  await page.waitForSelector('[data-double-check-scan]', { state: 'attached', timeout: 8000 })
+  await page.waitForTimeout(500)
   await shot(4)
-  await page.keyboard.press('Escape')
 
   // 5: the audit log — proof without the value
   const options = await context.newPage()
