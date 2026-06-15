@@ -117,6 +117,33 @@ shell.append(
   ),
 )
 
+// visual walkthrough — shown here on the welcome page (what people actually
+// land on) rather than only in the buried How-it-works tab
+const walkImg = (file: string, alt: string) =>
+  h('img', { class: 'walkimg', src: chrome.runtime.getURL(`screenshots/${file}`), alt, loading: 'lazy' })
+const walkFig = (file: string, alt: string, n: string, caption: string) =>
+  h('figure', { class: 'walkfig' }, walkImg(file, alt), h('figcaption', {}, h('strong', {}, `${n}. `), caption))
+
+shell.append(
+  h('section', { class: 'walk-section' },
+    h('h2', {}, 'See it in action'),
+    h('div', { class: 'walkgrid' },
+      walkFig('doc-verify.jpg', 'The card on a routing field: checksum valid, with a re-type box', '1',
+        'Press the shortcut on a field — Double Check detects the format, verifies the math, and asks you to re-type the value from your source.'),
+      walkFig('doc-mismatch.jpg', 'A mismatch naming two swapped digits', '2',
+        'If your two readings disagree, it names the exact error — here, two digits transposed.'),
+      walkFig('doc-match.jpg', 'A green match confirming an amount in words', '3',
+        'A match turns green and confirms amounts in words.'),
+      walkFig('doc-trusted.jpg', 'A warning that this is not the account saved for the payee', '4',
+        'Name the payee and it warns when an account differs from the one you saved before — the “bank details changed” fraud catch.'),
+    ),
+    h('figure', { class: 'walkwide' },
+      walkImg('doc-scan.jpg', 'A page with high-value fields tagged'),
+      h('figcaption', {}, 'Or right-click a page to flag every high-value field at once.'),
+    ),
+  ),
+)
+
 // step 3: practice form
 const practiceField = h('input', {
   id: 'practice', name: 'routing_number', inputmode: 'numeric', autocomplete: 'off',
