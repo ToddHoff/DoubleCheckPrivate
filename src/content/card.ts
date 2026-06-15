@@ -722,7 +722,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     const rowEl = h('div', { class: 'btnrow' }, confirmBtn)
     const speak = speakButton(() => r.normalized)
     if (speak) rowEl.append(speak)
-    body.append(attest, rowEl)
+    body.append(h('div', { class: 'divider' }), attest, rowEl)
     if (focusOnRender) checkbox.focus()
   }
 

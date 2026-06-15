@@ -80,6 +80,7 @@ button.btn.reveal { flex: none; font-size: 12px; padding: 5px 12px; }
 .diff span.c { padding: 1px 2px; border-radius: 3px; min-width: 12px; text-align: center; }
 .diff span.c.hl { background: #fecaca; color: #7f1d1d; }
 .diff span.c.gap { color: #d1d5db; }
+.divider { border-top: 1px solid #e5e7eb; height: 0; margin: 2px 0; }
 .attest { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; color: #374151; }
 .attest input { margin-top: 2px; accent-color: #166534; }
 .btnrow { display: flex; gap: 8px; }
@@ -140,6 +141,7 @@ button.btn.rate { flex: none; width: 40px; font-variant-numeric: tabular-nums; }
   .panel.bad { background: #450a0a; border-color: #b91c1c; color: #fecaca; }
   .diff .tag { color: #9ca3af; }
   .diff span.c.hl { background: #7f1d1d; color: #fecaca; }
+  .divider { border-color: #374151; }
   .attest { color: #d1d5db; }
   button.btn { background: #374151; color: #f3f4f6; border-color: #4b5563; }
   button.btn:hover { background: #4b5563; }
