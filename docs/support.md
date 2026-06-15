@@ -50,6 +50,16 @@ into — common with Bluetooth earbuds. Check System Settings → Sound → Inpu
 the top of `chrome://settings/content/microphone`. Start reading the digits
 as soon as "Listening" appears, and read digit by digit.
 
+**How do I copy a screenshot so I can paste it?**
+On a Mac, press Shift+Command+Control+4, then drag a box around the value —
+that copies the selection straight to the clipboard (plain Shift+Command+4
+saves it to a file instead). Then click into the card, press "Paste image,"
+and press Command+V. On Windows, press Windows+Shift+S, drag a box around the
+value, then press "Paste image" and Ctrl+V. Already have an image file or a
+phone photo? Open it in a viewer, copy it with Command/Ctrl+C, and paste —
+from a phone, AirDrop or message it to your computer first, or use a shared
+clipboard like Apple Universal Clipboard.
+
 **"Couldn't capture this page" when scanning a screen region.**
 Screen scanning uses the one-time page access Chrome grants when you open
 Double Check with the shortcut, the right-click menu, or the toolbar button.
