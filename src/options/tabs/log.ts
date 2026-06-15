@@ -46,9 +46,13 @@ export async function renderLogTab(rootEl: HTMLElement): Promise<void> {
     }
   })
 
+  // only show the Signatures column when something actually signed — otherwise
+  // it's an always-empty column that pushes every row to wrap
+  const hasSignatures = log.some((e) => e.signatures?.length)
+  const headers = ['When', 'Site', 'Field', 'Format', 'Methods',
+    ...(hasSignatures ? ['Signatures'] : []), 'Result', 'Len']
   const table = h('table', { class: 'log' },
-    h('thead', {}, h('tr', {},
-      ...['When', 'Site', 'Field', 'Format', 'Methods', 'Signatures', 'Result', 'Len'].map((t) => h('th', {}, t)))),
+    h('thead', {}, h('tr', {}, ...headers.map((t) => h('th', {}, t)))),
   )
   const tbody = h('tbody', {})
   for (const e of log) {
@@ -64,12 +68,13 @@ export async function renderLogTab(rootEl: HTMLElement): Promise<void> {
       h('td', {}, e.fieldLabel),
       h('td', { class: 'mono' }, e.format),
       h('td', { class: 'mono' }, e.methods.join('+')),
-      h('td', {}, e.signatures?.join(' + ') ?? ''),
+      ...(hasSignatures ? [h('td', {}, e.signatures?.join(' + ') ?? '')] : []),
       h('td', {}, result),
       h('td', { class: 'mono' }, String(e.valueLength)),
     ))
   }
   table.appendChild(tbody)
+  const tableWrap = h('div', { class: 'logwrap' }, table)
 
   rootEl.append(
     h('section', { class: 'panel' },
@@ -84,7 +89,7 @@ export async function renderLogTab(rootEl: HTMLElement): Promise<void> {
       integrity,
     ),
     h('section', { class: 'panel' },
-      log.length ? table : h('p', { class: 'muted' }, 'No checks logged yet. Focus a field on any page and press the shortcut.'),
+      log.length ? tableWrap : h('p', { class: 'muted' }, 'No checks logged yet. Focus a field on any page and press the shortcut.'),
     ),
   )
 }

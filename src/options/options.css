@@ -57,8 +57,10 @@ button.btn.danger:hover { background: #fef2f2; }
 .chip.ok { background: #dcfce7; color: var(--green); border-color: #86efac; }
 .chip.err { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
 .chip.warn { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+.logwrap { overflow-x: auto; }
 table.log { width: 100%; border-collapse: collapse; font-size: 13px; }
-table.log th, table.log td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); }
+table.log th, table.log td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.log td:nth-child(3) { white-space: normal; min-width: 140px; } /* field label may wrap */
 table.log th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
 table.log td.mono { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
 .stat { font-size: 28px; font-weight: 750; color: var(--green); }
