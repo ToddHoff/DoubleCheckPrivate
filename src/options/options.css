@@ -76,6 +76,13 @@ table.log td.mono { font-family: ui-monospace, Menlo, monospace; font-size: 12px
 .editor .wide { grid-column: 2; }
 .docs h2 { font-size: 17px; margin-top: 26px; }
 .docs p, .docs li { color: #374151; }
+.docwalk { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; margin-top: 8px; align-items: start; }
+@media (max-width: 640px) { .docwalk { grid-template-columns: 1fr; } }
+.docwalk figure, figure.docwide { margin: 0; }
+.docwalk img { width: 100%; max-width: 400px; height: auto; border: 1px solid var(--line); border-radius: 10px; display: block; }
+figure.docwide { margin-top: 22px; }
+figure.docwide img { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px; }
+.docwalk figcaption, figure.docwide figcaption { font-size: 13.5px; color: #4b5563; margin-top: 8px; }
 .docs .note {
   background: #f0fdf4; border: 1px solid #86efac; border-radius: 9px; padding: 12px 16px;
 }

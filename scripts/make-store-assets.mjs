@@ -136,6 +136,11 @@ async function main() {
     await page.screenshot({ path: `store-assets/screenshot-${n}.jpg`, type: 'jpeg', quality: 92 })
     console.log(`screenshot-${n}.jpg`)
   }
+  // tight crop of just the card, for in-product/website how-to walkthroughs
+  const cardShot = async (name) => {
+    await page.locator('.card').screenshot({ path: `store-assets/doc-${name}.jpg`, type: 'jpeg', quality: 92 })
+    console.log(`doc-${name}.jpg`)
+  }
 
   // open shadow (staging patch) → drive the card by selector, robust to layout
   const entry = () => page.locator('.entry')
@@ -194,6 +199,7 @@ async function main() {
   await page.locator('.payee').fill('Acme')
   await page.waitForTimeout(400) // the changed-account warning renders
   await shot(1)
+  await cardShot('trusted')
 
   // 2: transposition caught — the product's thesis
   await goPlain()
@@ -201,11 +207,13 @@ async function main() {
   await openCard()
   await waitStep('verify-entry')
   await page.waitForTimeout(300)
+  await cardShot('verify') // the re-type prompt, before typing — "how to use" entry point
   await entry().fill(ROUTING_OK.slice(0, 7) + '12')
   await primary().click() // Compare
   await waitStep('mismatch')
   await page.waitForTimeout(200)
   await shot(2)
+  await cardShot('mismatch')
 
   // 3: IBAN verified — checksum valid + destination country (Tier 2)
   await goPlain()
@@ -229,6 +237,7 @@ async function main() {
   await waitStep('match')
   await page.waitForTimeout(200)
   await shot(4)
+  await cardShot('match')
 
   // 5: page scan — tag the high-value fields worth verifying
   await page.goto('http://localhost:8923/all-formats.html')
@@ -236,6 +245,8 @@ async function main() {
   await page.waitForSelector('[data-double-check-scan]', { state: 'attached', timeout: 8000 })
   await page.waitForTimeout(500)
   await shot(5)
+  await page.screenshot({ path: 'store-assets/doc-scan.jpg', type: 'jpeg', quality: 92 })
+  console.log('doc-scan.jpg')
 
   await context.close()
   server.close()

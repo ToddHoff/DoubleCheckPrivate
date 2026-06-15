@@ -145,7 +145,26 @@ the tool is meant to be used.</p>
 `
 
 export function renderDocsTab(rootEl: HTMLElement): void {
+  const img = (file: string) => chrome.runtime.getURL(`screenshots/${file}`)
+  const walkthrough = `
+<h2>See it in action</h2>
+<div class="docwalk">
+  <figure><img src="${img('doc-verify.jpg')}" alt="The card on a routing field: checksum valid, with a re-type box">
+    <figcaption><strong>1.</strong> Press the shortcut on a field — Double Check detects the format,
+    verifies the math, and asks you to re-type the value from your source.</figcaption></figure>
+  <figure><img src="${img('doc-mismatch.jpg')}" alt="A mismatch naming two swapped digits">
+    <figcaption><strong>2.</strong> If your two readings disagree, it names the exact error —
+    here, two digits transposed.</figcaption></figure>
+  <figure><img src="${img('doc-match.jpg')}" alt="A green match confirming an amount in words">
+    <figcaption><strong>3.</strong> A match turns green and confirms amounts in words.</figcaption></figure>
+  <figure><img src="${img('doc-trusted.jpg')}" alt="A warning that this is not the account saved for the payee">
+    <figcaption><strong>4.</strong> Name the payee and it warns when an account differs from the one
+    you saved before — the “bank details changed” fraud catch.</figcaption></figure>
+</div>
+<figure class="docwide"><img src="${img('doc-scan.jpg')}" alt="A page with high-value fields tagged">
+  <figcaption>Or right-click a page to flag every high-value field at once.</figcaption></figure>
+`
   const docs = h('section', { class: 'panel docs' })
-  docs.innerHTML = DOCS_HTML
+  docs.innerHTML = DOCS_HTML.replace('<h2>How a check works</h2>', walkthrough + '<h2>How a check works</h2>')
   rootEl.append(docs)
 }
