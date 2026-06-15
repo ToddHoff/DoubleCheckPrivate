@@ -3,11 +3,27 @@
 Paste-ready text for the Store Listing tab. The dashboard's description
 field is plain text — headers are caps lines, bullets are "•".
 
+## Item title (= the manifest "name")
+
+Currently "Double Check". Google's guidance favors a title that's clear about
+the core function (without keyword-stuffing). "Double Check" is memorable but
+not self-descriptive in search results. OPEN DECISION — keep the brand alone,
+or add a short descriptor:
+- "Double Check" (brand only — cleanest)
+- "Double Check — verify account numbers & amounts" (clearer in search)
+- "Double Check — verify before you send"
+Changing it edits the manifest `name`, which is also the toolbar tooltip and
+the management-page name. Not changed yet; pick one and it's a one-line edit.
+
+## Item summary (the 132-character field shown in search/category/home)
+
+A second pair of eyes for numbers that can't be wrong — catch typos and "bank details changed" fraud. Nothing leaves your device.
+
 ## Detailed description
 
 A second pair of eyes for numbers that can't be wrong.
 
-One transposed digit in a wire transfer sends money to the wrong account. Double Check turns the careful-but-manual ritual — read it, re-read it, ask a colleague to look over your shoulder — into a fast, verifiable workflow that happens right in the field you're typing into. And the values you check never leave your computer.
+One transposed digit in a wire transfer sends money to the wrong account — and a fake "our bank details have changed" email sends it to a fraudster. Double Check guards against both. It turns the careful-but-manual ritual — read it, re-read it, ask a colleague to look over your shoulder — into a fast, verifiable workflow right in the field you're typing into, and it remembers each payee's usual account so a switched one stands out. The values you check never leave your computer.
 
 HOW IT WORKS
 
