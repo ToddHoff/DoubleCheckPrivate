@@ -89,11 +89,11 @@ button.btn.reveal { flex: none; font-size: 12px; padding: 5px 12px; }
   border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box;
 }
 .signer:focus { outline: 2px solid #166534; outline-offset: 1px; }
-.noteblock { margin: 8px 0 2px; }
+.noterow { padding: 7px 12px; border-top: 1px solid #e5e7eb; }
 .notefield {
-  width: 100%; box-sizing: border-box; resize: vertical; min-height: 40px;
-  padding: 8px 10px; font: 13px system-ui, sans-serif;
-  border: 1px solid #d1d5db; border-radius: 8px;
+  width: 100%; box-sizing: border-box; resize: vertical; min-height: 30px;
+  padding: 6px 9px; font: 12.5px system-ui, sans-serif; color: #374151;
+  border: 1px solid #d1d5db; border-radius: 7px;
 }
 .notefield:focus { outline: 2px solid #166534; outline-offset: 1px; }
 .btnrow { display: flex; gap: 8px; }
@@ -158,6 +158,7 @@ button.btn.rate { flex: none; width: 40px; font-variant-numeric: tabular-nums; }
   .attest { color: #d1d5db; }
   .signer, .notefield { background: #1f2937; color: #f3f4f6; border-color: #374151; }
   .signer::placeholder, .notefield::placeholder { color: #9ca3af; }
+  .noterow { border-color: #374151; }
   button.btn { background: #374151; color: #f3f4f6; border-color: #4b5563; }
   button.btn:hover { background: #4b5563; }
   button.btn.on { background: #052e16; color: #bbf7d0; border-color: #166534; }
