@@ -47,7 +47,7 @@
         <div class="f">
           <label for="iban">IBAN</label>
           <input id="iban" name="iban" value="gb82 west 1234 5698 7654 32" />
-          <div class="hint">pre-filled lowercase + spaces (tests normalization) · also <code>DE89370400440532013000</code> · <span class="bad">GB82WEST12345698765431</span></div>
+          <div class="hint">pre-filled lowercase + spaces (tests normalization) · shows destination country (United Kingdom) · also <code>DE89370400440532013000</code> (Germany) · <span class="bad">GB82WEST12345698765431</span></div>
         </div>
         <div class="f">
           <label for="amount">Wire amount</label>
@@ -57,7 +57,7 @@
         <div class="f">
           <label for="swift">SWIFT / BIC</label>
           <input id="swift" name="swift_bic" />
-          <div class="hint">try <code>NWBKGB2L</code> or <code>CHASUS33XXX</code> · <span class="bad">DEUTZZFF has a bad country code</span></div>
+          <div class="hint">try <code>NWBKGB2L</code> (United Kingdom) or <code>CHASUS33XXX</code> (United States) · <span class="bad">DEUTZZFF has a bad country code</span></div>
         </div>
         <div class="f">
           <label for="sort">Sort code (UK)</label>
@@ -154,6 +154,26 @@
           <label for="custom">Vendor ID (for a custom format)</label>
           <input id="custom" name="vendor_id" />
           <div class="hint">make a custom format in Settings → Formats (e.g. pattern <code>V\d{7}</code>), then try <code>V1234567</code></div>
+        </div>
+      </div>
+
+      <h2>Safety checks — look-alike &amp; hidden characters</h2>
+      <p class="hint" style="margin:0 0 10px">Copy each sample below (the imposter character is invisible to the eye) into the field, then open Double Check — it should warn even though nothing looks wrong.</p>
+      <div class="grid">
+        <div class="f">
+          <label for="homoglyph">Routing number with a look-alike digit</label>
+          <input id="homoglyph" name="routing_number" inputmode="text" />
+          <div class="hint">paste <code>０21000021</code> — the first digit is a full-width “０”, not ASCII “0” → look-alike warning</div>
+        </div>
+        <div class="f">
+          <label for="cyrillic">SWIFT / BIC with a Cyrillic look-alike</label>
+          <input id="cyrillic" name="swift_bic" />
+          <div class="hint">paste <code>NWBKGB2І</code> — the last letter is a Cyrillic “І”, not ASCII “I” → look-alike warning</div>
+        </div>
+        <div class="f">
+          <label for="zwsp">Value with a hidden character</label>
+          <input id="zwsp" name="routing_number" inputmode="text" />
+          <div class="hint">paste <code>021​000021</code> — there is an invisible zero-width space inside it → hidden-character warning</div>
         </div>
       </div>
 
