@@ -358,6 +358,14 @@ cover small offices.
    the number is internally valid" is the demo-able wow.
 2. **Mismatch diagnosis** (transposition detection) — turns a red X into
    an explanation.
+2b. **Page scan / field tagging** — right-click → "Find fields to
+   double-check"; the content script runs the detection heuristics over every
+   field and tags only the high-value matches (money/identity, score ≥ 60,
+   in `HIGH_VALUE_FORMATS`) with a clickable pill that opens the card. Reads
+   field signals (label/name/type), never values; on-demand, no new
+   permission (the right-click grants activeTab). Answers "which fields?"
+   proactively — the discovery gap. Natural future pairing: auto-populate
+   Submit Guard from the tagged set.
 3. **Tamper watch** — verification that survives until submit, not just
    at a moment in time.
 4. **Per-site memory** — second use on the same bank portal is

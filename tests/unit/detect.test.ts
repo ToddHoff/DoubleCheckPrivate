@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BUILTIN_VALIDATORS, suggestFormats } from '../../src/engine'
+import { BUILTIN_VALIDATORS, highValueCandidate, suggestFormats } from '../../src/engine'
 
 const suggest = (signals: Parameters<typeof suggestFormats>[0]) =>
   suggestFormats(signals, BUILTIN_VALIDATORS)
@@ -37,5 +37,27 @@ describe('suggestFormats', () => {
   it('never suggests generic formats from value shape alone', () => {
     const ids = suggest({ value: 'hello world' })
     expect(ids).not.toContain('generic-text')
+  })
+})
+
+describe('highValueCandidate (page-scan tagging)', () => {
+  const candidate = (signals: Parameters<typeof highValueCandidate>[0]) =>
+    highValueCandidate(signals, BUILTIN_VALIDATORS)
+
+  it('flags money and identity fields', () => {
+    expect(candidate({ name: 'routing_number' })?.id).toBe('aba-routing')
+    expect(candidate({ label: 'IBAN' })?.id).toBe('iban')
+    expect(candidate({ label: 'SSN' })?.id).toBe('ssn')
+    expect(candidate({ autocomplete: 'cc-number' })?.id).toBe('card')
+    expect(candidate({ id: 'beneficiary-account-number' })?.id).toBe('us-bank-account')
+    expect(candidate({ label: 'Wire amount' })?.id).toBe('currency-amount')
+  })
+
+  it('does NOT flag low-stakes or weak fields (no noise)', () => {
+    expect(candidate({ label: 'Email' })).toBeNull()
+    expect(candidate({ name: 'phone' })).toBeNull()
+    expect(candidate({ name: 'payment_date', id: 'date', label: 'Date' })).toBeNull()
+    expect(candidate({ name: 'comments' })).toBeNull()
+    expect(candidate({ name: 'payment_method' })).toBeNull() // weak "payment" only (55 < 60)
   })
 })

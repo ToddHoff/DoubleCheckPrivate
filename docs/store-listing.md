@@ -34,6 +34,7 @@ PROOF IT HAPPENED
 
 MADE FOR REAL WORK
 
+• Find the risky fields for you: right-click a page and Double Check tags the high-value fields (account/routing numbers, amounts, IDs) so you know what to verify — it reads field labels, never values
 • Remembers the right format for each field on each site — the second use is zero-configuration
 • Define your own formats (vendor IDs, policy numbers, internal account schemes) with clean-up rules, patterns, and standard checksum algorithms; share them with your team as files
 • Submit Guard (beta): optionally block a site's forms from submitting while a field you normally double-check there is unverified

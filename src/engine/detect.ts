@@ -46,11 +46,16 @@ const KEYWORD_RULES: Rule[] = [
   { re: /\bdate\b|\bdob\b/, formatId: 'date-mdy', score: 70 },
 ]
 
+export interface RankedFormat {
+  id: string
+  score: number
+}
+
 /**
- * Rank candidate formats for a field. Returns format ids, best first.
+ * Rank candidate formats for a field with their confidence scores, best first.
  * Per-site memory (handled by the caller) always outranks these signals.
  */
-export function suggestFormats(signals: FieldSignals, validators: Validator[]): string[] {
+export function rankFormats(signals: FieldSignals, validators: Validator[]): RankedFormat[] {
   const scores = new Map<string, number>()
   const bump = (id: string, by: number) => scores.set(id, Math.max(scores.get(id) ?? 0, by))
 
@@ -82,5 +87,28 @@ export function suggestFormats(signals: FieldSignals, validators: Validator[]): 
   return [...scores.entries()]
     .filter(([, s]) => s >= 50)
     .sort((a, b) => b[1] - a[1])
-    .map(([id]) => id)
+    .map(([id, score]) => ({ id, score }))
+}
+
+/** format ids only, best first (back-compat for the format picker) */
+export function suggestFormats(signals: FieldSignals, validators: Validator[]): string[] {
+  return rankFormats(signals, validators).map((r) => r.id)
+}
+
+// Formats worth proactively flagging on a page scan — money and identity,
+// where a wrong value is costly. Deliberately excludes email/phone/date/IP/
+// generic, which are checkable on demand but would just create noise.
+export const HIGH_VALUE_FORMATS = new Set([
+  'aba-routing', 'uk-sort-code', 'iban', 'us-bank-account', 'card', 'ssn', 'ein',
+  'swift-bic', 'clabe', 'cusip', 'isin', 'btc-address', 'eth-address', 'currency-amount',
+])
+
+/** confidence floor for tagging a field on a page scan (conservative on purpose) */
+export const TAG_THRESHOLD = 60
+
+/** the high-value format to flag for a field, or null if it isn't a strong candidate */
+export function highValueCandidate(signals: FieldSignals, validators: Validator[]): RankedFormat | null {
+  const top = rankFormats(signals, validators)[0]
+  if (top && top.score >= TAG_THRESHOLD && HIGH_VALUE_FORMATS.has(top.id)) return top
+  return null
 }

@@ -57,6 +57,10 @@ shell.append(
         '23 built-in formats. Routing numbers, IBANs, card numbers, CLABE, CUSIP, ISIN, VINs, and crypto ' +
         'addresses carry internal check digits — Double Check computes them, so a single wrong digit is often ' +
         'caught before you re-type anything.'),
+      feat('Find the risky fields for you',
+        'Right-click a page and choose “Find fields to double-check.” Double Check scans the page and tags the ' +
+        'high-value fields — account and routing numbers, amounts, IDs — so you know exactly what to verify. ' +
+        'It reads field labels, never values.'),
       feat('Blind double entry',
         'Re-type the value from your source — not from the field. Two independent readings must agree before ' +
         'anything is confirmed. Empty fields get a safe two-step entry flow.'),

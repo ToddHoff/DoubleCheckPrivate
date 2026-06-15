@@ -37,6 +37,14 @@ try everything on.</p>
       flips to a warning and the log entry is marked stale.</li>
 </ol>
 
+<h2>Not sure which fields to check?</h2>
+<p>Right-click anywhere on a page and choose <em>Find fields to
+double-check</em>. Double Check scans the page and tags the high-value fields
+— account and routing numbers, IBANs, card numbers, SSNs, amounts, and the
+like — with a clickable pill. Click a pill to open the card on that field, or
+press Esc to dismiss. The scan reads field labels and types only, never the
+values, and runs entirely on your device.</p>
+
 <h2>Empty fields (input mode)</h2>
 <p>If the field is empty, Double Check helps you enter the value safely: type
 it once from the source, then re-type it blind. Only a matching pair is

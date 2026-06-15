@@ -4,9 +4,10 @@ import { BUILTIN_VALIDATORS, fromUserSpec, suggestFormats } from '../engine'
 import type { Validator } from '../engine'
 import { getSettings, getSiteMemory, getUserValidatorSpecs, siteMemoryKey } from '../shared/storage'
 import type { LicenseStatus } from '../shared/types'
-import { fieldSignals, fieldSignature, findFocusedField } from './field'
+import { fieldSignals, fieldSignature, findFocusedField, type CheckableField } from './field'
 import { isCardMounted, mountCard, type CardContext } from './card'
 import { installSubmitGuard } from './submit-guard'
+import { scanAndTag } from './scan'
 
 declare global {
   interface Window {
@@ -14,7 +15,7 @@ declare global {
   }
 }
 
-async function buildContext(field: ReturnType<typeof findFocusedField> & object): Promise<CardContext> {
+async function buildContext(field: CheckableField): Promise<CardContext> {
   const [settings, userSpecs, siteMemory, license] = await Promise.all([
     getSettings(),
     getUserValidatorSpecs(),
@@ -40,6 +41,11 @@ async function buildContext(field: ReturnType<typeof findFocusedField> & object)
   }
 }
 
+function openOn(field: CheckableField): void {
+  if (isCardMounted(field)) return
+  void buildContext(field).then((ctx) => mountCard(field, ctx))
+}
+
 function activate(): boolean {
   // Why the top-frame exception: when activation comes from the toolbar
   // popup, the POPUP holds focus, not the page — document.hasFocus() is
@@ -49,9 +55,15 @@ function activate(): boolean {
   if (!document.hasFocus() && window !== window.top) return false
   const field = findFocusedField()
   if (!field) return false
-  if (isCardMounted(field)) return true
-  void buildContext(field).then((ctx) => mountCard(field, ctx))
+  openOn(field)
   return true
+}
+
+// scan the page for high-value fields and tag them; clicking a tag opens the
+// card on that field. Detection uses built-ins (which cover every high-value
+// format); the card itself still builds full, license-aware context.
+function scanPage(): number {
+  return scanAndTag(BUILTIN_VALIDATORS, openOn)
 }
 
 // Why no activate() on load: the background always follows injection with a
@@ -61,6 +73,7 @@ if (!window.__doubleCheckLoaded) {
   window.__doubleCheckLoaded = true
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg?.kind === 'dc-activate') sendResponse({ mounted: activate() })
+    else if (msg?.kind === 'dc-scan-page') sendResponse({ ok: true, count: scanPage() })
   })
   void getSettings().then((s) => installSubmitGuard(s.submitGuardOrigins))
 }

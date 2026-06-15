@@ -58,6 +58,7 @@ export const STORAGE_KEYS = {
  */
 export type RuntimeMessage =
   | { kind: 'dc-activate' }
+  | { kind: 'dc-scan-page' }
   | { kind: 'dc-activate-from-popup'; tabId: number }
   | { kind: 'dc-open-options'; section?: string }
   | { kind: 'dc-license-status' }
