@@ -1,6 +1,7 @@
 import type { Validator } from './types'
 import { parseAmount, formatAmount, amountToWords } from './amount'
 import { bitcoinAddressCheck, ethereumAddressCheck } from './crypto-addresses'
+import { countryName } from './countries'
 
 // IBAN registry lengths (total length incl. country code + check digits)
 const IBAN_LENGTHS: Record<string, number> = {
@@ -154,9 +155,8 @@ export const BUILTIN_VALIDATORS: Validator[] = [
       const cc = v.slice(0, 2)
       const expected = IBAN_LENGTHS[cc]
       if (!expected) return { errors: [], warnings: [`Unknown IBAN country code “${cc}” — length not verified`] }
-      return expected === v.length
-        ? []
-        : [`${cc} IBANs are ${expected} characters, got ${v.length}`]
+      if (expected !== v.length) return { errors: [`${cc} IBANs are ${expected} characters, got ${v.length}`] }
+      return { errors: [], info: [`This account is in ${countryName(cc)}`] }
     },
   },
   {
@@ -223,7 +223,9 @@ export const BUILTIN_VALIDATORS: Validator[] = [
     speech: 'char-by-char',
     extraCheck: (v) => {
       const cc = v.slice(4, 6)
-      return ISO_COUNTRIES.has(cc) ? [] : [`“${cc}” isn’t an ISO country code (positions 5–6)`]
+      return ISO_COUNTRIES.has(cc)
+        ? { errors: [], info: [`This bank is in ${countryName(cc)}`] }
+        : { errors: [`“${cc}” isn’t an ISO country code (positions 5–6)`] }
     },
   },
   {

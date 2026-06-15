@@ -71,6 +71,12 @@ shell.append(
       feat('Amounts taken seriously',
         'US and European separators both parse; genuinely ambiguous amounts like “1,234” are refused rather ' +
         'than guessed. Matches confirm in words: 1,200,000.00 — one million two hundred thousand and 00/100.'),
+      feat('Shows where the money is going',
+        'For IBANs and SWIFT/BIC codes, Double Check names the destination country — so a payment headed ' +
+        'somewhere you didn’t expect stands out before you send it.'),
+      feat('Catches what the eye can’t',
+        'Invisible characters and look-alikes — a Cyrillic “а” or a zero-width space pasted from a document — ' +
+        'are flagged. They sail past a glance but break the value, or hide an attack.'),
       feat('Compare against an image',
         'Paste a screenshot or phone photo of the value — from another tab, a PDF, an email, anywhere. ' +
         'A bundled OCR engine reads it on your device, images are never uploaded, and common misreads ' +

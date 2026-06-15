@@ -352,6 +352,32 @@ cover small offices.
 - CSP: MV3 default (`script-src 'self' 'wasm-unsafe-eval'`) — Tesseract
   v4+ is compatible; everything bundled, nothing remote.
 
+## 11b. Fraud & sanity checks (the "second pair of eyes" beyond typos)
+
+The headline losses are fraud (BEC — fake new bank details) and
+wrong-destination, not just typos. Features that close that gap:
+
+- **Destination country surface** (shipped): IBAN (chars 1–2) and SWIFT/BIC
+  (chars 5–6) country code → plain-language country name as a neutral `info`
+  chip ("This account is in Germany"). Catches "why is this going to a
+  country we don't deal with." Data: `engine/countries.ts` code→name map.
+- **Hidden / look-alike character detection** (shipped): `engine/suspicious.ts`
+  flags zero-width/invisible characters and homoglyphs (Cyrillic/Greek/
+  fullwidth look-alikes) in the RAW value, on every format, as warnings.
+  Catches paste artifacts and homoglyph attacks the eye misses.
+- **Trusted-payee memory** (proposed, the big one): save payee→value HMAC
+  fingerprints locally; warn when an account differs from the one used
+  before for that payee. Catches BEC, which no checksum can. Reuses the
+  opt-in HMAC infra.
+- **Bank name from routing number** (proposed): needs a vetted
+  routing→bank dataset — deferred on data-quality grounds (a wrong name is
+  worse than none for a trust product).
+- **Cross-field consistency** (proposed): IBAN-country vs BIC-country, etc.
+  — needs the single-field card to read sibling fields; design with the
+  page-scan infra.
+- **Duplicate-payment detection** (proposed): same account+amount seen
+  recently → warn; uses the log fingerprints.
+
 ## 12. Product ideas that make it stronger (beyond the brief)
 
 1. **Checksum math as the headline** — "we don't just compare, we verify

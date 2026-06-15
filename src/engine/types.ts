@@ -42,7 +42,7 @@ export interface Validator extends ValidatorSpec {
   /** parse-based normalization (e.g. amounts); runs after normalize ops */
   canonicalize?: (value: string) => { value?: string; error?: string }
   /** extra structural rules beyond the declarative spec; returns error messages */
-  extraCheck?: (normalized: string) => { errors: string[]; warnings?: string[] } | string[]
+  extraCheck?: (normalized: string) => { errors: string[]; warnings?: string[]; info?: string[] } | string[]
   /** true when extraCheck constitutes a real mathematical verification (EIP-55 etc.) */
   mathCheck?: boolean
   /** override display formatting (e.g. currency) */
@@ -57,6 +57,8 @@ export interface ValidationResult {
   formatted: string
   errors: string[]
   warnings: string[]
+  /** neutral, non-alarming notes — e.g. the destination country of an IBAN */
+  info: string[]
   /** true when a real mathematical check (not just shape) ran and passed */
   checksumPassed: boolean
   /** true when the format has a mathematical check at all */

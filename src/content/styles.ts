@@ -40,6 +40,7 @@ export const CARD_CSS = `
 .chip.ok { background: #dcfce7; color: #166534; border-color: #86efac; }
 .chip.err { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
 .chip.warn { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+.chip.info { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
 .lbl { font-size: 12px; color: #4b5563; font-weight: 600; }
 .steplbl { font-size: 16px; color: #111827; font-weight: 700; }
 .entry {

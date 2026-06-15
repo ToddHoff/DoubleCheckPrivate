@@ -222,6 +222,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     else if (r.valid) row.appendChild(h('span', { class: 'chip warn' }, 'Format valid — checksum not verifiable'))
     for (const e of r.errors) row.appendChild(h('span', { class: 'chip err' }, `✕ ${e}`))
     for (const w of r.warnings) row.appendChild(h('span', { class: 'chip warn' }, `⚠ ${w}`))
+    for (const i of r.info) row.appendChild(h('span', { class: 'chip info' }, i))
     return row
   }
 

@@ -1,10 +1,14 @@
 import type { ValidationResult, Validator, ValidatorSpec } from './types'
 import { applyNormalize, groupValue } from './normalize'
 import { runChecksum } from './checksums'
+import { suspiciousChars } from './suspicious'
 
 export function validate(v: Validator, raw: string): ValidationResult {
   const errors: string[] = []
-  const warnings: string[] = []
+  // deceptive characters are about the RAW value the user pasted/typed, before
+  // normalization strips spaces/dashes — check it up front
+  const warnings: string[] = suspiciousChars(raw)
+  const info: string[] = []
   let normalized = applyNormalize(raw, v.normalize)
   const hasChecksum = !!v.checksum || !!v.mathCheck
   let checksumPassed = false
@@ -40,8 +44,10 @@ export function validate(v: Validator, raw: string): ValidationResult {
         const res = v.extraCheck(normalized)
         const extraErrors = Array.isArray(res) ? res : res.errors
         const extraWarnings = Array.isArray(res) ? [] : (res.warnings ?? [])
+        const extraInfo = Array.isArray(res) ? [] : (res.info ?? [])
         errors.push(...extraErrors)
         warnings.push(...extraWarnings)
+        info.push(...extraInfo)
         if (v.mathCheck && extraErrors.length === 0 && extraWarnings.length === 0) checksumPassed = true
       }
     }
@@ -54,6 +60,7 @@ export function validate(v: Validator, raw: string): ValidationResult {
     formatted: valid && v.format ? v.format(normalized) : groupValue(normalized, v.grouping),
     errors,
     warnings,
+    info,
     checksumPassed: valid && checksumPassed,
     hasChecksum,
   }

@@ -52,6 +52,10 @@ describe('iban validator', () => {
     expect(r.valid).toBe(false)
     expect(r.errors.join(' ')).toMatch(/22 characters/)
   })
+  it('surfaces the destination country as info', () => {
+    expect(validate(v('iban'), 'GB82WEST12345698765432').info.join(' ')).toMatch(/United Kingdom/)
+    expect(validate(v('iban'), 'DE89370400440532013000').info.join(' ')).toMatch(/Germany/)
+  })
   it('warns on unknown country but still checks mod-97', () => {
     const r = validate(v('iban'), 'ZZ68WEST12345698765432')
     expect(r.warnings.join(' ')).toMatch(/unknown/i)
@@ -87,6 +91,24 @@ describe('swift-bic validator', () => {
     const r = validate(v('swift-bic'), 'DEUTZZFF')
     expect(r.valid).toBe(false)
     expect(r.errors.join(' ')).toMatch(/country/i)
+  })
+  it('surfaces the bank country as info', () => {
+    expect(validate(v('swift-bic'), 'NWBKGB2L').info.join(' ')).toMatch(/United Kingdom/)
+    expect(validate(v('swift-bic'), 'DEUTDEFF').info.join(' ')).toMatch(/Germany/)
+  })
+})
+
+describe('suspicious-character detection (any format)', () => {
+  it('flags a zero-width / invisible character', () => {
+    const r = validate(v('aba-routing'), '0210​00021') // valid digits + zero-width space
+    expect(r.warnings.join(' ')).toMatch(/hidden|invisible/i)
+  })
+  it('flags a Cyrillic look-alike in an alphanumeric value', () => {
+    const r = validate(v('swift-bic'), 'NWBKGB2І') // last char is Cyrillic І, not ASCII I
+    expect(r.warnings.join(' ')).toMatch(/look-alike/i)
+  })
+  it('a clean value has no suspicious warnings', () => {
+    expect(validate(v('aba-routing'), '021000021').warnings.join(' ')).not.toMatch(/hidden|look-alike/i)
   })
 })
 
