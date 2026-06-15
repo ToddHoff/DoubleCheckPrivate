@@ -163,7 +163,39 @@ async function main() {
     await page.waitForTimeout(150)
   }
 
-  // 1: transposition caught — the product's thesis
+  const OTHER_ROUTING = '026009593'
+
+  // 1: trusted-payee — the BEC fraud catch. First save Acme's account, then
+  // verify a DIFFERENT account for the same payee to trigger the warning.
+  await goPlain()
+  await page.locator('#routing').fill(ROUTING_OK)
+  await page.locator('#routing').focus()
+  await openCard()
+  await waitStep('verify-entry')
+  await page.waitForTimeout(200)
+  await entry().fill(ROUTING_OK)
+  await primary().click()
+  await waitStep('match')
+  await page.locator('.payee').fill('Acme')
+  await page.waitForTimeout(200)
+  await page.locator('.attest input').check()
+  await primary().click() // saves Acme = ROUTING_OK
+  await page.waitForTimeout(2200) // card auto-closes
+
+  await goPlain()
+  await page.locator('#routing').fill(OTHER_ROUTING)
+  await page.locator('#routing').focus()
+  await openCard()
+  await waitStep('verify-entry')
+  await page.waitForTimeout(200)
+  await entry().fill(OTHER_ROUTING)
+  await primary().click()
+  await waitStep('match')
+  await page.locator('.payee').fill('Acme')
+  await page.waitForTimeout(400) // the changed-account warning renders
+  await shot(1)
+
+  // 2: transposition caught — the product's thesis
   await goPlain()
   await page.locator('#routing').focus()
   await openCard()
@@ -173,18 +205,18 @@ async function main() {
   await primary().click() // Compare
   await waitStep('mismatch')
   await page.waitForTimeout(200)
-  await shot(1)
+  await shot(2)
 
-  // 2: IBAN verified — checksum valid + destination country (Tier 2)
+  // 3: IBAN verified — checksum valid + destination country (Tier 2)
   await goPlain()
   await page.locator('#iban').fill('GB82WEST12345698765432')
   await page.locator('#iban').focus()
   await openCard()
   await waitStep('verify-entry')
   await page.waitForTimeout(300)
-  await shot(2)
+  await shot(3)
 
-  // 3: amount match — big green value + amount in words
+  // 4: amount match — big green value + amount in words
   await goPlain()
   await page.locator('#amount').focus()
   await openCard()
@@ -196,17 +228,6 @@ async function main() {
   await primary().click() // Compare
   await waitStep('match')
   await page.waitForTimeout(200)
-  await shot(3)
-  await page.keyboard.press('Escape')
-
-  // 4: page audit — red flags on real problems (look-alike + bad checksum),
-  // staged in the top Banking section so several are visible at once
-  await page.goto('http://localhost:8923/all-formats.html')
-  await page.locator('#swift').fill('NWBKGB2І') // Cyrillic look-alike (CLABE stays pre-filled failing)
-  await page.evaluate(() => window.scrollTo(0, 0))
-  await pagePass('dc-audit-page')
-  await page.waitForSelector('[data-double-check-scan]', { state: 'attached', timeout: 8000 })
-  await page.waitForTimeout(500)
   await shot(4)
 
   // 5: page scan — tag the high-value fields worth verifying
