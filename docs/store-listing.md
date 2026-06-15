@@ -48,6 +48,9 @@ MORE WAYS TO VERIFY
 PROOF IT HAPPENED
 
 • Every attested check is logged: when, where, which field, what format, which methods, and your attestation — never the value itself
+• Two signatures for the highest-stakes fields: require two people to sign a given field; both names are recorded with the check
+• Add an optional note to any check — where a value came from, how it was calculated (keep the value itself out of it; it is never stored)
+• Tamper-evident seal: every entry is sealed with a keyed hash chained to the previous one, and a Verify-integrity button flags any later edit, removal, or reordering — integrity on this device, not identity or legal proof
 • A "Double-Checked" badge marks the verified field, and flips to a warning if the value changes afterwards
 • Export the log to CSV or JSON for your records; retention is yours to set
 
@@ -56,7 +59,8 @@ MADE FOR REAL WORK
 • Find the risky fields for you: right-click a page and Double Check tags the high-value fields (account/routing numbers, amounts, IDs) so you know what to verify — it reads field labels, never values
 • Audit a whole page in one click: right-click → "Check this page for problems" flags every filled field with a real issue — failed checksum, wrong country code, hidden or look-alike character — each with a clearable note
 • Remembers the right format for each field on each site — the second use is zero-configuration
-• Define your own formats (vendor IDs, policy numbers, internal account schemes) with clean-up rules, patterns, and standard checksum algorithms; share them with your team as files
+• Define your own formats (vendor IDs, policy numbers, internal account schemes) with clean-up rules, patterns, and standard checksum algorithms — plus an optional expected amount range that warns (without blocking) when a value is unusually large or small for the field; share them with your team as files
+• See what it's caught: a running, local-only tally of the mismatches, bad values, account-change warnings, and page problems Double Check has flagged for you — real events, never an estimated dollar figure
 • Submit Guard (beta): optionally block a site's forms from submitting while a field you normally double-check there is unverified
 • Keyboard-first: invoke, verify, and attest without touching the mouse
 
@@ -96,9 +100,13 @@ confirmations back to the extension after checkout. This is the only host
 permission; the extension requests no access to any other website.
 
 **storage:** Stores the user's settings, their user-defined format
-validators, per-site format preferences, and a verification audit log
-containing metadata only (time, site, field label, format, outcome). The
-verified values themselves are never stored.
+validators, per-site format preferences, per-field "require two signatures"
+flags, and a verification audit log. The log holds metadata only (time, site,
+field label, format, methods, outcome, attestation, and a tamper-evident
+seal) plus the optional text the user chooses to enter — the names typed as
+signatures and any note added to a check. The verified values themselves are
+never stored. Everything is kept locally in the browser's extension storage
+and is never transmitted.
 
 **offscreen:** Runs the bundled Tesseract OCR engine in an offscreen
 document so that images the user scans or pastes are read entirely

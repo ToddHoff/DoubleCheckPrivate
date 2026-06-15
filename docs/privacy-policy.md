@@ -36,12 +36,21 @@ numbers, amounts, IDs) entered into web forms. It is built on one principle:
   lives in your browser's extension storage, on your device only, and is
   never transmitted — we have no servers it could be sent to and no ability
   to access, see, or retrieve it.
+- **Signatures and notes you type** are stored with the log entry when you use
+  them: the names entered for a field that requires two signatures, and any
+  note you add to a check. This is text you choose to enter; keep the verified
+  value out of it (the value is never stored). Like the rest of the log, it
+  stays on your device and is never transmitted.
+- **A tamper-evident seal** is computed for each log entry: a keyed hash
+  chained to the previous entry, using a random key that never leaves your
+  device. It lets you detect later edits, removals, or reordering of the log
+  on this device. It is not identity authentication or a legal record.
 - **Optional fingerprinting** (off by default): if you enable it, the log
   stores an HMAC-SHA-256 of the verified value, keyed with a random secret
   that never leaves your device. This lets you later prove a logged check
   corresponds to a specific value without the value being stored.
-- **Settings, custom formats, and per-site format memory** are stored locally
-  in extension storage.
+- **Settings, custom formats, per-site format memory, and per-field
+  two-signature requirements** are stored locally in extension storage.
 
 ## Network traffic
 

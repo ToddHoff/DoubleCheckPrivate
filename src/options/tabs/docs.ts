@@ -123,11 +123,19 @@ page 2"). The note is saved with the log entry and sealed along with it.
 Keep the value itself out of the note: the whole point is that the value is
 never stored.</p>
 
+<h2>What it has caught</h2>
+<p>The Settings tab keeps a running, local-only tally of what Double Check has
+actually caught for you — mismatches, bad values, account-change warnings, and
+problems found by a page audit — and the popup shows the total. These are
+counts of real events that happened on this device; they are never an estimate
+of money "saved", and like everything else they are never transmitted.</p>
+
 <h2>What the log proves (and doesn't)</h2>
 <p>Each entry records when and where a check happened, the field, the format,
-the methods used, the outcome, and that you personally attested it. It does
-not record the value. It is evidence of diligence — that the verification
-happened — not a guarantee the value was objectively correct.</p>
+the methods used, the outcome, and that you personally attested it (and, when
+the field requires it, who signed). It does not record the value. It is
+evidence of diligence — that the verification happened — not a guarantee the
+value was objectively correct.</p>
 
 <h2>Custom formats</h2>
 <p>The Formats tab lets you define your own: clean-up steps, a pattern, a

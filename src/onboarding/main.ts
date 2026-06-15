@@ -73,6 +73,10 @@ shell.append(
         'the value). Next time it confirms “✓ matches Acme’s usual account” — or warns “⚠ this is NOT the ' +
         'account you saved for Acme.” That’s the catch for fake “our bank details changed” emails, which no ' +
         'checksum can spot.'),
+      feat('Two signatures for the highest-stakes fields',
+        'Mark a field “require two signatures” and the attestation becomes “We have personally compared…”. ' +
+        'Two people each type their name — they must differ — before the check can be confirmed, and both ' +
+        'names are saved with the log entry.'),
       feat('Mismatches explained, not just flagged',
         'A red result names the error: “characters 5 and 6 appear swapped,” one wrong digit, a missing or ' +
         'extra character — with a character-level diff. Transposition is the classic transcription error, ' +
@@ -102,6 +106,16 @@ shell.append(
       feat('Proof without the value',
         'Every attested check is logged: when, where, what format, which methods, and your attestation. ' +
         'Never the value itself. Export CSV/JSON for your records; retention is yours to set.'),
+      feat('A tamper-evident log',
+        'Every entry is sealed with a keyed hash chained to the one before it. The Verify-integrity button ' +
+        'recomputes the chain and tells you whether anything was edited, removed, or reordered since it was ' +
+        'written — on this device. It’s integrity, not identity or legal proof.'),
+      feat('Notes on a check',
+        'Add an optional note — where a value came from, how it was calculated. It’s saved and sealed with ' +
+        'the entry. Keep the value itself out of it; that’s never stored.'),
+      feat('See what it’s caught',
+        'A running, local-only tally of what Double Check has actually caught for you — mismatches, bad ' +
+        'values, account-change warnings, page problems. Real events, never an estimated dollar figure.'),
       feat('It remembers each site',
         'Confirm that a field is an IBAN once, and the right format is preselected on that site forever ' +
         'after. Second use is zero-configuration.'),
@@ -109,6 +123,10 @@ shell.append(
         'Vendor IDs, policy numbers, internal account schemes — define them with clean-up rules, patterns, ' +
         'lengths, and a menu of checksum algorithms. Formats are data, never code, and they export as files ' +
         'your whole team can import.'),
+      feat('Expected amount range',
+        'Give a format an expected min/max. A value that parses as an amount outside it gets a soft warning ' +
+        '— never a block — so an unusually large wire stands out. The bounds are your own configuration; no ' +
+        'past values are stored.'),
       feat('Submit Guard',
         'A toggle at the bottom of the check card, naming the site you’re on. Forms there won’t submit ' +
         'while a field you normally double-check is unverified or was edited after checking. A seatbelt ' +
