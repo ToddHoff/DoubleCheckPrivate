@@ -178,6 +178,12 @@ export async function renderFormatsTab(rootEl: HTMLElement): Promise<void> {
         h('label', {}, 'Checksum'), checksum,
         wmRow,
         h('label', {}, 'Digit grouping'), grouping,
+        h('div', { class: 'wide' },
+          h('div', { class: 'sub' },
+            'Splits the value into chunks for easier reading and comparison, and paces the read-aloud — ' +
+            'e.g. “3,3,3” shows a 9-digit value as 123 456 789, and “4” shows a card as 1234 5678 9012 3456. ' +
+            'The last size repeats if the value is longer. Leave blank for no grouping.'),
+        ),
         h('label', {}, 'Test it'), testInput,
         testOut,
       ),
