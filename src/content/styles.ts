@@ -41,6 +41,7 @@ export const CARD_CSS = `
 .chip.err { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
 .chip.warn { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
 .lbl { font-size: 12px; color: #4b5563; font-weight: 600; }
+.steplbl { font-size: 16px; color: #111827; font-weight: 700; }
 .entry {
   width: 100%; font: 16px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
   padding: 9px 10px; border: 2px solid #d1d5db; border-radius: 8px; color: #111827;
@@ -115,6 +116,7 @@ button.btn.rate { flex: none; width: 40px; font-variant-numeric: tabular-nums; }
   .hd .close { color: #9ca3af; }
   .hd .close:hover { background: #374151; color: #f3f4f6; }
   .lbl { color: #d1d5db; }
+  .steplbl { color: #f9fafb; }
   .entry { background: #111827; color: #f9fafb; border-color: #4b5563; }
   .entry.good { background: #052e16; }
   .entry.bad { background: #450a0a; }

@@ -745,7 +745,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     // Placing it directly under the text input made users think typing was the
     // only path and the image/voice options below were a separate thing.
     body.append(
-      h('div', { class: 'lbl' }, 'Step 1 of 2 — enter the value from your source'),
+      h('div', { class: 'steplbl' }, 'Step 1 of 2 — enter the value from your source'),
       input, liveChips,
       ocrSection((value) => {
         input.value = value
@@ -768,7 +768,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     const compareBtn = h('button', { class: 'btn primary' }, 'Compare')
     compareBtn.addEventListener('click', () => compare(input.value))
     body.append(
-      h('div', { class: 'lbl' }, 'Step 2 of 2 — type it again to confirm'),
+      h('div', { class: 'steplbl' }, 'Step 2 of 2 — type it again to confirm'),
       input,
       h('div', { class: 'hint' }, 'Read from your source again — your first entry stays hidden on purpose.'),
       h('div', { class: 'btnrow' }, compareBtn),
