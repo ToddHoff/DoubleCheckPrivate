@@ -22,6 +22,14 @@ that field, or press Esc to dismiss. The scan reads field labels and types
 only, never values, and runs entirely on your device. (On a field itself,
 right-click gives you "Double-check this field" directly.)
 
+**What are "trusted accounts" and how do I use them?**
+On a green match, type the payee's name in the optional "Payee" field. Double
+Check remembers that account for that payee — as a one-way fingerprint, never
+the value. Next time you verify a value for a saved payee, it confirms it
+matches, or warns if it doesn't — the check that catches fake "our bank
+details changed" requests. Manage or delete saved accounts in Settings →
+Trusted accounts. Nothing is saved unless you name a payee.
+
 **Can it check a whole page at once?**
 Yes — right-click anywhere on a page (not on a field) and choose "Check this
 page for problems." Double Check inspects every filled field and flags the

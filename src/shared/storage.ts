@@ -1,4 +1,4 @@
-import type { LogEntry, Settings, Stats, UserValidatorSpec } from './types'
+import type { LogEntry, Settings, Stats, TrustedAccount, UserValidatorSpec } from './types'
 import { DEFAULT_SETTINGS, STORAGE_KEYS } from './types'
 
 // All storage is chrome.storage.local. Nothing here ever stores a verified
@@ -149,4 +149,50 @@ export async function fingerprintValue(normalized: string): Promise<string> {
   const key = await getOrCreateHmacKey()
   const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(normalized))
   return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+// ---- trusted accounts (payee → value fingerprint; the BEC-fraud catch) ----
+// Why only fingerprints: we recognize a previously-saved value without ever
+// storing it. A record is written only when the user explicitly saves one.
+
+export async function getTrustedAccounts(): Promise<TrustedAccount[]> {
+  return get<TrustedAccount[]>(STORAGE_KEYS.trusted, [])
+}
+
+const sameLabel = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase()
+
+/** save a new trusted account, or bump the one with the same label+format+fingerprint */
+export async function saveTrustedAccount(
+  rec: { label: string; format: string; fingerprint: string; origin: string },
+): Promise<void> {
+  const list = await getTrustedAccounts()
+  const now = new Date().toISOString()
+  const existing = list.find(
+    (a) => sameLabel(a.label, rec.label) && a.format === rec.format && a.fingerprint === rec.fingerprint,
+  )
+  if (existing) {
+    existing.useCount++
+    existing.lastUsedAt = now
+  } else {
+    list.push({
+      id: crypto.randomUUID(),
+      label: rec.label.trim(),
+      format: rec.format,
+      fingerprint: rec.fingerprint,
+      origin: rec.origin,
+      createdAt: now,
+      lastUsedAt: now,
+      useCount: 1,
+    })
+  }
+  await chrome.storage.local.set({ [STORAGE_KEYS.trusted]: list })
+}
+
+export async function removeTrustedAccount(id: string): Promise<void> {
+  const list = (await getTrustedAccounts()).filter((a) => a.id !== id)
+  await chrome.storage.local.set({ [STORAGE_KEYS.trusted]: list })
+}
+
+export async function clearTrustedAccounts(): Promise<void> {
+  await chrome.storage.local.set({ [STORAGE_KEYS.trusted]: [] })
 }

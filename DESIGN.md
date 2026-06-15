@@ -373,10 +373,20 @@ wrong-destination, not just typos. Features that close that gap:
   these") with a value audit (filled fields → "these are wrong"). Reuses the
   shared overlay renderer; built-in validators only; on-demand, no new
   permission.
-- **Trusted-payee memory** (proposed, the big one): save payee→value HMAC
-  fingerprints locally; warn when an account differs from the one used
-  before for that payee. Catches BEC, which no checksum can. Reuses the
-  opt-in HMAC infra.
+- **Trusted-payee memory** (shipped, the big one): on the match screen an
+  optional "Payee" field. Saving stores an HMAC fingerprint of the value
+  (never the value) under that label. On a later check: recognition (green
+  "✓ Trusted: Acme") when the fingerprint matches any saved account, and —
+  the BEC catch — an amber "⚠ This is NOT the account you saved for Acme"
+  when the named payee has saved account(s) but none match. Nothing is
+  fingerprinted unless the user explicitly names a payee (per-account opt-in;
+  the HMAC key is created only on first use). Pure decision logic in
+  `engine/trusted.ts` (classifyPayee/recognize, unit-tested); storage CRUD in
+  `shared/storage.ts`; management UI in options. A label can hold several
+  accounts (a value matches if it equals any). Honest caveat (documented):
+  if both the fingerprint store and the device key are exfiltrated, short
+  numeric values are brute-forceable — hence fingerprint-only, key-local,
+  explicit-save.
 - **Bank name from routing number** (proposed): needs a vetted
   routing→bank dataset — deferred on data-quality grounds (a wrong name is
   worse than none for a trust product).

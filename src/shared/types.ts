@@ -39,6 +39,19 @@ export interface Stats {
   mismatchesCaught: number
 }
 
+// A value the user explicitly chose to remember for a payee. Stores a one-way
+// HMAC fingerprint, never the value itself. The label is a user-typed name.
+export interface TrustedAccount {
+  id: string
+  label: string
+  format: string
+  fingerprint: string
+  origin: string
+  createdAt: string
+  lastUsedAt: string
+  useCount: number
+}
+
 export const STORAGE_KEYS = {
   settings: 'dc:settings',
   userValidators: 'dc:userValidators',
@@ -48,6 +61,7 @@ export const STORAGE_KEYS = {
   hmacKey: 'dc:hmacKey',
   license: 'dc:license',
   devLicense: 'dc:devLicense',
+  trusted: 'dc:trusted',
 } as const
 
 /**

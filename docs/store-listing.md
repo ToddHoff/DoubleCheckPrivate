@@ -17,6 +17,7 @@ REAL VALIDATION, NOT JUST PATTERNS
 
 • 23 built-in formats: US routing numbers (ABA), IBAN, payment cards, SSN, EIN, SWIFT/BIC, UK sort codes, CLABE, CUSIP, ISIN, VIN, Bitcoin and Ethereum addresses, phone numbers, email, dates, and currency amounts
 • Formats with check digits are verified mathematically — a single wrong digit in a routing number, IBAN, or card number is caught instantly, often before you re-type anything
+• Trusted accounts: name a payee once and Double Check warns when an account doesn't match the one you saved for them — the check that catches fake "our bank details changed" (BEC) fraud, which no checksum can. Stores a one-way fingerprint, never the value.
 • Currency amounts parse US and European separators, refuse genuinely ambiguous ones ("1,234" could be two different numbers — Double Check won't guess), and confirm in words: 1,200,000.00 — one million two hundred thousand and 00/100
 • Names the destination country for IBANs and SWIFT/BIC codes, so a payment headed somewhere unexpected stands out
 • Flags invisible and look-alike characters — a Cyrillic "а" or a zero-width space pasted from a document — that pass a glance but break the value or hide an attack

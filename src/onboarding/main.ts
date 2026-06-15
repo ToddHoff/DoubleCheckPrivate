@@ -68,6 +68,11 @@ shell.append(
       feat('Blind double entry',
         'Re-type the value from your source — not from the field. Two independent readings must agree before ' +
         'anything is confirmed. Empty fields get a safe two-step entry flow.'),
+      feat('Remembers the right account for each payee',
+        'Name the payee on a match and Double Check remembers that account (as a one-way fingerprint, never ' +
+        'the value). Next time it confirms “✓ matches Acme’s usual account” — or warns “⚠ this is NOT the ' +
+        'account you saved for Acme.” That’s the catch for fake “our bank details changed” emails, which no ' +
+        'checksum can spot.'),
       feat('Mismatches explained, not just flagged',
         'A red result names the error: “characters 5 and 6 appear swapped,” one wrong digit, a missing or ' +
         'extra character — with a character-level diff. Transposition is the classic transcription error, ' +

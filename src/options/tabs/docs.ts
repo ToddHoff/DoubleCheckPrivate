@@ -45,6 +45,17 @@ like — with a clickable pill. Click a pill to open the card on that field, or
 press Esc to dismiss. The scan reads field labels and types only, never the
 values, and runs entirely on your device.</p>
 
+<h2>Trusted accounts (catching “our bank details changed” fraud)</h2>
+<p>On a green match, you can name the payee. Double Check remembers that
+account for that payee — storing a one-way fingerprint, never the value. The
+next time you verify a value for a saved payee, it confirms <em>“matches the
+account you saved for Acme,”</em> or warns <em>“this is NOT the account you
+saved for Acme”</em> if it differs. That last warning is the one a checksum
+can't give you — it's how a fraudulent “we changed banks” request gets
+caught. Manage or delete saved accounts in the Settings tab. Nothing is
+fingerprinted unless you name a payee, and the key never leaves your
+device.</p>
+
 <h2>Audit a whole page</h2>
 <p>Right-click anywhere on a page and choose <em>Check this page for
 problems</em>. Double Check inspects every field that already has a value and

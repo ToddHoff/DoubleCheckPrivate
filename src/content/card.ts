@@ -1,10 +1,10 @@
 import type { Diagnosis, ValidationResult, Validator } from '../engine'
-import { diagnose, extractCandidates, groupValue, normalizeSpoken, validate } from '../engine'
+import { classifyPayee, diagnose, extractCandidates, groupValue, normalizeSpoken, recognize, validate } from '../engine'
 import { fileToDataUrl } from './capture'
 import type { LicenseStatus, LogEntry, Settings } from '../shared/types'
 import {
-  appendLogEntry, bumpStats, fingerprintValue, getTtsRate, markLogEntryStale,
-  rememberFormat, saveSettings, saveTtsRate, TTS_RATES,
+  appendLogEntry, bumpStats, fingerprintValue, getTrustedAccounts, getTtsRate,
+  markLogEntryStale, rememberFormat, saveSettings, saveTrustedAccount, saveTtsRate, TTS_RATES,
 } from '../shared/storage'
 import { CARD_CSS } from './styles'
 import { speakValue, speechAvailable, stopSpeaking } from './speech'
@@ -93,6 +93,13 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   let usedTts = false
   let usedOcr = false
   let usedVoice = false
+  // trusted-payee: the optional payee the user associates on the match screen,
+  // and a memoized fingerprint of the matched value (computed only on demand,
+  // so the HMAC key is created only when the feature is actually used)
+  let payeeLabel = ''
+  let trustedMethod: string | null = null
+  let matchFpPromise: Promise<string> | null = null
+  const matchFingerprint = () => (matchFpPromise ??= fingerprintValue(subjectResult().normalized))
 
   const validator = () =>
     ctx.validators.find((v) => v.id === formatId) ?? ctx.validators.find((v) => v.id === 'generic-text')!
@@ -520,6 +527,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         ...(usedTts ? ['read-aloud'] : []),
         ...(usedOcr ? ['ocr'] : []),
         ...(usedVoice ? ['voice'] : []),
+        ...(trustedMethod ? [trustedMethod] : []),
       ],
       result: mismatchSeen ? 'mismatch-resolved' : 'match',
       attested: true,
@@ -530,6 +538,15 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     await appendLogEntry(entry)
     await bumpStats(mismatchSeen)
     await rememberFormat(location.origin, fieldSignature(field), formatId)
+    // remember the value as a trusted account for this payee (fingerprint only)
+    if (payeeLabel.trim()) {
+      await saveTrustedAccount({
+        label: payeeLabel,
+        format: formatId,
+        fingerprint: await matchFingerprint(),
+        origin: location.origin,
+      })
+    }
     badges.get(field)?.remove()
     markVerified(field)
     // for amounts, the badge shows the verified interpretation — "12345" in
@@ -589,6 +606,10 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     const r = subjectResult()
     card.className = 'card state-match'
     body.textContent = ''
+    // fresh trusted-payee state for this match
+    payeeLabel = ''
+    trustedMethod = null
+    matchFpPromise = null
     const [bigText, words] = r.formatted.includes(' — ')
       ? [r.formatted.split(' — ')[0], r.formatted.split(' — ').slice(1).join(' — ')]
       : [groupValue(r.normalized, validator().grouping), '']
@@ -617,6 +638,59 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     if (inputMode) {
       writeField(firstEntry.trim())
     }
+
+    // ---- trusted payee: recognition + changed-account (BEC) warning ----
+    const trustedChip = h('div', { class: 'chips' })
+    const payeeInput = h('input', {
+      class: 'payee', type: 'text', placeholder: 'e.g. Acme payroll',
+      autocomplete: 'off', list: 'dc-payees', 'aria-label': 'Payee',
+    }) as HTMLInputElement
+    const payeeList = h('datalist', { id: 'dc-payees' })
+    const payeeStatus = h('div', { class: 'hint' })
+    body.append(
+      trustedChip,
+      h('div', { class: 'lbl' }, 'Paying someone? Name them to check against the account you saved before'),
+      payeeInput, payeeList, payeeStatus,
+    )
+    void (async () => {
+      const accounts = await getTrustedAccounts()
+      for (const label of [...new Set(accounts.map((a) => a.label))]) {
+        payeeList.append(h('option', { value: label }))
+      }
+      // recognition: the value already matches something the user saved
+      if (accounts.length) {
+        const known = recognize(await matchFingerprint(), accounts)
+        if (known) {
+          trustedChip.append(
+            h('span', { class: 'chip ok' }, `✓ Trusted account: ${known.label} (used ${known.useCount}×)`),
+          )
+        }
+      }
+      payeeInput.addEventListener('input', () => {
+        void (async () => {
+          payeeLabel = payeeInput.value.trim()
+          trustedMethod = null
+          payeeStatus.textContent = ''
+          payeeStatus.className = 'hint'
+          const verdict = classifyPayee(await matchFingerprint(), accounts, payeeLabel, formatId)
+          if (!verdict) return
+          if (verdict.verdict === 'match') {
+            payeeStatus.textContent = `✓ Matches the account you saved for ${payeeLabel}.`
+            payeeStatus.className = 'hint trusted-ok'
+            trustedMethod = 'trusted-match'
+          } else if (verdict.verdict === 'changed') {
+            payeeStatus.textContent =
+              `⚠ This is NOT the account you saved for ${payeeLabel} (you’ve saved ${verdict.savedCount}). ` +
+              'Confirm the change is legitimate before you proceed.'
+            payeeStatus.className = 'hint trusted-warn'
+            trustedMethod = 'trusted-changed'
+          } else {
+            payeeStatus.textContent = `New payee — this account will be remembered for ${payeeLabel} when you confirm.`
+            trustedMethod = 'trusted-new'
+          }
+        })()
+      })
+    })()
 
     const checkbox = h('input', { type: 'checkbox', id: 'attest' })
     const attest = h('label', { class: 'attest', for: 'attest' },
