@@ -12,6 +12,11 @@ chrome.runtime.onInstalled.addListener((details) => {
   // right-click invocation on editable fields; recreate idempotently
   // (onInstalled also fires on updates, and duplicate ids throw)
   chrome.contextMenus.removeAll(() => {
+    // Why non-overlapping contexts: Chrome groups multiple same-context items
+    // from one extension under a "Double Check ▸" submenu, which would bury
+    // the common field action behind a hover. Keeping them in separate
+    // contexts (a field right-click matches 'editable', not 'page') makes each
+    // a single top-level item — "Double-check this field" stays one click.
     chrome.contextMenus.create({
       id: 'dc-check-field',
       title: 'Double-check this field',
@@ -20,7 +25,7 @@ chrome.runtime.onInstalled.addListener((details) => {
     chrome.contextMenus.create({
       id: 'dc-scan-page',
       title: 'Find fields to double-check on this page',
-      contexts: ['page', 'editable', 'selection', 'link', 'image'],
+      contexts: ['page', 'selection', 'link', 'image'],
     })
   })
 })
