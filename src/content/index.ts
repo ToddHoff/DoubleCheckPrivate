@@ -7,7 +7,7 @@ import type { LicenseStatus } from '../shared/types'
 import { fieldSignals, fieldSignature, findFocusedField, type CheckableField } from './field'
 import { isCardMounted, mountCard, type CardContext } from './card'
 import { installSubmitGuard } from './submit-guard'
-import { scanAndTag } from './scan'
+import { auditAndFlag, scanAndTag } from './scan'
 
 declare global {
   interface Window {
@@ -66,6 +66,12 @@ function scanPage(): number {
   return scanAndTag(BUILTIN_VALIDATORS, openOn)
 }
 
+// audit every filled field for detectable problems (failed checksums, bad
+// country codes, hidden/look-alike characters) and flag each with the issue
+function auditPage(): number {
+  return auditAndFlag(BUILTIN_VALIDATORS, openOn)
+}
+
 // Why no activate() on load: the background always follows injection with a
 // dc-activate message, and the popup's Submit Guard toggle injects this
 // script purely to arm the guard — mounting a card then would be a surprise.
@@ -74,6 +80,7 @@ if (!window.__doubleCheckLoaded) {
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg?.kind === 'dc-activate') sendResponse({ mounted: activate() })
     else if (msg?.kind === 'dc-scan-page') sendResponse({ ok: true, count: scanPage() })
+    else if (msg?.kind === 'dc-audit-page') sendResponse({ ok: true, count: auditPage() })
   })
   void getSettings().then((s) => installSubmitGuard(s.submitGuardOrigins))
 }

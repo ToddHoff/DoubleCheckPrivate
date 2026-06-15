@@ -365,6 +365,14 @@ wrong-destination, not just typos. Features that close that gap:
   flags zero-width/invisible characters and homoglyphs (Cyrillic/Greek/
   fullwidth look-alikes) in the RAW value, on every format, as warnings.
   Catches paste artifacts and homoglyph attacks the eye misses.
+- **Page audit** (shipped): right-click → "Check this page for problems" →
+  `content/scan.ts auditAndFlag` validates every *filled* field against its
+  detected high-value format and flags real problems (failed checksum, bad
+  country, hidden/look-alike chars) with red, clickable, clearable pills.
+  Complements the green candidate-tagging scan (empty/any fields → "verify
+  these") with a value audit (filled fields → "these are wrong"). Reuses the
+  shared overlay renderer; built-in validators only; on-demand, no new
+  permission.
 - **Trusted-payee memory** (proposed, the big one): save payee→value HMAC
   fingerprints locally; warn when an account differs from the one used
   before for that payee. Catches BEC, which no checksum can. Reuses the

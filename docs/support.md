@@ -22,6 +22,13 @@ that field, or press Esc to dismiss. The scan reads field labels and types
 only, never values, and runs entirely on your device. (On a field itself,
 right-click gives you "Double-check this field" directly.)
 
+**Can it check a whole page at once?**
+Yes — right-click anywhere on a page (not on a field) and choose "Check this
+page for problems." Double Check inspects every filled field and flags the
+ones with a detectable issue (failed checksum, invalid country code, hidden
+or look-alike character) with a red note you can click to fix or dismiss.
+Empty fields are left alone, and values are read locally, never transmitted.
+
 **The keyboard shortcut does nothing.**
 Check it's actually bound at `chrome://extensions/shortcuts` — Chrome
 silently leaves it blank if another extension claimed the combination. On a

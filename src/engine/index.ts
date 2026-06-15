@@ -7,6 +7,8 @@ export { suggestFormats, rankFormats, highValueCandidate, HIGH_VALUE_FORMATS, TA
 export type { RankedFormat } from './detect'
 export { extractCandidates } from './extract'
 export { normalizeSpoken } from './spoken'
+export { suspiciousChars } from './suspicious'
+export { countryName } from './countries'
 export type { FieldSignals } from './detect'
 export { applyNormalize, groupValue } from './normalize'
 export { parseAmount, formatAmount, amountToWords, integerToWords } from './amount'

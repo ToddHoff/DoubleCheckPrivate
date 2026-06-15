@@ -27,6 +27,11 @@ chrome.runtime.onInstalled.addListener((details) => {
       title: 'Find fields to double-check on this page',
       contexts: ['page', 'selection', 'link', 'image'],
     })
+    chrome.contextMenus.create({
+      id: 'dc-audit-page',
+      title: 'Check this page for problems',
+      contexts: ['page', 'selection', 'link', 'image'],
+    })
   })
 })
 
@@ -34,7 +39,8 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   // the menu click is the user gesture that grants activeTab, same as the
   // shortcut; right-clicking the field also focuses it
   if (info.menuItemId === 'dc-check-field' && tab?.id) void injectCard(tab.id)
-  if (info.menuItemId === 'dc-scan-page' && tab?.id) void injectScan(tab.id)
+  if (info.menuItemId === 'dc-scan-page' && tab?.id) void injectPage(tab.id, 'dc-scan-page')
+  if (info.menuItemId === 'dc-audit-page' && tab?.id) void injectPage(tab.id, 'dc-audit-page')
 })
 
 chrome.alarms.onAlarm.addListener((alarm) => {
@@ -81,13 +87,13 @@ async function injectCard(tabId: number) {
   }
 }
 
-async function injectScan(tabId: number) {
+async function injectPage(tabId: number, kind: 'dc-scan-page' | 'dc-audit-page') {
   try {
     await chrome.scripting.executeScript({ target: { tabId }, files: [contentScript] })
   } catch {
     return // restricted page — can't scan
   }
-  await sendWithRetry(tabId, { kind: 'dc-scan-page' })
+  await sendWithRetry(tabId, { kind })
 }
 
 chrome.commands.onCommand.addListener((command, tab) => {

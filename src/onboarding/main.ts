@@ -61,6 +61,10 @@ shell.append(
         'Right-click a page and choose “Find fields to double-check.” Double Check scans the page and tags the ' +
         'high-value fields — account and routing numbers, amounts, IDs — so you know exactly what to verify. ' +
         'It reads field labels, never values.'),
+      feat('Audit a whole page in one click',
+        'Right-click and choose “Check this page for problems.” Double Check inspects every filled field and ' +
+        'flags the ones with a real issue — a failed checksum, a wrong country code, a hidden or look-alike ' +
+        'character — each with a clearable note. Click one to open the card and fix it.'),
       feat('Blind double entry',
         'Re-type the value from your source — not from the field. Two independent readings must agree before ' +
         'anything is confirmed. Empty fields get a safe two-step entry flow.'),

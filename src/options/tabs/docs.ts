@@ -45,6 +45,15 @@ like — with a clickable pill. Click a pill to open the card on that field, or
 press Esc to dismiss. The scan reads field labels and types only, never the
 values, and runs entirely on your device.</p>
 
+<h2>Audit a whole page</h2>
+<p>Right-click anywhere on a page and choose <em>Check this page for
+problems</em>. Double Check inspects every field that already has a value and
+flags the ones with a detectable problem — a failed checksum, an invalid
+country code, or a hidden/look-alike character — with a red note you can
+dismiss (or press Esc). Click a note to open the card on that field and fix
+it. Empty fields are left alone; the audit reads values locally and never
+transmits them.</p>
+
 <h2>Empty fields (input mode)</h2>
 <p>If the field is empty, Double Check helps you enter the value safely: type
 it once from the source, then re-type it blind. Only a matching pair is

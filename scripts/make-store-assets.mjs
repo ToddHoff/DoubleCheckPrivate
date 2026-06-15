@@ -140,41 +140,52 @@ async function main() {
   // open shadow (staging patch) → drive the card by selector, robust to layout
   const entry = () => page.locator('.entry')
   const primary = () => page.locator('.btn.primary')
-  const scanPage = async () => {
+  const pagePass = async (kind) => {
     await worker.evaluate(
-      async ({ tabId, file }) => {
+      async ({ tabId, file, kind }) => {
         await chrome.scripting.executeScript({ target: { tabId }, files: [file] })
         for (let i = 0; i < 20; i++) {
           try {
-            await chrome.tabs.sendMessage(tabId, { kind: 'dc-scan-page' })
+            await chrome.tabs.sendMessage(tabId, { kind })
             return
           } catch {
             await new Promise((r) => setTimeout(r, 100))
           }
         }
       },
-      { tabId, file: contentScriptFile },
+      { tabId, file: contentScriptFile, kind },
     )
   }
 
-  // 1: verify mode on the pre-filled routing number — instant checksum chip
-  await page.locator('#routing').fill(ROUTING_OK)
+  // fresh page per card screenshot — avoids state bleed between them
+  const goPlain = async () => {
+    await page.goto('http://localhost:8923/plain.html')
+    await page.waitForTimeout(150)
+  }
+
+  // 1: transposition caught — the product's thesis
+  await goPlain()
   await page.locator('#routing').focus()
   await openCard()
   await waitStep('verify-entry')
   await page.waitForTimeout(300)
-  await shot(1)
-
-  // 2: transposition caught — re-type with the last two digits swapped
   await entry().fill(ROUTING_OK.slice(0, 7) + '12')
   await primary().click() // Compare
   await waitStep('mismatch')
   await page.waitForTimeout(200)
+  await shot(1)
+
+  // 2: IBAN verified — checksum valid + destination country (Tier 2)
+  await goPlain()
+  await page.locator('#iban').fill('GB82WEST12345698765432')
+  await page.locator('#iban').focus()
+  await openCard()
+  await waitStep('verify-entry')
+  await page.waitForTimeout(300)
   await shot(2)
-  await page.keyboard.press('Escape')
 
   // 3: amount match — big green value + amount in words
-  await page.locator('#amount').fill('')
+  await goPlain()
   await page.locator('#amount').focus()
   await openCard()
   await waitStep('input-first')
@@ -186,25 +197,24 @@ async function main() {
   await waitStep('match')
   await page.waitForTimeout(200)
   await shot(3)
-  // attest so a log entry exists for screenshot 5
-  await page.locator('.attest input').check()
-  await primary().click() // Confirm — log this check
-  await page.waitForTimeout(2000) // card auto-closes
+  await page.keyboard.press('Escape')
 
-  // 4: page scan — tag the high-value fields on a real form
+  // 4: page audit — red flags on real problems (look-alike + bad checksum),
+  // staged in the top Banking section so several are visible at once
   await page.goto('http://localhost:8923/all-formats.html')
-  await scanPage()
+  await page.locator('#swift').fill('NWBKGB2І') // Cyrillic look-alike (CLABE stays pre-filled failing)
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await pagePass('dc-audit-page')
   await page.waitForSelector('[data-double-check-scan]', { state: 'attached', timeout: 8000 })
   await page.waitForTimeout(500)
   await shot(4)
 
-  // 5: the audit log — proof without the value
-  const options = await context.newPage()
-  await options.setViewportSize({ width: 1280, height: 800 })
-  await options.goto(`chrome-extension://${extId}/src/options/index.html#log`)
-  await options.waitForTimeout(400)
-  await options.screenshot({ path: 'store-assets/screenshot-5.jpg', type: 'jpeg', quality: 92 })
-  console.log('screenshot-5.jpg')
+  // 5: page scan — tag the high-value fields worth verifying
+  await page.goto('http://localhost:8923/all-formats.html')
+  await pagePass('dc-scan-page')
+  await page.waitForSelector('[data-double-check-scan]', { state: 'attached', timeout: 8000 })
+  await page.waitForTimeout(500)
+  await shot(5)
 
   await context.close()
   server.close()
