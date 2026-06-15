@@ -17,6 +17,13 @@ describe('suggestFormats', () => {
     expect(suggest({ name: 'server_ip_address' })[0]).toBe('ip-address')
   })
 
+  it('“payment_date” is a date, not a currency amount (weak “payment” signal)', () => {
+    expect(suggest({ name: 'payment_date', id: 'date', label: 'Date' })[0]).toBe('date-mdy')
+    // but real amount fields, even when labelled "Payment amount", still win
+    expect(suggest({ label: 'Payment amount' })[0]).toBe('currency-amount')
+    expect(suggest({ name: 'total_amount' })[0]).toBe('currency-amount')
+  })
+
   it('a passing checksum in the value outranks weak keyword evidence', () => {
     // field is vaguely named "account" but holds a valid routing number
     const ids = suggest({ name: 'account', value: '021000021' })

@@ -32,14 +32,18 @@ const KEYWORD_RULES: Rule[] = [
   { re: /isin/, formatId: 'isin', score: 95 },
   { re: /\bvin\b|vehicle.?id/, formatId: 'vin', score: 90 },
   { re: /card.?(number|no|num)|credit.?card|debit.?card|\bpan\b/, formatId: 'card', score: 85 },
-  { re: /amount|total|price|payment|\bamt\b|\bsum\b/, formatId: 'currency-amount', score: 75 },
+  { re: /amount|total|price|\bamt\b|\bsum\b/, formatId: 'currency-amount', score: 75 },
+  // "payment" is a weak currency signal — it substring-matches "payment_date",
+  // "payment_method", etc. Keep it, but below an explicit date token so
+  // "payment_date" reads as a date, not an amount.
+  { re: /payment/, formatId: 'currency-amount', score: 55 },
   { re: /bitcoin|\bbtc\b/, formatId: 'btc-address', score: 90 },
   { re: /ethereum|\beth\b|wallet/, formatId: 'eth-address', score: 70 },
   { re: /\bip\b|ip.?(address|addr)|ipv4|ipv6/, formatId: 'ip-address', score: 90 },
   { re: /e.?mail/, formatId: 'email', score: 80 },
   { re: /phone|mobile|\btel\b|\bfax\b/, formatId: 'phone-e164', score: 75 },
   { re: /account.?(number|no|num|#)|beneficiary|acct/, formatId: 'us-bank-account', score: 60 },
-  { re: /\bdate\b|\bdob\b/, formatId: 'date-mdy', score: 50 },
+  { re: /\bdate\b|\bdob\b/, formatId: 'date-mdy', score: 70 },
 ]
 
 /**
