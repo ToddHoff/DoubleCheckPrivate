@@ -43,12 +43,12 @@ it once from the source, then re-type it blind. Only a matching pair is
 written into the field.</p>
 
 <h2>Comparing against an image</h2>
-<p>Use <em>Scan screen region</em> to drag a box around the value (a PDF open
-in another tab, a web page, anything visible), or <em>Paste image</em>
-(⌘V/Ctrl+V) for screenshots and phone photos. Recognition runs entirely on
-your machine. Anything the OCR finds that passes format validation is offered
-as a candidate; values that look close but fail validation are shown as
-warnings, never silently used.</p>
+<p>Press <em>Paste image</em> and paste a screenshot or phone photo of the
+value — from another tab, a PDF, an email, anywhere. Copy it to the clipboard
+first (Mac: Shift+Control+Command+4 to grab a region; Windows: Win+Shift+S),
+then ⌘V / Ctrl+V. Recognition runs entirely on your machine. Anything the OCR
+finds that passes format validation is offered as a candidate; values that
+look close but fail validation are shown as warnings, never silently used.</p>
 
 <h2>Voice input</h2>
 <p><em>Speak it</em> lets you read the value aloud from your source —

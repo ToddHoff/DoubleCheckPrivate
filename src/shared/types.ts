@@ -63,7 +63,6 @@ export type RuntimeMessage =
   | { kind: 'dc-license-status' }
   | { kind: 'dc-payment-action'; action: string }
   | { kind: 'dc-ocr'; imageDataUrl: string }
-  | { kind: 'dc-capture-visible-tab' }
   | { kind: 'dc-open-mic-setup' }
   | { kind: 'dc-open-help' }
 

@@ -1,6 +1,6 @@
 import type { Diagnosis, ValidationResult, Validator } from '../engine'
 import { diagnose, extractCandidates, groupValue, normalizeSpoken, validate } from '../engine'
-import { cropToRegion, fileToDataUrl, selectRegion } from './capture'
+import { fileToDataUrl } from './capture'
 import type { LicenseStatus, LogEntry, Settings } from '../shared/types'
 import {
   appendLogEntry, bumpStats, fingerprintValue, getTtsRate, markLogEntryStale,
@@ -413,34 +413,6 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       }
     }
 
-    // Why scan is conditional: captureVisibleTab needs the activeTab grant
-    // from a real invocation (shortcut / toolbar click). The onboarding
-    // practice page mounts the card with a plain button, so no grant can
-    // ever exist there — showing a button that always fails teaches users
-    // that scanning is broken.
-    const canScan = location.protocol !== 'chrome-extension:'
-    const scan = h('button', { class: 'btn' }, '📷 Scan screen region')
-    scan.addEventListener('click', async () => {
-      host.style.visibility = 'hidden'
-      try {
-        const region = await selectRegion()
-        if (!region) return
-        await new Promise((r) => setTimeout(r, 80)) // let the overlay repaint away
-        const res = await chrome.runtime.sendMessage({ kind: 'dc-capture-visible-tab' }).catch(() => null)
-        if (!res?.ok) {
-          setStatus(
-            'Couldn’t capture this page — re-open Double Check with the keyboard shortcut or the toolbar ' +
-            'button (that grants one-time page access), or paste a screenshot instead (⌘V / Ctrl+V).')
-          return
-        }
-        const cropped = await cropToRegion(res.dataUrl as string, region)
-        host.style.visibility = ''
-        await runOcr(cropped)
-      } finally {
-        host.style.visibility = ''
-      }
-    })
-
     const paste = h('button', { class: 'btn' }, '🖼 Paste image')
     paste.addEventListener('click', () => {
       expectingPaste = true
@@ -503,15 +475,13 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
     // while OCR runs, the assist buttons can't start a second job
     function setBusy(busy: boolean): void {
-      for (const b of [scan, paste, mic]) {
+      for (const b of [paste, mic]) {
         if (busy) b.setAttribute('disabled', '')
         else b.removeAttribute('disabled')
       }
     }
 
-    const row = h('div', { class: 'btnrow' })
-    if (canScan) row.append(scan)
-    row.append(paste, mic)
+    const row = h('div', { class: 'btnrow' }, paste, mic)
     wrap.append(
       h('div', { class: 'lbl' },
         onValue ? 'Or read the value in from an image or your voice' : 'Or compare against an image or your voice'),
@@ -520,11 +490,6 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     // copying a screenshot to the clipboard isn't obvious — spell it out,
     // for this machine's platform only
     wrap.append(h('div', { class: 'hint' }, PASTE_HINT))
-    if (!canScan) {
-      wrap.append(h('div', { class: 'hint' },
-        'Screen scanning works on regular web pages (it uses the one-time access granted by the shortcut). ' +
-        'On this page, paste a screenshot instead.'))
-    }
     wrap.append(status, cands)
     return wrap
   }

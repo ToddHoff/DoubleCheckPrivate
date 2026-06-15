@@ -60,12 +60,6 @@ phone photo? Open it in a viewer, copy it with Command/Ctrl+C, and paste —
 from a phone, AirDrop or message it to your computer first, or use a shared
 clipboard like Apple Universal Clipboard.
 
-**"Couldn't capture this page" when scanning a screen region.**
-Screen scanning uses the one-time page access Chrome grants when you open
-Double Check with the shortcut, the right-click menu, or the toolbar button.
-Re-open it one of those ways, or paste a screenshot instead (⌘V / Ctrl+V
-works in any entry step).
-
 **The read-aloud speaker button is missing.**
 It appears in verify mode and on the green match screen — not during blind
 entry, where hearing the value would defeat the purpose. If it's disabled

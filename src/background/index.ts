@@ -87,7 +87,7 @@ async function ensureOffscreen(): Promise<void> {
   })
 }
 
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg?.kind === 'dc-activate-from-popup' && typeof msg.tabId === 'number') {
     void injectCard(msg.tabId).then(() => sendResponse({ ok: true }))
     return true // async response
@@ -101,19 +101,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         sendResponse(res ?? { ok: false, error: 'no OCR response' })
       } catch (e) {
         sendResponse({ ok: false, error: e instanceof Error ? e.message : 'OCR unavailable' })
-      }
-    })()
-    return true
-  }
-  if (msg?.kind === 'dc-capture-visible-tab') {
-    void (async () => {
-      try {
-        const dataUrl = await chrome.tabs.captureVisibleTab(sender.tab?.windowId ?? chrome.windows.WINDOW_ID_CURRENT, {
-          format: 'png',
-        })
-        sendResponse({ ok: true, dataUrl })
-      } catch (e) {
-        sendResponse({ ok: false, error: e instanceof Error ? e.message : 'capture failed' })
       }
     })()
     return true

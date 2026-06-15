@@ -30,7 +30,7 @@ shell.append(
     h('h2', {}, h('span', { class: 'num' }, '2'), 'Your values never leave this computer'),
     h('p', {},
       'No value you verify is ever transmitted, logged, or stored. No analytics, no telemetry. ' +
-      'Reading aloud uses your device’s local voice; image scanning runs a bundled, offline OCR engine. ' +
+      'Reading aloud uses your device’s local voice; reading pasted images runs a bundled, offline OCR engine. ' +
       'The extension can’t even see a page until you invoke it there — it has no standing access to any website. ' +
       'The only network traffic is license checking (your email and payment status, nothing else).'),
     h('p', {},
@@ -68,8 +68,9 @@ shell.append(
         'US and European separators both parse; genuinely ambiguous amounts like “1,234” are refused rather ' +
         'than guessed. Matches confirm in words: 1,200,000.00 — one million two hundred thousand and 00/100.'),
       feat('Compare against an image',
-        'Scan a screen region or paste a screenshot or phone photo. A bundled OCR engine reads it on your ' +
-        'device — images are never uploaded — and common misreads like O-for-0 are repaired automatically.'),
+        'Paste a screenshot or phone photo of the value — from another tab, a PDF, an email, anywhere. ' +
+        'A bundled OCR engine reads it on your device, images are never uploaded, and common misreads ' +
+        'like O-for-0 are repaired automatically.'),
       feat('Speak it',
         'Read the value aloud from the paper in your hand; Chrome’s on-device speech recognition transcribes ' +
         'it (nothing leaves the machine) and it’s validated like any other entry.', 'Chrome 139+'),
@@ -126,13 +127,10 @@ shell.append(
     h('p', {}, 'Open Double Check on the field using either way above — or the button below. ' +
       'Type the number (try getting one digit wrong on purpose to see the red diff).'),
     h('div', { class: 'demo-note' },
-      h('strong', {}, 'Heads up — this practice page is slightly hobbled. '),
-      'It’s one of the extension’s own pages, and Chrome restricts a couple of things here that work ' +
-      'normally everywhere else: “Scan screen region” isn’t available on this page (use Paste image or ' +
-      'Speak it instead), and the microphone needs a one-time grant via the voice setup rather than a ' +
-      'simple prompt. On real websites — where you’ll actually use Double Check — scanning works, the mic ' +
-      'asks once per site, and the shortcut is handled natively by Chrome. Everything else you see here ' +
-      '(checksums, blind double entry, the red diff, the badge, the log) is exactly the real product.'),
+      h('strong', {}, 'This is a safe practice field. '),
+      'Everything you see here — checksums, blind double entry, the red diff, Paste image, Speak it, the ' +
+      'badge, the log — is exactly the real product. On real websites the shortcut is handled natively by ' +
+      'Chrome and the microphone asks for permission once per site.'),
     h('div', {}, tryBtn),
     practiceStatus,
   ),
@@ -141,7 +139,7 @@ shell.append(
     h('ul', {},
       h('li', {}, 'Focus the field → shortcut → confirm the format → re-type from your source → attest.'),
       h('li', {}, 'Empty field? Double Check helps you enter the value with a blind second entry.'),
-      h('li', {}, 'Compare against an image: scan a screen region or paste a screenshot — recognized locally.'),
+      h('li', {}, 'Compare against an image: paste a screenshot of the value — recognized locally.'),
       h('li', {}, 'Every attested check is logged (never the value) — see the Log tab in Settings.'),
     ),
     (() => {
@@ -218,8 +216,6 @@ shell.append(
       '<strong>On a Mac:</strong> press <kbd>Shift</kbd>+<kbd>Command</kbd>+<kbd>Control</kbd>+<kbd>4</kbd>, then drag a box around the value — that copies the selection straight to the clipboard. (Plain Shift+Command+4 saves it to a file instead.) Then click into Double Check’s entry box, press the <em>Paste image</em> button, and press <kbd>Command</kbd>+<kbd>V</kbd>.',
       '<strong>On Windows:</strong> press <kbd>Windows</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>, then drag a box around the value — the snipping tool copies it to the clipboard. Then click into the entry box, press <em>Paste image</em>, and press <kbd>Ctrl</kbd>+<kbd>V</kbd>.',
       '<strong>Already have an image file or a phone photo?</strong> Open it in a viewer (Preview, Photos), copy it with <kbd>Command</kbd>/<kbd>Ctrl</kbd>+<kbd>C</kbd>, then paste it into the card. From a phone, AirDrop or message the photo to your computer first, or use a shared clipboard like Apple Universal Clipboard.'),
-    trouble('“Couldn’t capture this page” when scanning a screen region',
-      'Screen scanning uses the one-time page access Chrome grants when you open Double Check with the shortcut or the toolbar button. If the card was opened another way (like the practice button on this page), there’s no grant — re-open it with the shortcut, or paste a screenshot instead (⌘V / Ctrl+V works anywhere).'),
     trouble('The read-aloud speaker button is missing',
       'It appears in verify mode and on the green match screen — not during blind entry, where hearing the value would defeat the purpose. If it’s disabled with a “no local voice” note, your device has no on-device voice; network voices are deliberately never used. It’s also hidden on masked (password-type) fields, where reading the value aloud would leak it.'),
     trouble('The field shows dots, not the value',

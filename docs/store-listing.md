@@ -21,7 +21,7 @@ REAL VALIDATION, NOT JUST PATTERNS
 
 MORE WAYS TO VERIFY
 
-• Compare against an image: scan a screen region or paste a screenshot or phone photo — read by a bundled OCR engine on your device, never uploaded
+• Compare against an image: paste a screenshot or phone photo of the value — read by a bundled OCR engine on your device, never uploaded
 • Speak it: read the value aloud from the paper in your hand; Chrome's on-device speech recognition transcribes it (Chrome 139+), and nothing leaves your machine
 • Hear it read back digit by digit by a local on-device voice, at the speed you choose
 • Empty fields get safe two-step entry: type the value, then re-type it blind — only a matching pair is written into the field
