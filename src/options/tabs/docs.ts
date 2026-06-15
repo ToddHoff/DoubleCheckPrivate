@@ -116,6 +116,13 @@ device</em>. It is not identity authentication, and because the key lives on the
 same device, it is not proof against the device's owner, nor a substitute for a
 court-admissible record.</p>
 
+<h2>Notes</h2>
+<p>Each check has an optional <em>Note</em> field on the card — for recording
+where a value came from or how it was calculated (e.g. "from the signed PO,
+page 2"). The note is saved with the log entry and sealed along with it.
+Keep the value itself out of the note: the whole point is that the value is
+never stored.</p>
+
 <h2>What the log proves (and doesn't)</h2>
 <p>Each entry records when and where a check happened, the field, the format,
 the methods used, the outcome, and that you personally attested it. It does

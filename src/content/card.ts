@@ -542,7 +542,10 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   })
 
   // ---- attestation + logging ----
-  async function confirmAndLog(r: ValidationResult, signatures?: string[]): Promise<void> {
+  async function confirmAndLog(
+    r: ValidationResult,
+    extra: { signatures?: string[]; note?: string } = {},
+  ): Promise<void> {
     const entry: LogEntry = {
       id: crypto.randomUUID(),
       at: new Date().toISOString(),
@@ -555,7 +558,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         ...(usedTts ? ['read-aloud'] : []),
         ...(usedOcr ? ['ocr'] : []),
         ...(usedVoice ? ['voice'] : []),
-        ...(signatures?.length ? ['dual-sign'] : []),
+        ...(extra.signatures?.length ? ['dual-sign'] : []),
         ...(trustedMethod ? [trustedMethod] : []),
       ],
       result: mismatchSeen ? 'mismatch-resolved' : 'match',
@@ -563,7 +566,8 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       valueLength: r.normalized.length,
       durationMs: Date.now() - startedAt,
     }
-    if (signatures?.length) entry.signatures = signatures
+    if (extra.signatures?.length) entry.signatures = extra.signatures
+    if (extra.note) entry.note = extra.note
     if (ctx.settings.hmacFingerprint) entry.fingerprint = await fingerprintValue(r.normalized)
     await appendLogEntry(entry)
     await bumpStats(mismatchSeen)
@@ -746,6 +750,16 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     const speak = speakButton(() => r.normalized)
     if (speak) rowEl.append(speak)
 
+    // optional note saved with the log entry. Free text the user controls, so
+    // remind them not to put the value itself here — the value is never stored.
+    const note = h('textarea', {
+      class: 'notefield', rows: '2',
+      placeholder: 'Optional note — where it came from, how it was calculated. Not the value itself.',
+    }) as HTMLTextAreaElement
+    const noteBlock = h('div', { class: 'noteblock' },
+      h('div', { class: 'lbl' }, 'Note (optional)'), note)
+    const noteValue = () => note.value.trim() || undefined
+
     if (requireDualSign) {
       const sign1 = h('input', { class: 'signer', type: 'text', placeholder: 'First signer — full name' }) as HTMLInputElement
       const sign2 = h('input', { class: 'signer', type: 'text', placeholder: 'Second signer — full name' }) as HTMLInputElement
@@ -765,12 +779,12 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       ;[checkbox, sign1, sign2].forEach((el) => el.addEventListener('input', sync))
       checkbox.addEventListener('change', sync)
       confirmBtn.addEventListener('click', () =>
-        void confirmAndLog(r, [sign1.value.trim(), sign2.value.trim()]))
+        void confirmAndLog(r, { signatures: [sign1.value.trim(), sign2.value.trim()], note: noteValue() }))
       body.append(
         h('div', { class: 'divider' }),
         h('div', { class: 'lbl' }, 'Two signatures required for this field'),
         h('div', { class: 'signers' }, sign1, sign2),
-        attest, rowEl,
+        noteBlock, attest, rowEl,
       )
       if (focusOnRender) sign1.focus()
     } else {
@@ -784,8 +798,8 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         if (checkbox.checked) confirmBtn.removeAttribute('disabled')
         else confirmBtn.setAttribute('disabled', '')
       })
-      confirmBtn.addEventListener('click', () => void confirmAndLog(r))
-      body.append(h('div', { class: 'divider' }), attest, rowEl)
+      confirmBtn.addEventListener('click', () => void confirmAndLog(r, { note: noteValue() }))
+      body.append(h('div', { class: 'divider' }), noteBlock, attest, rowEl)
       if (focusOnRender) checkbox.focus()
     }
   }

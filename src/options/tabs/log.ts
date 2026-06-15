@@ -3,7 +3,7 @@ import { clearLog, getLog, verifyLogIntegrity } from '../../shared/storage'
 import type { LogEntry } from '../../shared/types'
 
 function toCsv(entries: LogEntry[]): string {
-  const cols = ['at', 'origin', 'fieldLabel', 'format', 'methods', 'result', 'attested', 'valueLength', 'durationMs', 'stale', 'signatures', 'fingerprint', 'seal'] as const
+  const cols = ['at', 'origin', 'fieldLabel', 'format', 'methods', 'result', 'attested', 'valueLength', 'durationMs', 'stale', 'signatures', 'note', 'fingerprint', 'seal'] as const
   const esc = (s: string) => (/[",\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s)
   const cell = (e: LogEntry, c: typeof cols[number]): string => {
     if (c === 'methods') return e.methods.join('+')
@@ -49,8 +49,9 @@ export async function renderLogTab(rootEl: HTMLElement): Promise<void> {
   // only show the Signatures column when something actually signed — otherwise
   // it's an always-empty column that pushes every row to wrap
   const hasSignatures = log.some((e) => e.signatures?.length)
+  const hasNotes = log.some((e) => e.note)
   const headers = ['When', 'Site', 'Field', 'Format', 'Methods',
-    ...(hasSignatures ? ['Signatures'] : []), 'Result', 'Len']
+    ...(hasSignatures ? ['Signatures'] : []), ...(hasNotes ? ['Note'] : []), 'Result', 'Len']
   const table = h('table', { class: 'log' },
     h('thead', {}, h('tr', {}, ...headers.map((t) => h('th', {}, t)))),
   )
@@ -69,6 +70,7 @@ export async function renderLogTab(rootEl: HTMLElement): Promise<void> {
       h('td', { class: 'mono' }, e.format),
       h('td', { class: 'mono' }, e.methods.join('+')),
       ...(hasSignatures ? [h('td', {}, e.signatures?.join(' + ') ?? '')] : []),
+      ...(hasNotes ? [h('td', { class: 'note' }, e.note ?? '')] : []),
       h('td', {}, result),
       h('td', { class: 'mono' }, String(e.valueLength)),
     ))

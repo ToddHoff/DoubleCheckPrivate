@@ -34,6 +34,8 @@ export interface LogEntry {
   fingerprint?: string
   /** typed names of the two people who signed, when the field requires it */
   signatures?: string[]
+  /** optional free-text note about the value (where it came from, how derived) */
+  note?: string
   /** tamper-evident seal: keyed HMAC over this entry, chained to the previous */
   seal?: string
   /** the previous entry's seal at write time — the chain link */

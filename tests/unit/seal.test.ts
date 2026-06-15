@@ -103,6 +103,24 @@ describe('tamper-evident seal chain', () => {
     expect(r.ok).toBe(false)
   })
 
+  it('seals the note so it cannot be quietly altered', async () => {
+    const log = await sealed(entry('1', { note: 'from the signed PO, page 2' }))
+    let r = await verifyChain(log, fakeHmac)
+    expect(r.ok).toBe(true)
+    log[0].note = 'from somewhere else'
+    r = await verifyChain(log, fakeHmac)
+    expect(r.ok).toBe(false)
+  })
+
+  it('keeps note-less seals valid (note added to canonical only when present)', async () => {
+    // an entry sealed without a note must still verify after the canonical
+    // form learned about notes
+    const log = await sealed(entry('1'), entry('2'))
+    expect(log[0].note).toBeUndefined()
+    const r = await verifyChain(log, fakeHmac)
+    expect(r.ok).toBe(true)
+  })
+
   it('reports legacy unsealed entries without flagging tampering', async () => {
     const legacy = entry('1') // no seal (created before sealing existed)
     const log = [legacy, ...(await sealed(entry('2'), entry('3')))]

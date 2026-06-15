@@ -29,6 +29,10 @@ export function canonicalEntry(e: LogEntry): string {
     e.id, e.at, e.origin, e.fieldLabel, e.format, e.methods,
     e.result, e.attested, e.valueLength, e.durationMs,
     e.fingerprint ?? null, e.signatures ?? null, e.prevSeal ?? null,
+    // Why: `note` was added after sealing shipped. Appending it only when
+    // present keeps the canonical form of older note-less entries byte-for-byte
+    // identical, so their existing seals still verify.
+    ...(e.note != null ? [e.note] : []),
   ])
 }
 
