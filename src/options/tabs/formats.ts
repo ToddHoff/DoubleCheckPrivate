@@ -158,6 +158,22 @@ export async function renderFormatsTab(rootEl: HTMLElement): Promise<void> {
         h('label', {}, 'Notes'), notes,
         h('label', {}, 'Clean-up'), h('div', {}, ...normBoxes.map(({ el }) => el)),
         h('label', {}, 'Pattern (regex)'), pattern,
+        h('div', { class: 'wide' },
+          (() => {
+            const hint = h('div', { class: 'sub' })
+            hint.append(
+              'New to regular expressions? Build and test one at ',
+              h('a', { href: 'https://regex101.com/', target: '_blank', rel: 'noopener' }, 'regex101.com'),
+              ', or see the ',
+              h('a', {
+                href: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet',
+                target: '_blank', rel: 'noopener',
+              }, 'MDN cheatsheet'),
+              '. The pattern is anchored automatically (it must match the whole value).',
+            )
+            return hint
+          })(),
+        ),
         h('label', {}, 'Length'), h('div', { style: 'display:flex;gap:8px' }, lenMin, lenMax),
         h('label', {}, 'Checksum'), checksum,
         wmRow,
