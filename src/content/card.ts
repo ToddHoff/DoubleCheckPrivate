@@ -241,11 +241,12 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     // text the user controls, so the placeholder reminds them not to put the
     // value itself here — the value is never stored.
     const noteInput = h('textarea', {
-      class: 'notefield', rows: '1',
-      placeholder: 'Optional note — where it came from / how it was calculated (not the value)',
+      class: 'notefield', rows: '3',
+      placeholder: 'Where it came from, how it was calculated — not the value itself.',
     }) as HTMLTextAreaElement
     noteEl = noteInput
-    const noteRow = h('div', { class: 'noterow' }, noteInput)
+    const noteRow = h('div', { class: 'noterow' },
+      h('div', { class: 'lbl' }, 'Note (optional)'), noteInput)
 
     card.append(header, body,
       noteRow,

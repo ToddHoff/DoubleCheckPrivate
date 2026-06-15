@@ -89,10 +89,11 @@ button.btn.reveal { flex: none; font-size: 12px; padding: 5px 12px; }
   border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box;
 }
 .signer:focus { outline: 2px solid #166534; outline-offset: 1px; }
-.noterow { padding: 7px 12px; border-top: 1px solid #e5e7eb; }
+.noterow { padding: 8px 12px; border-top: 1px solid #e5e7eb; }
+.noterow .lbl { margin-bottom: 5px; }
 .notefield {
-  width: 100%; box-sizing: border-box; resize: vertical; min-height: 30px;
-  padding: 6px 9px; font: 12.5px system-ui, sans-serif; color: #374151;
+  width: 100%; box-sizing: border-box; resize: vertical; min-height: 56px;
+  padding: 7px 9px; font: 12.5px/1.4 system-ui, sans-serif; color: #374151;
   border: 1px solid #d1d5db; border-radius: 7px;
 }
 .notefield:focus { outline: 2px solid #166534; outline-offset: 1px; }
