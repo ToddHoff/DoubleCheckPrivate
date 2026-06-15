@@ -23,6 +23,8 @@ A second pair of eyes for numbers that can't be wrong — catch typos and "bank 
 
 A second pair of eyes for numbers that can't be wrong.
 
+Prevent expensive, embarrassing, and hard-to-reverse mistakes at the exact moment they happen.
+
 One transposed digit in a wire transfer sends money to the wrong account — and a fake "our bank details have changed" email sends it to a fraudster. Double Check guards against both. It turns the careful-but-manual ritual — read it, re-read it, ask a colleague to look over your shoulder — into a fast, verifiable workflow right in the field you're typing into, and it remembers each payee's usual account so a switched one stands out. The values you check never leave your computer.
 
 HOW IT WORKS
