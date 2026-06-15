@@ -1,3 +1,4 @@
+import { computeSeal, verifyChain, type IntegrityReport } from './seal'
 import type { LogEntry, Settings, Stats, TrustedAccount, UserValidatorSpec } from './types'
 import { DEFAULT_SETTINGS, STORAGE_KEYS } from './types'
 
@@ -44,15 +45,38 @@ export async function rememberFormat(origin: string, fieldSignature: string, for
   await chrome.storage.local.set({ [STORAGE_KEYS.siteMemory]: mem })
 }
 
+// ---- per-field "require two signatures" flags (keyed like site memory) ----
+
+export async function getDualSignFields(): Promise<Record<string, true>> {
+  return get<Record<string, true>>(STORAGE_KEYS.dualSignFields, {})
+}
+
+export async function setDualSignField(origin: string, fieldSignature: string, required: boolean): Promise<void> {
+  const map = await getDualSignFields()
+  const key = siteMemoryKey(origin, fieldSignature)
+  if (required) map[key] = true
+  else delete map[key]
+  await chrome.storage.local.set({ [STORAGE_KEYS.dualSignFields]: map })
+}
+
 // ---- audit log ----
 
 const LOG_CAP = 5000
 
 export async function appendLogEntry(entry: LogEntry): Promise<void> {
   const log = await get<LogEntry[]>(STORAGE_KEYS.log, [])
+  // chain the seal to the prior entry before writing — every entry is sealed
+  const prev = log.length ? log[log.length - 1] : null
+  entry.prevSeal = prev?.seal ?? null
+  entry.seal = await computeSeal(entry, hmacHex)
   log.push(entry)
   if (log.length > LOG_CAP) log.splice(0, log.length - LOG_CAP)
   await chrome.storage.local.set({ [STORAGE_KEYS.log]: log })
+}
+
+/** recompute the seal chain and report whether the log is intact */
+export async function verifyLogIntegrity(): Promise<IntegrityReport> {
+  return verifyChain(await getLog(), hmacHex)
 }
 
 export async function getLog(): Promise<LogEntry[]> {
@@ -84,15 +108,41 @@ export async function clearLog(): Promise<void> {
 
 // ---- local-only stats (the "412 values double-checked" counter) ----
 
+// Why: catch categories were added after launch. Spread these defaults over the
+// stored object so pre-existing installs read the new keys back as 0, not NaN.
+function emptyStats(): Stats {
+  return {
+    checked: 0,
+    mismatchesCaught: 0,
+    badValuesCaught: 0,
+    accountChangeWarnings: 0,
+    pageProblemsFound: 0,
+  }
+}
+
+async function readStats(): Promise<Stats> {
+  return { ...emptyStats(), ...(await get<Stats>(STORAGE_KEYS.stats, emptyStats())) }
+}
+
 export async function bumpStats(mismatchCaught: boolean): Promise<void> {
-  const stats = await get<Stats>(STORAGE_KEYS.stats, { checked: 0, mismatchesCaught: 0 })
+  const stats = await readStats()
   stats.checked++
   if (mismatchCaught) stats.mismatchesCaught++
   await chrome.storage.local.set({ [STORAGE_KEYS.stats]: stats })
 }
 
+/** the catch categories the "what Double Check has caught" panel sums */
+export type CatchStat = 'badValuesCaught' | 'accountChangeWarnings' | 'pageProblemsFound'
+
+export async function bumpStat(key: CatchStat, by = 1): Promise<void> {
+  if (by <= 0) return
+  const stats = await readStats()
+  stats[key] += by
+  await chrome.storage.local.set({ [STORAGE_KEYS.stats]: stats })
+}
+
 export async function getStats(): Promise<Stats> {
-  return get<Stats>(STORAGE_KEYS.stats, { checked: 0, mismatchesCaught: 0 })
+  return readStats()
 }
 
 // ---- read-aloud speed (sticky, controlled from the card) ----
@@ -145,10 +195,16 @@ export async function getOrCreateHmacKey(): Promise<CryptoKey> {
   return crypto.subtle.importKey('raw', raw.buffer as ArrayBuffer, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
 }
 
-export async function fingerprintValue(normalized: string): Promise<string> {
+// keyed HMAC-SHA-256 as lowercase hex — the primitive behind both the value
+// fingerprint and the tamper-evident log seal
+export async function hmacHex(data: string): Promise<string> {
   const key = await getOrCreateHmacKey()
-  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(normalized))
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data))
   return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+export async function fingerprintValue(normalized: string): Promise<string> {
+  return hmacHex(normalized)
 }
 
 // ---- trusted accounts (payee → value fingerprint; the BEC-fraud catch) ----

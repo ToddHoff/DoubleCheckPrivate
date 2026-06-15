@@ -7,6 +7,7 @@
 // card on that field; Esc or Dismiss clears them.
 import { highValueCandidate, suspiciousChars, validate } from '../engine'
 import type { Validator } from '../engine'
+import { bumpStat } from '../shared/storage'
 import { fieldSignals, isCheckable, type CheckableField } from './field'
 
 const FLAG_CSS = `
@@ -173,6 +174,7 @@ export function auditAndFlag(validators: Validator[], onPick: (field: CheckableF
     }
     if (problems.length) flags.push({ field, text: problems[0], tone: 'bad' })
   }
+  if (flags.length) void bumpStat('pageProblemsFound', flags.length)
   return renderFlags(
     flags,
     {

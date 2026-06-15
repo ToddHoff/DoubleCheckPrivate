@@ -1,4 +1,5 @@
 import { getShortcut } from '../shared/shortcut'
+import { getStats } from '../shared/storage'
 import type { LicenseStatus } from '../shared/types'
 
 export {}
@@ -10,8 +11,19 @@ app.innerHTML = `
   <p class="hint">Tip: focus the field on the page, then press
   <span id="kbd">the keyboard shortcut</span> (<a href="#" id="shortcuts">change it</a>).</p>
   <div id="license" class="hint"></div>
+  <p class="wins" id="wins" hidden></p>
   <p class="links"><a href="#" id="options">Settings &amp; log</a> · <a href="#" id="help">Help</a></p>
 `
+
+// Why: only surface the counter once there's a real win — "0 issues caught"
+// reads as a dead feature, not a reassuring one.
+void getStats().then((s) => {
+  const caught = s.mismatchesCaught + s.badValuesCaught + s.accountChangeWarnings + s.pageProblemsFound
+  if (caught <= 0) return
+  const el = document.getElementById('wins')!
+  el.textContent = `✓ ${caught} issue${caught === 1 ? '' : 's'} caught for you so far`
+  el.removeAttribute('hidden')
+})
 
 void getShortcut('check-field').then((sc) => {
   const el = document.getElementById('kbd')!

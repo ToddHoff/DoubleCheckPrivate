@@ -32,11 +32,23 @@ export interface LogEntry {
   stale?: boolean
   /** HMAC-SHA-256 of the normalized value, only when the user opted in */
   fingerprint?: string
+  /** typed names of the two people who signed, when the field requires it */
+  signatures?: string[]
+  /** tamper-evident seal: keyed HMAC over this entry, chained to the previous */
+  seal?: string
+  /** the previous entry's seal at write time — the chain link */
+  prevSeal?: string | null
 }
 
 export interface Stats {
   checked: number
   mismatchesCaught: number
+  /** field value failed a checksum/format/hidden-character check */
+  badValuesCaught: number
+  /** an account didn't match the one saved for that payee (the BEC catch) */
+  accountChangeWarnings: number
+  /** problems surfaced by a whole-page audit */
+  pageProblemsFound: number
 }
 
 // A value the user explicitly chose to remember for a payee. Stores a one-way
@@ -56,6 +68,7 @@ export const STORAGE_KEYS = {
   settings: 'dc:settings',
   userValidators: 'dc:userValidators',
   siteMemory: 'dc:siteMemory',
+  dualSignFields: 'dc:dualSignFields',
   log: 'dc:log',
   stats: 'dc:stats',
   hmacKey: 'dc:hmacKey',

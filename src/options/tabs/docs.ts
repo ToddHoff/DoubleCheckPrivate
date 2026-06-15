@@ -98,6 +98,24 @@ Double Check is active on the page (the toggle arms the current page
 immediately), and some single-page apps submit in ways no extension can
 intercept — the attestation, not the guard, is the real control.</p>
 
+<h2>Two signatures (for the highest-stakes fields)</h2>
+<p>When one person signing off isn't enough, tick <em>Require two signatures
+for this field</em> on the check card (just above Submit Guard). That choice is
+remembered for this field on this site. The attestation then reads
+"<em>We</em> have personally compared…", and both people type their name —
+the check can't be confirmed until both names are filled in and differ. Both
+names are saved with the log entry, locally, like everything else.</p>
+
+<h2>The tamper-evident seal</h2>
+<p>Every log entry is sealed with a keyed hash chained to the entry before it,
+using a random key generated on your device that never leaves it. The
+<em>Verify integrity</em> button on the Log tab recomputes the chain and tells
+you whether any entry was edited, removed, reordered, or inserted since it was
+written. Honest limits: the seal shows the log hasn't been altered <em>on this
+device</em>. It is not identity authentication, and because the key lives on the
+same device, it is not proof against the device's owner, nor a substitute for a
+court-admissible record.</p>
+
 <h2>What the log proves (and doesn't)</h2>
 <p>Each entry records when and where a check happened, the field, the format,
 the methods used, the outcome, and that you personally attested it. It does

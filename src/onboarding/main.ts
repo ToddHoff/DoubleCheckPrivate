@@ -288,6 +288,7 @@ async function openCardOnPractice(): Promise<void> {
     suggestions: suggestFormats(fieldSignals(practiceField), BUILTIN_VALIDATORS),
     settings,
     license: { active: true, trial: false, trialDaysLeft: -1, cached: false },
+    requireDualSign: false,
   })
   practiceStatus.textContent = ''
 }

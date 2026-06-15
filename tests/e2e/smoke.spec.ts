@@ -87,6 +87,12 @@ test('full check flow on the practice form, with privacy regression', async () =
   expect(log[0].fingerprint).toBeUndefined() // off by default
   expect(JSON.stringify(stored)).not.toContain(ROUTING)
 
+  // every entry is sealed (tamper-evident); first entry's chain link is null
+  expect(typeof log[0].seal).toBe('string')
+  expect((log[0].seal as string).length).toBeGreaterThan(0)
+  expect(log[0].prevSeal).toBeNull()
+  expect(log[0].signatures).toBeUndefined() // single-sign flow
+
   // tamper watch: editing the field flips the badge to a warning and marks the entry stale
   await page.locator('#practice').fill('021000022')
   await settle(page, 300)

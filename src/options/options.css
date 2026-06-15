@@ -64,6 +64,11 @@ table.log td.mono { font-family: ui-monospace, Menlo, monospace; font-size: 12px
 .stat { font-size: 28px; font-weight: 750; color: var(--green); }
 .statlbl { color: var(--muted); font-size: 13px; }
 .stats { display: flex; gap: 36px; }
+.catchgrid { margin-top: 18px; display: grid; gap: 9px; }
+.catchrow { display: flex; align-items: baseline; gap: 12px; font-size: 14px; }
+.catchrow .cnum { font-weight: 750; color: var(--green); min-width: 32px; text-align: right; }
+.catchrow .cdesc { color: var(--muted); font-size: 12.5px; }
+.integrity { display: inline-block; margin-top: 6px; }
 .vlist { display: flex; flex-direction: column; gap: 8px; }
 .vitem {
   display: flex; align-items: center; gap: 10px; padding: 10px 12px;

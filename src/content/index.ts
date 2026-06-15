@@ -2,7 +2,7 @@
 // mounts the card. Guard: executeScript may run this more than once per page.
 import { BUILTIN_VALIDATORS, fromUserSpec, suggestFormats } from '../engine'
 import type { Validator } from '../engine'
-import { getSettings, getSiteMemory, getUserValidatorSpecs, siteMemoryKey } from '../shared/storage'
+import { getDualSignFields, getSettings, getSiteMemory, getUserValidatorSpecs, siteMemoryKey } from '../shared/storage'
 import type { LicenseStatus } from '../shared/types'
 import { fieldSignals, fieldSignature, findFocusedField, type CheckableField } from './field'
 import { isCardMounted, mountCard, type CardContext } from './card'
@@ -16,10 +16,11 @@ declare global {
 }
 
 async function buildContext(field: CheckableField): Promise<CardContext> {
-  const [settings, userSpecs, siteMemory, license] = await Promise.all([
+  const [settings, userSpecs, siteMemory, dualSign, license] = await Promise.all([
     getSettings(),
     getUserValidatorSpecs(),
     getSiteMemory(),
+    getDualSignFields(),
     chrome.runtime
       .sendMessage({ kind: 'dc-license-status' })
       .catch(() => null) as Promise<LicenseStatus | null>,
@@ -30,7 +31,8 @@ async function buildContext(field: CheckableField): Promise<CardContext> {
     ? userSpecs.map(fromUserSpec).filter((v): v is Validator => v !== null)
     : []
   const validators = [...BUILTIN_VALIDATORS, ...userValidators]
-  const remembered = siteMemory[siteMemoryKey(location.origin, fieldSignature(field))]
+  const fieldKey = siteMemoryKey(location.origin, fieldSignature(field))
+  const remembered = siteMemory[fieldKey]
   const suggestions = suggestFormats(fieldSignals(field), validators)
   return {
     validators,
@@ -38,6 +40,7 @@ async function buildContext(field: CheckableField): Promise<CardContext> {
     remembered: validators.some((v) => v.id === remembered) ? remembered : undefined,
     settings,
     license: lic,
+    requireDualSign: !!dualSign[fieldKey],
   }
 }
 

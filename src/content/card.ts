@@ -3,8 +3,9 @@ import { classifyPayee, diagnose, extractCandidates, groupValue, normalizeSpoken
 import { fileToDataUrl } from './capture'
 import type { LicenseStatus, LogEntry, Settings } from '../shared/types'
 import {
-  appendLogEntry, bumpStats, fingerprintValue, getTrustedAccounts, getTtsRate,
-  markLogEntryStale, rememberFormat, saveSettings, saveTrustedAccount, saveTtsRate, TTS_RATES,
+  appendLogEntry, bumpStat, bumpStats, fingerprintValue, getTrustedAccounts, getTtsRate,
+  markLogEntryStale, rememberFormat, saveSettings, saveTrustedAccount, saveTtsRate,
+  setDualSignField, TTS_RATES,
 } from '../shared/storage'
 import { CARD_CSS } from './styles'
 import { speakValue, speechAvailable, stopSpeaking } from './speech'
@@ -21,6 +22,7 @@ export interface CardContext {
   remembered?: string
   settings: Settings
   license: LicenseStatus
+  requireDualSign: boolean
 }
 
 type Step = 'verify-entry' | 'input-first' | 'input-confirm' | 'match' | 'mismatch' | 'done'
@@ -90,6 +92,11 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   let lastDiagnosis: Diagnosis | null = null
   let lastEntered = ''
   let mismatchSeen = false
+  // Why: stats are catch *events*, not per-render. Guard each so the counter
+  // bumps once per card session even though the verify screen re-renders.
+  let badSeen = false
+  let changeWarned = false
+  let requireDualSign = ctx.requireDualSign
   let usedTts = false
   let usedOcr = false
   let usedVoice = false
@@ -198,6 +205,25 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   // the guard on this page instantly (we ARE the content script). Hidden on
   // the extension's own pages, where guarding has nothing to protect.
   if (location.protocol !== 'chrome-extension:') {
+    // per-field "two signatures" requirement, remembered for this field on this
+    // site. Sits right above Submit Guard; toggling it re-renders the
+    // attestation so the second signature line appears/disappears immediately.
+    const dualBox = h('input', { type: 'checkbox' }) as HTMLInputElement
+    dualBox.checked = requireDualSign
+    dualBox.addEventListener('change', async () => {
+      requireDualSign = dualBox.checked
+      await setDualSignField(location.origin, fieldSignature(field), requireDualSign)
+      if (step === 'match') render()
+    })
+    const dualRow = h('label', { class: 'guardrow' },
+      dualBox,
+      h('span', { class: 'gtext' },
+        h('span', {}, 'Require two signatures for this field'),
+        h('span', { class: 'gcap' },
+          'Two people each type their name and confirm together; both names are saved with the check.'),
+      ),
+    )
+
     const box = h('input', { type: 'checkbox' }) as HTMLInputElement
     box.checked = ctx.settings.submitGuardOrigins.includes(location.origin)
     box.addEventListener('change', async () => {
@@ -209,6 +235,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       else box.title = 'Off — this page stays guarded until reloaded'
     })
     card.append(header, body,
+      dualRow,
       h('label', { class: 'guardrow' },
         box,
         h('span', { class: 'gtext' },
@@ -515,7 +542,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   })
 
   // ---- attestation + logging ----
-  async function confirmAndLog(r: ValidationResult): Promise<void> {
+  async function confirmAndLog(r: ValidationResult, signatures?: string[]): Promise<void> {
     const entry: LogEntry = {
       id: crypto.randomUUID(),
       at: new Date().toISOString(),
@@ -528,6 +555,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         ...(usedTts ? ['read-aloud'] : []),
         ...(usedOcr ? ['ocr'] : []),
         ...(usedVoice ? ['voice'] : []),
+        ...(signatures?.length ? ['dual-sign'] : []),
         ...(trustedMethod ? [trustedMethod] : []),
       ],
       result: mismatchSeen ? 'mismatch-resolved' : 'match',
@@ -535,6 +563,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       valueLength: r.normalized.length,
       durationMs: Date.now() - startedAt,
     }
+    if (signatures?.length) entry.signatures = signatures
     if (ctx.settings.hmacFingerprint) entry.fingerprint = await fingerprintValue(r.normalized)
     await appendLogEntry(entry)
     await bumpStats(mismatchSeen)
@@ -567,6 +596,10 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   // ---- step renderers ----
   function renderVerifyEntry(): void {
     const r = subjectResult()
+    if (!r.valid && !badSeen) {
+      badSeen = true
+      void bumpStat('badValuesCaught')
+    }
     card.className = 'card'
     const input = entryInput('Re-type the value here')
     const hint = h('div', { class: 'hint' }, 'Read it from your source — not from the field. Press Enter to compare.')
@@ -693,6 +726,10 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
               'Confirm the change is legitimate before you proceed.'
             payeeStatus.className = 'hint trusted-warn'
             trustedMethod = 'trusted-changed'
+            if (!changeWarned) {
+              changeWarned = true
+              void bumpStat('accountChangeWarnings')
+            }
           } else {
             payeeStatus.textContent =
               `New payee — when you confirm, ${payeeLabel}’s account is remembered as a one-way ` +
@@ -703,24 +740,54 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       })
     })()
 
-    const checkbox = h('input', { type: 'checkbox', id: 'attest' })
-    const attest = h('label', { class: 'attest', for: 'attest' },
-      checkbox,
-      h('span', {},
-        'I have personally compared this value against the source and confirm it is correct. ' +
-        'Double Check assists verification; responsibility for the value remains mine.'),
-    )
+    const checkbox = h('input', { type: 'checkbox', id: 'attest' }) as HTMLInputElement
     const confirmBtn = h('button', { class: 'btn primary', disabled: '' }, 'Confirm — log this check') as HTMLButtonElement
-    checkbox.addEventListener('change', () => {
-      if ((checkbox as HTMLInputElement).checked) confirmBtn.removeAttribute('disabled')
-      else confirmBtn.setAttribute('disabled', '')
-    })
-    confirmBtn.addEventListener('click', () => void confirmAndLog(r))
     const rowEl = h('div', { class: 'btnrow' }, confirmBtn)
     const speak = speakButton(() => r.normalized)
     if (speak) rowEl.append(speak)
-    body.append(h('div', { class: 'divider' }), attest, rowEl)
-    if (focusOnRender) checkbox.focus()
+
+    if (requireDualSign) {
+      const sign1 = h('input', { class: 'signer', type: 'text', placeholder: 'First signer — full name' }) as HTMLInputElement
+      const sign2 = h('input', { class: 'signer', type: 'text', placeholder: 'Second signer — full name' }) as HTMLInputElement
+      const attest = h('label', { class: 'attest', for: 'attest' },
+        checkbox,
+        h('span', {},
+          'We have personally compared this value against the source and confirm it is correct. ' +
+          'Double Check assists verification; responsibility for the value remains ours.'),
+      )
+      // both names required, the box ticked, and the two names distinct
+      const sync = () => {
+        const a = sign1.value.trim()
+        const b = sign2.value.trim()
+        const ok = checkbox.checked && !!a && !!b && a.toLowerCase() !== b.toLowerCase()
+        confirmBtn.toggleAttribute('disabled', !ok)
+      }
+      ;[checkbox, sign1, sign2].forEach((el) => el.addEventListener('input', sync))
+      checkbox.addEventListener('change', sync)
+      confirmBtn.addEventListener('click', () =>
+        void confirmAndLog(r, [sign1.value.trim(), sign2.value.trim()]))
+      body.append(
+        h('div', { class: 'divider' }),
+        h('div', { class: 'lbl' }, 'Two signatures required for this field'),
+        h('div', { class: 'signers' }, sign1, sign2),
+        attest, rowEl,
+      )
+      if (focusOnRender) sign1.focus()
+    } else {
+      const attest = h('label', { class: 'attest', for: 'attest' },
+        checkbox,
+        h('span', {},
+          'I have personally compared this value against the source and confirm it is correct. ' +
+          'Double Check assists verification; responsibility for the value remains mine.'),
+      )
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) confirmBtn.removeAttribute('disabled')
+        else confirmBtn.setAttribute('disabled', '')
+      })
+      confirmBtn.addEventListener('click', () => void confirmAndLog(r))
+      body.append(h('div', { class: 'divider' }), attest, rowEl)
+      if (focusOnRender) checkbox.focus()
+    }
   }
 
   function renderMismatch(): void {

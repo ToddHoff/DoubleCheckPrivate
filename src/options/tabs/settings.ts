@@ -1,6 +1,38 @@
 import { h } from '../../shared/dom'
 import { getSettings, getStats, getTosAcceptance, saveSettings, saveTosAcceptance } from '../../shared/storage'
-import { STORAGE_KEYS, type LicenseStatus } from '../../shared/types'
+import { STORAGE_KEYS, type LicenseStatus, type Stats } from '../../shared/types'
+
+function statBlock(value: string, label: string): HTMLElement {
+  return h('div', {}, h('div', { class: 'stat' }, value), h('div', { class: 'statlbl' }, label))
+}
+
+function catchRow(n: number, label: string, desc: string): HTMLElement {
+  return h('div', { class: 'catchrow' },
+    h('span', { class: 'cnum' }, String(n)),
+    h('span', {}, label, h('span', { class: 'cdesc' }, ` — ${desc}`)),
+  )
+}
+
+function statsPanel(stats: Stats): HTMLElement {
+  // Why: only count what actually happened — these are real catch events, never
+  // an estimate of money "saved" (a claim the Terms say the tool can't make).
+  const caught = stats.mismatchesCaught + stats.badValuesCaught +
+    stats.accountChangeWarnings + stats.pageProblemsFound
+  return h('section', { class: 'panel' },
+    h('h2', {}, 'What Double Check has caught'),
+    h('div', { class: 'stats' },
+      statBlock(String(caught), caught === 1 ? 'issue caught before you submitted' : 'issues caught before you submitted'),
+      statBlock(String(stats.checked), 'values double-checked'),
+    ),
+    h('div', { class: 'catchgrid' },
+      catchRow(stats.mismatchesCaught, 'mismatches caught', 'your re-typed value disagreed'),
+      catchRow(stats.badValuesCaught, 'bad values caught', 'failed a checksum, format, or hidden-character check'),
+      catchRow(stats.accountChangeWarnings, 'account-change warnings', 'an account differed from the one saved for that payee'),
+      catchRow(stats.pageProblemsFound, 'page problems found', 'surfaced by a whole-page audit'),
+    ),
+    h('p', { class: 'muted' }, 'Counted locally on this device. Like everything else here, never transmitted.'),
+  )
+}
 
 function licensePanel(lic: LicenseStatus | null, tosAccepted: boolean): HTMLElement {
   const payBtns: HTMLButtonElement[] = []
@@ -127,14 +159,7 @@ export async function renderSettingsTab(rootEl: HTMLElement): Promise<void> {
 
   rootEl.append(
     licensePanel(license, tosAccepted),
-    h('section', { class: 'panel' },
-      h('h2', {}, 'Your numbers'),
-      h('div', { class: 'stats' },
-        h('div', {}, h('div', { class: 'stat' }, String(stats.checked)), h('div', { class: 'statlbl' }, 'values double-checked')),
-        h('div', {}, h('div', { class: 'stat' }, String(stats.mismatchesCaught)), h('div', { class: 'statlbl' }, 'mismatches caught')),
-      ),
-      h('p', { class: 'muted' }, 'Counted locally on this device. Like everything else here, never transmitted.'),
-    ),
+    statsPanel(stats),
     h('section', { class: 'panel' },
       h('h2', {}, 'Verification'),
       h('p', { class: 'muted' },

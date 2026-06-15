@@ -34,6 +34,12 @@ kbd {
   padding: 1px 5px;
   color: #1f2937;
 }
+.wins {
+  margin-top: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #166534;
+}
 .links {
   margin-top: 10px;
   font-size: 12px;
