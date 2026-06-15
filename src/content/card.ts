@@ -685,7 +685,9 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
             payeeStatus.className = 'hint trusted-warn'
             trustedMethod = 'trusted-changed'
           } else {
-            payeeStatus.textContent = `New payee — this account will be remembered for ${payeeLabel} when you confirm.`
+            payeeStatus.textContent =
+              `New payee — when you confirm, ${payeeLabel}’s account is remembered as a one-way ` +
+              'fingerprint (never the value, and it never leaves this device) so we can flag it if it changes.'
             trustedMethod = 'trusted-new'
           }
         })()
