@@ -32,6 +32,25 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 })
 
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+// Why retry: the crxjs content-script loader registers its onMessage listener
+// via an async dynamic import that isn't finished when executeScript resolves.
+// A single immediate sendMessage loses that race on first invocation (the bug
+// where the first try silently did nothing and the second worked). We retry
+// until the listener answers — a null result means "not up yet", an object
+// means it answered (mounted true or false).
+async function activateTab(tabId: number): Promise<{ mounted: boolean } | null> {
+  for (let i = 0; i < 30; i++) {
+    const res = (await chrome.tabs.sendMessage(tabId, { kind: 'dc-activate' }).catch(() => null)) as
+      | { mounted: boolean }
+      | null
+    if (res) return res
+    await delay(40)
+  }
+  return null
+}
+
 async function injectCard(tabId: number) {
   // Why: top frame first; if the focused field lives in a subframe the top
   // instance reports "not here" and we retry allFrames (cross-origin frames
@@ -41,14 +60,14 @@ async function injectCard(tabId: number) {
   } catch {
     return // restricted page (chrome://, web store) — nothing we can do
   }
-  const res = await chrome.tabs.sendMessage(tabId, { kind: 'dc-activate' }).catch(() => null)
+  const res = await activateTab(tabId)
   if (res?.mounted) return
   try {
     await chrome.scripting.executeScript({
       target: { tabId, allFrames: true },
       files: [contentScript],
     })
-    await chrome.tabs.sendMessage(tabId, { kind: 'dc-activate' }).catch(() => null)
+    await activateTab(tabId)
   } catch {
     /* subframes unreachable under activeTab — top-frame card already offered */
   }
