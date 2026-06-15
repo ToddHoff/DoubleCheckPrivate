@@ -34,6 +34,9 @@ export interface ValidatorSpec {
   /** chunk sizes for display/speech, e.g. [3,3,3]; cycles last size if value is longer */
   grouping?: number[]
   speech?: 'char-by-char' | 'natural'
+  /** optional expected amount bounds; a value outside them is a soft warning,
+   * not an error — for catching an unusually large/small amount for this field */
+  amountRange?: { min?: number; max?: number }
 }
 
 /** Built-ins may carry code; user validators are pure declarative specs. */

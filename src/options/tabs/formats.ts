@@ -49,6 +49,8 @@ export async function renderFormatsTab(rootEl: HTMLElement): Promise<void> {
     const lenMin = h('input', { type: 'number', value: initial.length ? String(initial.length.min) : '', placeholder: 'min' }) as HTMLInputElement
     const lenMax = h('input', { type: 'number', value: initial.length ? String(initial.length.max) : '', placeholder: 'max' }) as HTMLInputElement
     const grouping = h('input', { type: 'text', class: 'mono', value: (initial.grouping ?? []).join(','), placeholder: 'e.g. 3,3,3' }) as HTMLInputElement
+    const amtMin = h('input', { type: 'number', value: initial.amountRange?.min != null ? String(initial.amountRange.min) : '', placeholder: 'min' }) as HTMLInputElement
+    const amtMax = h('input', { type: 'number', value: initial.amountRange?.max != null ? String(initial.amountRange.max) : '', placeholder: 'max' }) as HTMLInputElement
 
     const normBoxes = NORMALIZE_OPS.map(([op, label]) => {
       const box = h('input', { type: 'checkbox', value: op }) as HTMLInputElement
@@ -100,6 +102,12 @@ export async function renderFormatsTab(rootEl: HTMLElement): Promise<void> {
         grouping: grouping.value.trim()
           ? grouping.value.split(',').map((s) => Number(s.trim())).filter((n) => Number.isInteger(n) && n > 0)
           : undefined,
+        amountRange: amtMin.value.trim() || amtMax.value.trim()
+          ? {
+              ...(amtMin.value.trim() ? { min: Number(amtMin.value) } : {}),
+              ...(amtMax.value.trim() ? { max: Number(amtMax.value) } : {}),
+            }
+          : undefined,
         speech: 'char-by-char',
       }
       if (checksum.value === 'weighted-mod') {
@@ -132,7 +140,7 @@ export async function renderFormatsTab(rootEl: HTMLElement): Promise<void> {
       if (r.valid) testOut.appendChild(h('span', { class: 'chip warn' }, `display: ${r.formatted}`))
     }
     testInput.addEventListener('input', runTest)
-    for (const el of [name, pattern, lenMin, lenMax, grouping, weights, modulus]) el.addEventListener('input', runTest)
+    for (const el of [name, pattern, lenMin, lenMax, grouping, weights, modulus, amtMin, amtMax]) el.addEventListener('input', runTest)
     checksum.addEventListener('change', runTest)
 
     const saveBtn = h('button', { class: 'btn primary' }, isNew ? 'Add format' : 'Save changes')
@@ -175,6 +183,13 @@ export async function renderFormatsTab(rootEl: HTMLElement): Promise<void> {
           })(),
         ),
         h('label', {}, 'Length'), h('div', { style: 'display:flex;gap:8px' }, lenMin, lenMax),
+        h('label', {}, 'Amount range (warn)'), h('div', { style: 'display:flex;gap:8px' }, amtMin, amtMax),
+        h('div', { class: 'wide' },
+          h('div', { class: 'sub' },
+            'Optional. When the value parses as an amount and falls outside this range, ' +
+            'Double Check shows a warning — it never blocks. Useful for catching an unusually ' +
+            'large wire or payment for this field. Leave blank to skip.'),
+        ),
         h('label', {}, 'Checksum'), checksum,
         wmRow,
         h('label', {}, 'Digit grouping'), grouping,

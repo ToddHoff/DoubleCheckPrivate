@@ -135,6 +135,11 @@ length range, digit grouping, and a checksum chosen from a menu of standard
 algorithms (Luhn, mod-97, Damm, Verhoeff, weighted modulus…). Formats are
 data, not code — importing a colleague's format file can't do anything except
 validate values.</p>
+<p>A format can also carry an optional <em>amount range</em>. When a value
+parses as an amount and falls outside the expected min/max, Double Check shows
+a soft warning (it never blocks) — a simple, company-specific way to flag an
+unusually large wire or payment for a field. Because the bounds are your own
+configuration, this works without storing any past values.</p>
 
 <h2>Known limits — read this once</h2>
 <ul>

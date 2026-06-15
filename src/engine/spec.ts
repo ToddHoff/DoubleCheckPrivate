@@ -2,6 +2,7 @@ import type { ValidationResult, Validator, ValidatorSpec } from './types'
 import { applyNormalize, groupValue } from './normalize'
 import { runChecksum } from './checksums'
 import { suspiciousChars } from './suspicious'
+import { parseAmount } from './amount'
 
 export function validate(v: Validator, raw: string): ValidationResult {
   const errors: string[] = []
@@ -49,6 +50,22 @@ export function validate(v: Validator, raw: string): ValidationResult {
         warnings.push(...extraWarnings)
         info.push(...extraInfo)
         if (v.mathCheck && extraErrors.length === 0 && extraWarnings.length === 0) checksumPassed = true
+      }
+    }
+  }
+
+  // soft amount bounds: warn (never block) when the value parses as an amount
+  // outside the expected range — e.g. a wire far above the field's usual max
+  if (v.amountRange && raw.trim()) {
+    const parsed = parseAmount(raw)
+    if (parsed) {
+      const n = Number(parsed.canonical)
+      const { min, max } = v.amountRange
+      const fmt = (x: number) => x.toLocaleString('en-US')
+      if (max != null && n > max) {
+        warnings.push(`Amount ${fmt(n)} is above the expected maximum of ${fmt(max)} — double-check it’s intended`)
+      } else if (min != null && n < min) {
+        warnings.push(`Amount ${fmt(n)} is below the expected minimum of ${fmt(min)} — double-check it’s intended`)
       }
     }
   }
@@ -121,6 +138,18 @@ export function fromUserSpec(spec: unknown): Validator | null {
   const grouping = Array.isArray(s.grouping) && s.grouping.every((g) => Number.isInteger(g) && g >= 1 && g <= 64)
     ? s.grouping.slice(0, 32)
     : undefined
+  // amount bounds: accept finite numbers; drop an inverted range rather than guess
+  let amountRange: { min?: number; max?: number } | undefined
+  if (s.amountRange && typeof s.amountRange === 'object') {
+    const a = s.amountRange as { min?: unknown; max?: unknown }
+    const min = typeof a.min === 'number' && Number.isFinite(a.min) ? a.min : undefined
+    const max = typeof a.max === 'number' && Number.isFinite(a.max) ? a.max : undefined
+    if ((min !== undefined || max !== undefined) && !(min !== undefined && max !== undefined && min > max)) {
+      amountRange = {}
+      if (min !== undefined) amountRange.min = min
+      if (max !== undefined) amountRange.max = max
+    }
+  }
   return {
     id: s.id,
     name: s.name,
@@ -130,6 +159,7 @@ export function fromUserSpec(spec: unknown): Validator | null {
     length,
     checksum,
     grouping,
+    amountRange,
     speech: s.speech === 'natural' ? 'natural' : 'char-by-char',
   }
 }
