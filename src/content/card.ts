@@ -28,6 +28,16 @@ type Step = 'verify-entry' | 'input-first' | 'input-confirm' | 'match' | 'mismat
 let current: { destroy(): void; field: CheckableField } | null = null
 const badges = new WeakMap<CheckableField, BadgeHandle>()
 
+// show only the user's own platform's copy/paste keys, not both
+const IS_MAC = /mac/i.test(
+  (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform ||
+    navigator.platform ||
+    navigator.userAgent,
+)
+const PASTE_HINT = IS_MAC
+  ? 'To paste an image, copy it to the clipboard first — press Shift+Control+Command+4 and drag — then press Paste image and ⌘V.'
+  : 'To paste an image, copy it to the clipboard first — press Win+Shift+S and drag — then press Paste image and Ctrl+V.'
+
 function h<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   attrs: Record<string, string> = {},
@@ -507,10 +517,9 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         onValue ? 'Or read the value in from an image or your voice' : 'Or compare against an image or your voice'),
       row,
     )
-    // copying a screenshot to the clipboard isn't obvious — spell it out
-    wrap.append(h('div', { class: 'hint' },
-      'To paste an image you must copy it first — Mac: Shift+Control+Command+4, ' +
-      'Windows: Win+Shift+S — then press Paste image and ⌘V / Ctrl+V.'))
+    // copying a screenshot to the clipboard isn't obvious — spell it out,
+    // for this machine's platform only
+    wrap.append(h('div', { class: 'hint' }, PASTE_HINT))
     if (!canScan) {
       wrap.append(h('div', { class: 'hint' },
         'Screen scanning works on regular web pages (it uses the one-time access granted by the shortcut). ' +
