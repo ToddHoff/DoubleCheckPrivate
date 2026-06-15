@@ -658,9 +658,6 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         trustedChip.append(
           h('span', { class: 'chip ok' }, `✓ Trusted account: ${known.label} (used ${known.useCount}×)`),
         )
-        payeeSection.append(
-          h('div', { class: 'hint trusted-ok' }, `Recognized as ${known.label} — no need to name the payee.`),
-        )
         return
       }
 
