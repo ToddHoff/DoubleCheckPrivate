@@ -66,15 +66,23 @@ async function sendWithRetry<T>(tabId: number, msg: RuntimeMessage): Promise<T |
   return null
 }
 
-type FocusedIframe = { origin: string; crossOrigin: boolean }
+type FocusedIframe = { origin: string; crossOrigin: boolean; isCard: boolean }
 
-// executeScript func: is focus inside an <iframe>, and is it cross-origin?
+// executeScript func: is focus inside an <iframe>, is it cross-origin, and does
+// it look like the card-NUMBER field (so we can force the 'card' format)?
 function detectFocusedIframe(): FocusedIframe | null {
   const el = document.activeElement as HTMLIFrameElement | null
   if (!el || el.tagName !== 'IFRAME') return null
   let crossOrigin = false
   try { crossOrigin = !el.contentDocument } catch { crossOrigin = true }
-  try { return { origin: new URL(el.src).origin, crossOrigin } } catch { return null }
+  try {
+    const hint = `${el.id} ${el.name} ${el.title} ${el.src}`.toLowerCase()
+    const isCard = /ccnumber|card.?number|account.?number|\bpan\b|number/.test(hint) &&
+      !/\bexp|expir|cvv|cvc|cvn|security.?code/.test(hint)
+    return { origin: new URL(el.src).origin, crossOrigin, isCard }
+  } catch {
+    return null
+  }
 }
 
 async function injectCard(tabId: number) {
@@ -96,15 +104,16 @@ async function injectCard(tabId: number) {
     return
   }
   if (!info) return // nothing focused / not an iframe — do nothing, as before
+  const fmt = info.isCard ? 'card' : undefined
   if (!info.crossOrigin) {
-    await verifyIframe(tabId) // same-origin subframe — always readable
+    await verifyIframe(tabId, fmt) // same-origin subframe — always readable
     return
   }
   // cross-origin: only proceed if the user already granted this origin. The
   // first grant must come from the popup (content/SW can't call
   // permissions.request), so point the user there with an on-page hint.
   if (await chrome.permissions.contains({ origins: [`${info.origin}/*`] })) {
-    await verifyIframe(tabId)
+    await verifyIframe(tabId, fmt)
   } else {
     await sendWithRetry(tabId, { kind: 'dc-sealed-hint', host: new URL(info.origin).host })
   }
