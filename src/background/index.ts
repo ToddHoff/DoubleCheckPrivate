@@ -100,10 +100,13 @@ async function injectCard(tabId: number) {
     await verifyIframe(tabId) // same-origin subframe — always readable
     return
   }
-  // cross-origin: only proceed if the user already granted this origin; the
-  // first grant must come from the popup (content/SW can't call permissions.request)
+  // cross-origin: only proceed if the user already granted this origin. The
+  // first grant must come from the popup (content/SW can't call
+  // permissions.request), so point the user there with an on-page hint.
   if (await chrome.permissions.contains({ origins: [`${info.origin}/*`] })) {
     await verifyIframe(tabId)
+  } else {
+    await sendWithRetry(tabId, { kind: 'dc-sealed-hint', host: new URL(info.origin).host })
   }
 }
 

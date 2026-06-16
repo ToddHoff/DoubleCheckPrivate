@@ -29,6 +29,8 @@ export interface CardContext {
   detached?: boolean
   /** host of the cross-origin frame the value came from (for labeling) */
   relayHost?: string
+  /** the iframe element to anchor the detached card/badge next to */
+  relayAnchor?: HTMLElement
 }
 
 type Step = 'verify-entry' | 'input-first' | 'input-confirm' | 'match' | 'mismatch' | 'done'
@@ -619,16 +621,22 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         origin: location.origin,
       })
     }
+    const detail = formatId === 'currency-amount' ? r.formatted.split(' — ')[0] : undefined
     if (!detached) {
       badges.get(field)?.remove()
       markVerified(field)
       // for amounts, the badge shows the verified interpretation — "12345" in
       // a money field doesn't speak for itself the way a routing number does
-      const detail = formatId === 'currency-amount' ? r.formatted.split(' — ')[0] : undefined
       badges.set(field, attachBadge(field, () => {
         markTampered(field)
         void markLogEntryStale(entry.id)
       }, detail))
+    } else if (ctx.relayAnchor) {
+      // detached: pin a "✓ Double-Checked" marker next to the cross-origin field.
+      // Why cast: attachBadge positions by getBoundingClientRect (works on the
+      // iframe element); its value-watch is inert there — and we can't watch a
+      // cross-origin field anyway — so it's purely a confirmation marker.
+      attachBadge(ctx.relayAnchor as unknown as CheckableField, () => {}, detail)
     }
     step = 'done'
     render()
@@ -960,13 +968,14 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
   // ---- positioning ----
   function position(): void {
-    if (detached) {
-      // no real field to anchor to — pin near the top center of the viewport
+    // detached card with no anchor (shouldn't normally happen) → top center
+    const anchorEl = detached ? ctx.relayAnchor : field
+    const r = anchorEl?.getBoundingClientRect()
+    if (!r || (r.width === 0 && r.height === 0)) {
       card.style.left = `${Math.max(8, (window.innerWidth - card.offsetWidth) / 2)}px`
       card.style.top = '24px'
       return
     }
-    const r = field.getBoundingClientRect()
     const ch = card.offsetHeight
     const below = r.bottom + 8 + ch <= window.innerHeight || r.top - 8 - ch < 0
     card.style.left = `${Math.min(Math.max(8, r.left), window.innerWidth - card.offsetWidth - 8)}px`

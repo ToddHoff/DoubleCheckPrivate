@@ -51,14 +51,64 @@ function openOn(field: CheckableField): void {
   void buildContext(field).then((ctx) => mountCard(field, ctx))
 }
 
+// the focused field is sealed in a cross-origin frame we don't have access to
+// yet, and the grant can only come from the popup — so float a hint next to the
+// field pointing the user at the toolbar icon. Turns a dead shortcut press into
+// guidance instead of silence.
+function renderSealedHint(host: string): void {
+  if (window !== window.top) return
+  document.querySelector('[data-double-check-hint]')?.remove()
+  const anchor = document.activeElement instanceof HTMLIFrameElement ? document.activeElement : null
+  const wrap = document.createElement('div')
+  wrap.setAttribute('data-double-check-hint', '')
+  const root = wrap.attachShadow({ mode: 'closed' })
+  const box = document.createElement('div')
+  box.textContent = `🔒 This field is inside a secure frame (${host}). Click the Double Check icon in your toolbar to verify it.`
+  box.style.cssText = [
+    'position:fixed', 'z-index:2147483647', 'max-width:300px', 'box-sizing:border-box',
+    'padding:10px 12px', 'border-radius:10px', 'background:#1f2937', 'color:#f9fafb',
+    'font:600 12.5px/1.45 system-ui,-apple-system,sans-serif', 'box-shadow:0 4px 16px rgba(0,0,0,.3)',
+    'cursor:pointer', 'border:1px solid #374151',
+  ].join(';')
+  root.appendChild(box)
+  document.documentElement.appendChild(wrap)
+  const place = () => {
+    const r = anchor?.getBoundingClientRect()
+    if (r && (r.width || r.height)) {
+      box.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - box.offsetWidth - 8))}px`
+      box.style.top = `${Math.max(8, r.top - box.offsetHeight - 8)}px`
+    } else {
+      box.style.left = `${Math.max(8, (window.innerWidth - box.offsetWidth) / 2)}px`
+      box.style.top = '24px'
+    }
+  }
+  place()
+  const reposition = () => requestAnimationFrame(place)
+  window.addEventListener('scroll', reposition, { capture: true, passive: true })
+  window.addEventListener('resize', reposition, { passive: true })
+  const dismiss = () => {
+    wrap.remove()
+    window.removeEventListener('scroll', reposition, { capture: true })
+    window.removeEventListener('resize', reposition)
+  }
+  box.addEventListener('click', dismiss)
+  setTimeout(dismiss, 9000)
+}
+
 // open the card on a value relayed out of a cross-origin frame (Solution B):
 // a detached scratch input holds the value; the card runs in the top frame in
 // normal verify mode. Empty value → input mode (the read found nothing).
 function openWithValue(value: string | null, host?: string): void {
   if (window !== window.top) return // render once, in the top frame
+  // anchor the card (and its later badge) to the iframe the value came from, so
+  // it appears next to the field instead of floating at the top of the page
+  const anchor = document.activeElement instanceof HTMLIFrameElement ? document.activeElement : undefined
   const field = document.createElement('input')
   if (value) field.value = value
-  void buildContext(field, true, host).then((ctx) => mountCard(field, ctx))
+  void buildContext(field, true, host).then((ctx) => {
+    ctx.relayAnchor = anchor
+    mountCard(field, ctx)
+  })
 }
 
 function activate(): boolean {
@@ -95,6 +145,7 @@ if (!window.__doubleCheckLoaded) {
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg?.kind === 'dc-activate') sendResponse({ mounted: activate() })
     else if (msg?.kind === 'dc-open-with-value') { openWithValue(msg.value, msg.host); sendResponse({ ok: true }) }
+    else if (msg?.kind === 'dc-sealed-hint') { renderSealedHint(msg.host); sendResponse({ ok: true }) }
     else if (msg?.kind === 'dc-scan-page') sendResponse({ ok: true, count: scanPage() })
     else if (msg?.kind === 'dc-audit-page') sendResponse({ ok: true, count: auditPage() })
   })
