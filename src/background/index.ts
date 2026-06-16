@@ -139,7 +139,10 @@ async function verifyIframe(tabId: number, format?: string) {
         return null
       },
     })
+    // the sealed field is in a sub-frame — skip the TOP frame, whose own hidden
+    // inputs (checkout tokens, CSRF, page state) can be card-shaped by accident
     value = results
+      .filter((r) => r.frameId !== 0)
       .map((r) => r.result as string | null)
       .find((v): v is string => typeof v === 'string' && v.trim().length > 0) ?? null
   } catch {
