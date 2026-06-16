@@ -133,6 +133,10 @@ shell.append(
         'A toggle at the bottom of the check card, naming the site you’re on. Forms there won’t submit ' +
         'while a field you normally double-check is unverified or was edited after checking. A seatbelt ' +
         'on top of the workflow, honest about its limits.', 'beta'),
+      feat('Card numbers in secure payment frames',
+        'A card number usually sits inside the processor’s own cross-origin frame the shortcut can’t reach. ' +
+        'Grant Double Check access to that one site (per-site, on your click, revocable under Site access) ' +
+        'and it verifies the field in place — read and checked locally, never stored or sent.'),
     ),
   ),
 )

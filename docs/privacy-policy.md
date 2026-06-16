@@ -51,6 +51,14 @@ numbers, amounts, IDs) entered into web forms. It is built on one principle:
   corresponds to a specific value without the value being stored.
 - **Settings, custom formats, per-site format memory, and per-field
   two-signature requirements** are stored locally in extension storage.
+- **Verifying a field sealed in a secure frame** (only if you grant that site —
+  see Permissions): some values, such as a card number rendered inside a
+  payment processor's cross-origin frame, can't be reached the normal way. If
+  you grant access to that site, Double Check reads the value locally and
+  relays it between the page's own frames (the frame → the extension's service
+  worker → the page's top frame) solely to run the check at that moment. It is
+  never written to storage and never sent over the network. Without your
+  per-site grant, no value is ever read this way.
 
 ## Network traffic
 
@@ -68,6 +76,14 @@ network requests of any kind.
 - **activeTab + scripting**: lets the extension open its verification card on
   a page — only when you press the keyboard shortcut or click the toolbar
   icon on that page. The extension has no standing access to any website.
+- **Optional site access (off by default)**: Double Check installs with access
+  to no website at all. To verify a field sealed inside a cross-origin frame
+  (e.g. a card number in a payment processor's iframe), it must be allowed onto
+  that site. It asks Chrome for access to that **one** site, on your click, the
+  first time you choose to verify such a field there. The grant is per-site and
+  revocable any time in Settings → Site access; nothing is granted unless you
+  opt in. (Technically declared as `optional_host_permissions`; we request only
+  the specific site you're on, never all sites up front.)
 - **storage**: settings, custom formats, and the metadata-only log.
 - **offscreen**: runs the bundled OCR engine.
 - **alarms**: deletes old log entries per your retention setting.

@@ -98,6 +98,19 @@ Double Check is active on the page (the toggle arms the current page
 immediately), and some single-page apps submit in ways no extension can
 intercept — the attestation, not the guard, is the real control.</p>
 
+<h2>Card numbers inside secure payment frames</h2>
+<p>A card number on a checkout usually lives inside the payment processor's own
+cross-origin frame, which the keyboard shortcut can't reach on its own. When you
+invoke Double Check there (or right-click &rarr; <em>Find fields to
+double-check</em>, which tags the field), it offers to verify it — the first
+time, you grant access to that one site through the toolbar popup. After that,
+Double Check reads the value locally and opens the verify card right next to the
+field, in card format with the Luhn check.</p>
+<p>That per-site access is the one time Double Check asks to be allowed onto a
+website. It's opt-in, one site at a time, and you can see and revoke every site
+you've granted under <em>Site access</em>. The value is read and checked locally
+and is never stored or sent anywhere — same promise as everything else here.</p>
+
 <h2>Two signatures (for the highest-stakes fields)</h2>
 <p>When one person signing off isn't enough, tick <em>Require two signatures
 for this field</em> on the check card (just above Submit Guard). That choice is

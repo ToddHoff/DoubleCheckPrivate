@@ -64,11 +64,12 @@ MADE FOR REAL WORK
 • Define your own formats (vendor IDs, policy numbers, internal account schemes) with clean-up rules, patterns, and standard checksum algorithms — plus an optional expected amount range that warns (without blocking) when a value is unusually large or small for the field; share them with your team as files
 • See what it's caught: a running, local-only tally of the mismatches, bad values, account-change warnings, and page problems Double Check has flagged for you — real events, never an estimated dollar figure
 • Submit Guard (beta): optionally block a site's forms from submitting while a field you normally double-check there is unverified
+• Verify card numbers inside secure payment frames: a card number lives in a processor's cross-origin iframe the usual tools can't reach — grant Double Check access to that one site (per-site, on your click, revocable in Settings → Site access) and it verifies the field in place
 • Keyboard-first: invoke, verify, and attest without touching the mouse
 
 PRIVACY IS THE ARCHITECTURE, NOT A POLICY
 
-Double Check has no access to any page until you invoke it there — it requests no standing permission to read websites. Verified values are never transmitted, logged, or stored. OCR and speech recognition run entirely on your device. There are no analytics and no telemetry. The only network traffic is license verification with our payment provider.
+Double Check installs with no access to any website and no standing permission to read pages — it opens only when you invoke it. The one exception is opt-in and per-site: to verify a field sealed inside a payment processor's secure frame, you can grant access to that single site (revocable any time); even then the value is read and checked locally, never transmitted. Verified values are never transmitted, logged, or stored. OCR and speech recognition run entirely on your device. There are no analytics and no telemetry. The only network traffic is license verification with our payment provider.
 
 PRICING
 
@@ -98,8 +99,22 @@ together with activeTab; no content scripts run on user pages otherwise.
 
 **Host permission use (https://extensionpay.com/*):** A content script on
 extensionpay.com (our payment provider) relays payment and trial
-confirmations back to the extension after checkout. This is the only host
-permission; the extension requests no access to any other website.
+confirmations back to the extension after checkout. This is the only
+declared-and-granted host; see the optional host permission below.
+
+**optional_host_permissions (https://\*/\*), requested per-site at runtime:**
+Declared as OPTIONAL and never granted at install — the extension ships with
+no host access and no install-time host warning. Some values the user needs to
+verify (most commonly a card number) are rendered inside a payment processor's
+cross-origin iframe that activeTab cannot reach. When the user explicitly
+chooses to verify such a field, the extension calls chrome.permissions.request
+for the SINGLE specific origin of that frame, on a user gesture. With that
+per-site grant it reads the field's value locally and relays it between the
+page's own frames to run the double-check; the value is never stored or sent
+over the network. Grants are listed and revocable in the extension's Site
+access tab. The broad "https://*/*" pattern is declared only so any site the
+user lands on can be requested individually at runtime; the extension never
+requests all-sites access and holds access only to sites the user grants.
 
 **storage:** Stores the user's settings, their user-defined format
 validators, per-site format preferences, per-field "require two signatures"
