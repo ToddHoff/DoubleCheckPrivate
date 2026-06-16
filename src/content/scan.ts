@@ -38,9 +38,10 @@ const FLAG_CSS = `
 
 type Tone = 'ok' | 'bad'
 interface Flag {
-  field: CheckableField
+  el: HTMLElement // positioning anchor: an input/textarea or a payment iframe
   text: string
   tone: Tone
+  action: () => void // what clicking the pill does
 }
 
 let activeHost: HTMLElement | null = null
@@ -56,10 +57,31 @@ function checkableFields(): CheckableField[] {
   )
 }
 
+// cross-origin iframes that look like a payment/card field (CollectJS, Stripe,
+// Braintree, Adyen, etc.) — fields the input-scan can't see into
+const CARD_IFRAME_RE = /cc|card|credit|number|payment|cvv|cvc|secur|stripe|braintree|adyen|checkout|safeweb/i
+function paymentIframes(): HTMLIFrameElement[] {
+  return [...document.querySelectorAll('iframe')].filter((f): f is HTMLIFrameElement => {
+    let crossOrigin = false
+    try { crossOrigin = !f.contentDocument } catch { crossOrigin = true }
+    if (!crossOrigin) return false
+    return CARD_IFRAME_RE.test(`${f.id} ${f.name} ${f.title} ${f.src}`.toLowerCase())
+  })
+}
+
+// the grant/verify flow for a sealed card field has to run through the service
+// worker (and, for the first grant, the popup) — content can't request perms
+function pickIframe(f: HTMLIFrameElement): void {
+  try {
+    void chrome.runtime.sendMessage({ kind: 'dc-pill-iframe', origin: new URL(f.src).origin })
+  } catch {
+    /* iframe has no usable src/origin */
+  }
+}
+
 function renderFlags(
   flags: Flag[],
   banner: { tone: Tone | 'none'; text: string },
-  onPick: (field: CheckableField) => void,
 ): number {
   clearScanTags()
 
@@ -73,19 +95,19 @@ function renderFlags(
   activeHost = host
 
   const positioners: Array<() => void> = []
-  for (const { field, text, tone } of flags) {
+  for (const { el, text, tone, action } of flags) {
     const pill = document.createElement('button')
     pill.className = `pill ${tone}`
     pill.textContent = text
     pill.title = 'Open Double Check on this field'
     pill.addEventListener('click', () => {
       clearScanTags()
-      onPick(field)
+      action()
     })
     root.appendChild(pill)
 
     const position = () => {
-      const r = field.getBoundingClientRect()
+      const r = el.getBoundingClientRect()
       if ((r.width === 0 && r.height === 0) || r.bottom < 0 || r.top > window.innerHeight) {
         pill.style.display = 'none'
         return
@@ -137,18 +159,18 @@ export function scanAndTag(validators: Validator[], onPick: (field: CheckableFie
     const candidate = highValueCandidate(fieldSignals(field), validators)
     if (!candidate) continue
     const name = validators.find((v) => v.id === candidate.id)?.name ?? 'value'
-    flags.push({ field, text: `Double-check: ${name}?`, tone: 'ok' })
+    flags.push({ el: field, text: `Double-check: ${name}?`, tone: 'ok', action: () => onPick(field) })
   }
-  return renderFlags(
-    flags,
-    {
-      tone: flags.length ? 'ok' : 'none',
-      text: flags.length
-        ? `Double Check flagged ${flags.length} field${flags.length === 1 ? '' : 's'} worth verifying — click a tag.`
-        : 'Double Check found no high-value fields on this page.',
-    },
-    onPick,
-  )
+  // sealed card fields the input-scan can't see into — tag the iframe itself
+  for (const f of paymentIframes()) {
+    flags.push({ el: f, text: '🔒 Verify card field (secure frame)', tone: 'ok', action: () => pickIframe(f) })
+  }
+  return renderFlags(flags, {
+    tone: flags.length ? 'ok' : 'none',
+    text: flags.length
+      ? `Double Check flagged ${flags.length} field${flags.length === 1 ? '' : 's'} worth verifying — click a tag.`
+      : 'Double Check found no high-value fields on this page.',
+  })
 }
 
 /** audit filled fields for detectable problems; red pills with the issue */
@@ -172,17 +194,13 @@ export function auditAndFlag(validators: Validator[], onPick: (field: CheckableF
       // unknown field — still flag deceptive characters, which are bad anywhere
       problems.push(...suspiciousChars(raw))
     }
-    if (problems.length) flags.push({ field, text: problems[0], tone: 'bad' })
+    if (problems.length) flags.push({ el: field, text: problems[0], tone: 'bad', action: () => onPick(field) })
   }
   if (flags.length) void bumpStat('pageProblemsFound', flags.length)
-  return renderFlags(
-    flags,
-    {
-      tone: flags.length ? 'bad' : 'none',
-      text: flags.length
-        ? `Double Check found ${flags.length} field${flags.length === 1 ? '' : 's'} with a problem — click to fix.`
-        : 'Double Check found no problems in the filled fields on this page.',
-    },
-    onPick,
-  )
+  return renderFlags(flags, {
+    tone: flags.length ? 'bad' : 'none',
+    text: flags.length
+      ? `Double Check found ${flags.length} field${flags.length === 1 ? '' : 's'} with a problem — click to fix.`
+      : 'Double Check found no problems in the filled fields on this page.',
+  })
 }

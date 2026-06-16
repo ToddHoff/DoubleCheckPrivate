@@ -100,6 +100,7 @@ export type RuntimeMessage =
   | { kind: 'dc-verify-iframe'; tabId: number }
   | { kind: 'dc-open-with-value'; value: string | null; host?: string }
   | { kind: 'dc-sealed-hint'; host: string }
+  | { kind: 'dc-pill-iframe'; origin: string }
   | { kind: 'dc-open-options'; section?: string }
   | { kind: 'dc-license-status' }
   | { kind: 'dc-payment-action'; action: string }

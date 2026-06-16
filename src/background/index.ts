@@ -120,16 +120,25 @@ async function verifyIframe(tabId: number) {
   try {
     const results = await chrome.scripting.executeScript({
       target: { tabId, allFrames: true },
+      // Why not document.activeElement: the user may have invoked from a scan
+      // pill (focus is on the pill, not the field), so read the frame's filled
+      // input directly rather than relying on focus.
       func: () => {
-        const el = document.activeElement
-        return el && (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) && el.value.trim()
-          ? el.value
-          : null
+        const el = [...document.querySelectorAll('input, textarea')]
+          .find((e) => (e as HTMLInputElement).value?.trim())
+        return el ? (el as HTMLInputElement).value : null
       },
     })
-    value = results.map((r) => r.result as string | null).find((v) => typeof v === 'string' && v.trim()) ?? null
+    const filled = results
+      .map((r) => r.result as string | null)
+      .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+    // prefer a card-number-shaped value (13–19 digits) over expiry/CVV fields
+    value = filled.find((v) => {
+      const d = v.replace(/\D/g, '')
+      return d.length >= 13 && d.length <= 19
+    }) ?? filled[0] ?? null
   } catch {
-    /* the granted frame may not have a focused input anymore — fall through to input mode */
+    /* the granted frame may not be readable — fall through to input mode */
   }
   try {
     await chrome.scripting.executeScript({ target: { tabId }, files: [contentScript] })
@@ -162,7 +171,7 @@ async function ensureOffscreen(): Promise<void> {
   })
 }
 
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg?.kind === 'dc-activate-from-popup' && typeof msg.tabId === 'number') {
     void injectCard(msg.tabId).then(() => sendResponse({ ok: true }))
     return true // async response
@@ -170,6 +179,21 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg?.kind === 'dc-verify-iframe' && typeof msg.tabId === 'number') {
     void verifyIframe(msg.tabId).then(() => sendResponse({ ok: true }))
     return true // async response
+  }
+  // a scan pill on a sealed card field was clicked (sender is the page)
+  if (msg?.kind === 'dc-pill-iframe' && typeof msg.origin === 'string') {
+    const tabId = sender.tab?.id
+    if (tabId == null) { sendResponse({ ok: false }); return }
+    void (async () => {
+      if (await chrome.permissions.contains({ origins: [`${msg.origin}/*`] })) {
+        await verifyIframe(tabId) // already granted → read + verify
+      } else {
+        // can't request permission here (needs the popup); point the user there
+        await sendWithRetry(tabId, { kind: 'dc-sealed-hint', host: new URL(msg.origin).host })
+      }
+      sendResponse({ ok: true })
+    })()
+    return true
   }
   if (msg?.kind === 'dc-ocr' && typeof msg.imageDataUrl === 'string') {
     // relay content → offscreen; the image stays inside the extension process

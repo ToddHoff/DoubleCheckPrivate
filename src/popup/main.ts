@@ -56,19 +56,32 @@ document.getElementById('check')!.addEventListener('click', async () => {
 type IframeField = { origin: string; host: string; isCard: boolean }
 
 function detectIframeField(): IframeField | null {
-  const el = document.activeElement as HTMLElement | null
-  if (!el || el.tagName !== 'IFRAME') return null
-  const iframe = el as HTMLIFrameElement
-  let crossOrigin = false
-  try { crossOrigin = !iframe.contentDocument } catch { crossOrigin = true }
-  if (!crossOrigin || !iframe.src) return null
-  try {
-    const u = new URL(iframe.src)
-    const hint = `${iframe.id} ${iframe.name} ${iframe.title} ${iframe.src}`.toLowerCase()
-    return { origin: u.origin, host: u.host, isCard: /cc|card|credit|number|payment/.test(hint) }
-  } catch {
-    return null
+  const re = /cc|card|credit|number|payment|cvv|cvc|secur|stripe|braintree|adyen|checkout|safeweb/i
+  const consider = (f: HTMLIFrameElement): IframeField | null => {
+    let crossOrigin = false
+    try { crossOrigin = !f.contentDocument } catch { crossOrigin = true }
+    if (!crossOrigin || !f.src) return null
+    try {
+      const u = new URL(f.src)
+      const hint = `${f.id} ${f.name} ${f.title} ${f.src}`.toLowerCase()
+      return { origin: u.origin, host: u.host, isCard: re.test(hint) }
+    } catch {
+      return null
+    }
   }
+  // prefer the focused iframe (any cross-origin frame the user is in)
+  const ae = document.activeElement
+  if (ae && ae.tagName === 'IFRAME') {
+    const r = consider(ae as HTMLIFrameElement)
+    if (r) return r
+  }
+  // otherwise look for a payment-looking cross-origin iframe on the page, so the
+  // grant button still shows after a scan pill sent the user to the toolbar
+  for (const f of Array.from(document.querySelectorAll('iframe'))) {
+    const r = consider(f as HTMLIFrameElement)
+    if (r?.isCard) return r
+  }
+  return null
 }
 
 void (async () => {
