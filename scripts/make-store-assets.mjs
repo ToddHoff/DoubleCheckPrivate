@@ -248,6 +248,43 @@ async function main() {
   await page.screenshot({ path: 'store-assets/doc-scan.jpg', type: 'jpeg', quality: 92 })
   console.log('doc-scan.jpg')
 
+  // 6: two signatures + a note — the dual sign-off and note features. ROUTING_OK
+  // is recognized as Acme (saved in screenshot 1), so it shows the trusted chip.
+  await goPlain()
+  await page.locator('#routing').fill(ROUTING_OK)
+  await page.locator('#routing').focus()
+  await openCard()
+  await waitStep('verify-entry')
+  await page.waitForTimeout(150)
+  await page.locator('.guardrow').first().locator('input').check() // require two signatures
+  await page.locator('.notefield').fill('Q3 vendor payment — see signed PO, page 2')
+  await entry().fill(ROUTING_OK)
+  await primary().click()
+  await waitStep('match')
+  await page.waitForTimeout(250)
+  await page.locator('.signer').nth(0).fill('Dana Ruiz')
+  await page.locator('.signer').nth(1).fill('Sam Okafor')
+  await page.waitForTimeout(150)
+  await shot(6)
+  await cardShot('dualsign')
+  // confirm so it lands in the log (used by the log screenshot below)
+  await page.locator('.attest input').check()
+  await primary().click()
+  await page.waitForTimeout(2200) // card auto-closes
+
+  // 7: the verification log — reformatted feed with signatures, a note, and the
+  // tamper-evident seal confirmed intact
+  const opt = await context.newPage()
+  await opt.setViewportSize({ width: 1280, height: 800 })
+  await opt.goto(`chrome-extension://${extId}/src/options/index.html#log`)
+  await opt.waitForSelector('.logfeed .le', { timeout: 8000 })
+  await opt.locator('button:has-text("Verify integrity")').click()
+  await opt.waitForSelector('.integrity .chip', { timeout: 8000 })
+  await opt.waitForTimeout(250)
+  await opt.screenshot({ path: 'store-assets/screenshot-7.jpg', type: 'jpeg', quality: 92 })
+  console.log('screenshot-7.jpg')
+  await opt.close()
+
   await context.close()
   server.close()
   rmSync('dist-shots', { recursive: true, force: true })
