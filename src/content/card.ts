@@ -1,5 +1,5 @@
-import type { Diagnosis, FieldSignals, ValidationResult, Validator } from '../engine'
-import { classifyPayee, diagnose, extractCandidates, groupValue, normalizeSpoken, recognize, suggestFormats, validate } from '../engine'
+import type { Diagnosis, ValidationResult, Validator } from '../engine'
+import { classifyPayee, diagnose, extractCandidates, groupValue, normalizeSpoken, recognize, validate } from '../engine'
 import { fileToDataUrl } from './capture'
 import type { LicenseStatus, LogEntry, Settings } from '../shared/types'
 import {
@@ -95,7 +95,6 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   let formatId = ctx.remembered ?? ctx.suggestions[0] ??
     (/^[\d\s().+-]*$/.test(field.value) ? 'generic-number' : 'generic-text')
   let firstEntry = '' // input mode: the value typed from the source
-  let userPickedFormat = false // stop value-based auto-detect once they choose
   let lastDiagnosis: Diagnosis | null = null
   let lastEntered = ''
   let mismatchSeen = false
@@ -179,30 +178,15 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   renderSelect()
   select.addEventListener('change', () => {
     formatId = select.value
-    userPickedFormat = true
     step = inputMode ? 'input-first' : 'verify-entry'
     render()
   })
-
-  // standalone has no field signals to infer a format from, so detect it from
-  // the value as the user types (a Luhn-valid 16-digit number → card, etc.),
-  // until they pick one themselves
-  const autoDetectFormat = (value: string): void => {
-    if (!standalone || userPickedFormat || !value.trim()) return
-    const top = suggestFormats({ value } as FieldSignals, ctx.validators)
-      .find((id) => !id.startsWith('generic-'))
-    if (top && top !== formatId) {
-      formatId = top
-      const sel = root.querySelector('select') as HTMLSelectElement | null
-      if (sel) sel.value = formatId
-    }
-  }
 
   const closeBtn = h('button', { class: 'close', 'aria-label': 'Close' }, '✕')
   closeBtn.addEventListener('click', () => destroy(true))
   const header = h('div', { class: 'hd' },
     h('span', { class: 'logo', 'aria-hidden': 'true' }),
-    h('span', { class: 'title' }, standalone ? 'Verify a value' : 'Double Check'),
+    h('span', { class: 'title' }, 'Double Check'),
     select, closeBtn,
   )
   const body = h('div', { class: 'bd', 'aria-live': 'polite' })
@@ -910,7 +894,6 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     const liveChips = h('div', {})
     const next = h('button', { class: 'btn primary', disabled: '' }, 'Continue to step 2') as HTMLButtonElement
     const update = () => {
-      autoDetectFormat(input.value) // standalone: pick the format from the value
       const r = validate(validator(), input.value)
       liveChips.textContent = ''
       if (input.value.trim()) liveChips.appendChild(chipRow(r))
