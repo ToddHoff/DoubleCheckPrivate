@@ -23,6 +23,9 @@ export interface CardContext {
   settings: Settings
   license: LicenseStatus
   requireDualSign: boolean
+  /** field-less "verify a value" card: not bound to any page input. Used when
+   * the real field is unreachable (e.g. a cross-origin payment iframe). */
+  standalone?: boolean
 }
 
 type Step = 'verify-entry' | 'input-first' | 'input-confirm' | 'match' | 'mismatch' | 'done'
@@ -71,6 +74,9 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
   // ---- state ----
   const startedAt = Date.now()
+  // field-less mode: `field` is a detached scratch input we never attach to the
+  // page, so writes/reads are harmless and there's no badge or per-site memory
+  const standalone = !!ctx.standalone
   // Why: the site masked this field on purpose (open-office shoulder-surfing).
   // The match screen's big bold value is the highest-exposure moment, so we
   // keep it masked behind an explicit reveal toggle rather than un-masking
@@ -208,35 +214,6 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   // the guard on this page instantly (we ARE the content script). Hidden on
   // the extension's own pages, where guarding has nothing to protect.
   if (location.protocol !== 'chrome-extension:') {
-    // per-field "two signatures" requirement, remembered for this field on this
-    // site. Sits right above Submit Guard; toggling it re-renders the
-    // attestation so the second signature line appears/disappears immediately.
-    const dualBox = h('input', { type: 'checkbox' }) as HTMLInputElement
-    dualBox.checked = requireDualSign
-    dualBox.addEventListener('change', async () => {
-      requireDualSign = dualBox.checked
-      await setDualSignField(location.origin, fieldSignature(field), requireDualSign)
-      if (step === 'match') render()
-    })
-    const dualRow = h('label', { class: 'guardrow' },
-      dualBox,
-      h('span', { class: 'gtext' },
-        h('span', {}, 'Require two signatures for this field'),
-        h('span', { class: 'gcap' },
-          'Two people each type their name and confirm together; both names are saved with the check.'),
-      ),
-    )
-
-    const box = h('input', { type: 'checkbox' }) as HTMLInputElement
-    box.checked = ctx.settings.submitGuardOrigins.includes(location.origin)
-    box.addEventListener('change', async () => {
-      ctx.settings.submitGuardOrigins = box.checked
-        ? [...new Set([...ctx.settings.submitGuardOrigins, location.origin])]
-        : ctx.settings.submitGuardOrigins.filter((o) => o !== location.origin)
-      await saveSettings(ctx.settings)
-      if (box.checked) await installSubmitGuard(ctx.settings.submitGuardOrigins)
-      else box.title = 'Off — this page stays guarded until reloaded'
-    })
     // optional note, kept in the unobtrusive options strip at the bottom. Free
     // text the user controls, so the placeholder reminds them not to put the
     // value itself here — the value is never stored.
@@ -248,18 +225,52 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     const noteRow = h('div', { class: 'noterow' },
       h('div', { class: 'lbl' }, 'Note (optional)'), noteInput)
 
-    card.append(header, body,
-      noteRow,
-      dualRow,
-      h('label', { class: 'guardrow' },
-        box,
+    if (standalone) {
+      // no page field → the per-field/per-site toggles below are meaningless
+      card.append(header, body, noteRow, footer)
+    } else {
+      // per-field "two signatures" requirement, remembered for this field on this
+      // site. Sits right above Submit Guard; toggling it re-renders the
+      // attestation so the second signature line appears/disappears immediately.
+      const dualBox = h('input', { type: 'checkbox' }) as HTMLInputElement
+      dualBox.checked = requireDualSign
+      dualBox.addEventListener('change', async () => {
+        requireDualSign = dualBox.checked
+        await setDualSignField(location.origin, fieldSignature(field), requireDualSign)
+        if (step === 'match') render()
+      })
+      const dualRow = h('label', { class: 'guardrow' },
+        dualBox,
         h('span', { class: 'gtext' },
-          h('span', {}, 'Submit Guard on ', h('strong', {}, location.host), ' ', h('em', {}, '(beta)')),
+          h('span', {}, 'Require two signatures for this field'),
           h('span', { class: 'gcap' },
-            'Blocks form submits on this site while a field you double-check is unverified or was changed after checking.'),
+            'Two people each type their name and confirm together; both names are saved with the check.'),
         ),
-      ),
-      footer)
+      )
+
+      const box = h('input', { type: 'checkbox' }) as HTMLInputElement
+      box.checked = ctx.settings.submitGuardOrigins.includes(location.origin)
+      box.addEventListener('change', async () => {
+        ctx.settings.submitGuardOrigins = box.checked
+          ? [...new Set([...ctx.settings.submitGuardOrigins, location.origin])]
+          : ctx.settings.submitGuardOrigins.filter((o) => o !== location.origin)
+        await saveSettings(ctx.settings)
+        if (box.checked) await installSubmitGuard(ctx.settings.submitGuardOrigins)
+        else box.title = 'Off — this page stays guarded until reloaded'
+      })
+      card.append(header, body,
+        noteRow,
+        dualRow,
+        h('label', { class: 'guardrow' },
+          box,
+          h('span', { class: 'gtext' },
+            h('span', {}, 'Submit Guard on ', h('strong', {}, location.host), ' ', h('em', {}, '(beta)')),
+            h('span', { class: 'gcap' },
+              'Blocks form submits on this site while a field you double-check is unverified or was changed after checking.'),
+          ),
+        ),
+        footer)
+    }
   } else {
     card.append(header, body, footer)
   }
@@ -565,7 +576,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       id: crypto.randomUUID(),
       at: new Date().toISOString(),
       origin: location.origin,
-      fieldLabel: fieldDescription(field),
+      fieldLabel: standalone ? 'Standalone check' : fieldDescription(field),
       format: formatId,
       methods: [
         'double-entry',
@@ -587,7 +598,8 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     if (ctx.settings.hmacFingerprint) entry.fingerprint = await fingerprintValue(r.normalized)
     await appendLogEntry(entry)
     await bumpStats(mismatchSeen)
-    await rememberFormat(location.origin, fieldSignature(field), formatId)
+    // no field to remember a format for in standalone mode
+    if (!standalone) await rememberFormat(location.origin, fieldSignature(field), formatId)
     // remember/refresh the trusted account: the payee the user named, or the
     // one this value was already recognized as (bumps its use count)
     const trustedLabel = payeeLabel.trim() || recognizedLabel
@@ -599,18 +611,36 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         origin: location.origin,
       })
     }
-    badges.get(field)?.remove()
-    markVerified(field)
-    // for amounts, the badge shows the verified interpretation — "12345" in
-    // a money field doesn't speak for itself the way a routing number does
-    const detail = formatId === 'currency-amount' ? r.formatted.split(' — ')[0] : undefined
-    badges.set(field, attachBadge(field, () => {
-      markTampered(field)
-      void markLogEntryStale(entry.id)
-    }, detail))
+    if (standalone) {
+      // no page field to badge — hand the verified value to the clipboard so
+      // the user can paste it into the (unreachable) field themselves
+      await copyValue(r.normalized)
+    } else {
+      badges.get(field)?.remove()
+      markVerified(field)
+      // for amounts, the badge shows the verified interpretation — "12345" in
+      // a money field doesn't speak for itself the way a routing number does
+      const detail = formatId === 'currency-amount' ? r.formatted.split(' — ')[0] : undefined
+      badges.set(field, attachBadge(field, () => {
+        markTampered(field)
+        void markLogEntryStale(entry.id)
+      }, detail))
+    }
     step = 'done'
     render()
-    setTimeout(() => destroy(true), 1600)
+    setTimeout(() => destroy(true), standalone ? 2600 : 1600)
+  }
+
+  // copy the verified value to the clipboard (standalone mode) — a user-gesture
+  // local action; the value goes only to the user's own clipboard
+  let copied = false
+  async function copyValue(value: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(value)
+      copied = true
+    } catch {
+      copied = false
+    }
   }
 
   // ---- step renderers ----
@@ -694,6 +724,17 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
     if (inputMode) {
       writeField(firstEntry.trim())
+    }
+
+    if (standalone) {
+      // give the verified value to the clipboard so it can be pasted into the
+      // unreachable field; confirming below also copies and logs it
+      const copyBtn = h('button', { class: 'btn' }, 'Copy value')
+      copyBtn.addEventListener('click', async () => {
+        await copyValue(r.normalized)
+        copyBtn.textContent = '✓ Copied'
+      })
+      body.append(h('div', { class: 'btnrow' }, copyBtn))
     }
 
     // ---- trusted payee: recognition + changed-account (BEC) warning ----
@@ -918,7 +959,10 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   function renderDone(): void {
     card.className = 'card state-match'
     body.textContent = ''
-    body.append(h('div', { class: 'done' }, '✓ Verified, attested, and logged'))
+    const msg = standalone
+      ? (copied ? '✓ Verified and logged — value copied. Paste it into the field.' : '✓ Verified and logged.')
+      : '✓ Verified, attested, and logged'
+    body.append(h('div', { class: 'done' }, msg))
   }
 
   function render(): void {
@@ -938,6 +982,13 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
   // ---- positioning ----
   function position(): void {
+    if (standalone) {
+      // no field to anchor to — pin near the top center of the viewport
+      const cw = card.offsetWidth
+      card.style.left = `${Math.max(8, (window.innerWidth - cw) / 2)}px`
+      card.style.top = '24px'
+      return
+    }
     const r = field.getBoundingClientRect()
     const ch = card.offsetHeight
     const below = r.bottom + 8 + ch <= window.innerHeight || r.top - 8 - ch < 0

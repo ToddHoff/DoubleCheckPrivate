@@ -87,6 +87,17 @@ async function injectCard(tabId: number) {
   }
 }
 
+async function injectStandalone(tabId: number) {
+  // top frame only — the standalone card isn't tied to any field, so there's no
+  // subframe to chase; this works even when the focused field is unreachable
+  try {
+    await chrome.scripting.executeScript({ target: { tabId }, files: [contentScript] })
+  } catch {
+    return // restricted page (chrome://, web store) — nothing we can do
+  }
+  await sendWithRetry(tabId, { kind: 'dc-activate-standalone' })
+}
+
 async function injectPage(tabId: number, kind: 'dc-scan-page' | 'dc-audit-page') {
   try {
     await chrome.scripting.executeScript({ target: { tabId }, files: [contentScript] })
@@ -113,6 +124,10 @@ async function ensureOffscreen(): Promise<void> {
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg?.kind === 'dc-activate-from-popup' && typeof msg.tabId === 'number') {
     void injectCard(msg.tabId).then(() => sendResponse({ ok: true }))
+    return true // async response
+  }
+  if (msg?.kind === 'dc-verify-standalone' && typeof msg.tabId === 'number') {
+    void injectStandalone(msg.tabId).then(() => sendResponse({ ok: true }))
     return true // async response
   }
   if (msg?.kind === 'dc-ocr' && typeof msg.imageDataUrl === 'string') {
