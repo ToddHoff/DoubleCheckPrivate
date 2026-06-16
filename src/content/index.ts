@@ -32,7 +32,10 @@ async function buildContext(field: CheckableField, detached = false, relayHost?:
     : []
   const validators = [...BUILTIN_VALIDATORS, ...userValidators]
   const fieldKey = siteMemoryKey(location.origin, fieldSignature(field))
-  const remembered = siteMemory[fieldKey]
+  // a detached card's field signature is meaningless ("||"), so it would collide
+  // with any no-signature field's remembered format on this origin — ignore
+  // remembered for detached and let value-based detection pick the format
+  const remembered = detached ? undefined : siteMemory[fieldKey]
   const suggestions = suggestFormats(fieldSignals(field), validators)
   return {
     validators,
@@ -98,7 +101,7 @@ function renderSealedHint(host: string): void {
 // open the card on a value relayed out of a cross-origin frame (Solution B):
 // a detached scratch input holds the value; the card runs in the top frame in
 // normal verify mode. Empty value → input mode (the read found nothing).
-function openWithValue(value: string | null, host?: string): void {
+function openWithValue(value: string | null, host?: string, format?: string): void {
   if (window !== window.top) return // render once, in the top frame
   // anchor the card (and its later badge) to the iframe the value came from, so
   // it appears next to the field instead of floating at the top of the page
@@ -107,6 +110,7 @@ function openWithValue(value: string | null, host?: string): void {
   if (value) field.value = value
   void buildContext(field, true, host).then((ctx) => {
     ctx.relayAnchor = anchor
+    ctx.preferredFormat = format // e.g. 'card' — we detected a card-number iframe
     mountCard(field, ctx)
   })
 }
@@ -144,7 +148,7 @@ if (!window.__doubleCheckLoaded) {
   window.__doubleCheckLoaded = true
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg?.kind === 'dc-activate') sendResponse({ mounted: activate() })
-    else if (msg?.kind === 'dc-open-with-value') { openWithValue(msg.value, msg.host); sendResponse({ ok: true }) }
+    else if (msg?.kind === 'dc-open-with-value') { openWithValue(msg.value, msg.host, msg.format); sendResponse({ ok: true }) }
     else if (msg?.kind === 'dc-sealed-hint') { renderSealedHint(msg.host); sendResponse({ ok: true }) }
     else if (msg?.kind === 'dc-scan-page') sendResponse({ ok: true, count: scanPage() })
     else if (msg?.kind === 'dc-audit-page') sendResponse({ ok: true, count: auditPage() })

@@ -115,28 +115,33 @@ async function injectCard(tabId: number) {
 // value from whichever now-permitted frame has focus, then open the verify card
 // in the top frame. The value is relayed locally only — never stored, never
 // sent to the network. See RuntimeMessage note on dc-open-with-value.
-async function verifyIframe(tabId: number) {
+async function verifyIframe(tabId: number, format?: string) {
   let value: string | null = null
   try {
     const results = await chrome.scripting.executeScript({
       target: { tabId, allFrames: true },
-      // Why not document.activeElement: the user may have invoked from a scan
-      // pill (focus is on the pill, not the field), so read the frame's filled
-      // input directly rather than relying on focus.
+      // Read the FOCUSED element first — processors like CollectJS use custom
+      // fields that querySelectorAll('input') misses but activeElement catches
+      // (per-frame activeElement persists even when top-frame focus moves). Only
+      // accept a card-number-shaped value (12–19 digits) so we never grab a
+      // giant hidden token/state input by mistake.
       func: () => {
-        const el = [...document.querySelectorAll('input, textarea')]
-          .find((e) => (e as HTMLInputElement).value?.trim())
-        return el ? (el as HTMLInputElement).value : null
+        const cardish = (s: string | null | undefined) => {
+          const d = (s || '').replace(/\D/g, '')
+          return d.length >= 12 && d.length <= 19
+        }
+        const ae = document.activeElement as HTMLInputElement | null
+        if (ae && typeof ae.value === 'string' && cardish(ae.value)) return ae.value
+        for (const e of Array.from(document.querySelectorAll('input, textarea'))) {
+          const v = (e as HTMLInputElement).value
+          if (cardish(v)) return v
+        }
+        return null
       },
     })
-    const filled = results
+    value = results
       .map((r) => r.result as string | null)
-      .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
-    // prefer a card-number-shaped value (13–19 digits) over expiry/CVV fields
-    value = filled.find((v) => {
-      const d = v.replace(/\D/g, '')
-      return d.length >= 13 && d.length <= 19
-    }) ?? filled[0] ?? null
+      .find((v): v is string => typeof v === 'string' && v.trim().length > 0) ?? null
   } catch {
     /* the granted frame may not be readable — fall through to input mode */
   }
@@ -145,7 +150,7 @@ async function verifyIframe(tabId: number) {
   } catch {
     return // restricted page
   }
-  await sendWithRetry(tabId, { kind: 'dc-open-with-value', value })
+  await sendWithRetry(tabId, { kind: 'dc-open-with-value', value, format })
 }
 
 async function injectPage(tabId: number, kind: 'dc-scan-page' | 'dc-audit-page') {
@@ -177,7 +182,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true // async response
   }
   if (msg?.kind === 'dc-verify-iframe' && typeof msg.tabId === 'number') {
-    void verifyIframe(msg.tabId).then(() => sendResponse({ ok: true }))
+    void verifyIframe(msg.tabId, msg.format).then(() => sendResponse({ ok: true }))
     return true // async response
   }
   // a scan pill on a sealed card field was clicked (sender is the page)
@@ -186,7 +191,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (tabId == null) { sendResponse({ ok: false }); return }
     void (async () => {
       if (await chrome.permissions.contains({ origins: [`${msg.origin}/*`] })) {
-        await verifyIframe(tabId) // already granted → read + verify, like the popup button
+        await verifyIframe(tabId, 'card') // pill only fires for card-number frames
+
       } else {
         // first grant can only come from an extension page — open the popup so
         // its Grant-access button is one tap away; fall back to an on-page hint

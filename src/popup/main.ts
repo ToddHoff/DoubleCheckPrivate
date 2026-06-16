@@ -106,7 +106,9 @@ void (async () => {
   box.hidden = false
 
   const verify = async () => {
-    await chrome.runtime.sendMessage({ kind: 'dc-verify-iframe', tabId: tab.id })
+    await chrome.runtime.sendMessage({
+      kind: 'dc-verify-iframe', tabId: tab.id, format: detected.isCard ? 'card' : undefined,
+    })
     window.close()
   }
 

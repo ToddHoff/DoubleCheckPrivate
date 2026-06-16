@@ -31,6 +31,9 @@ export interface CardContext {
   relayHost?: string
   /** the iframe element to anchor the detached card/badge next to */
   relayAnchor?: HTMLElement
+  /** format to default to (e.g. 'card' when we detected a card-number iframe),
+   * since the relayed value can be unreadable/masked and shouldn't decide it */
+  preferredFormat?: string
 }
 
 type Step = 'verify-entry' | 'input-first' | 'input-confirm' | 'match' | 'mismatch' | 'done'
@@ -97,7 +100,12 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   let suppressFieldEvents = false
   // don't yank focus into the card while the user is typing in the field
   let focusOnRender = true
-  let formatId = ctx.remembered ?? ctx.suggestions[0] ??
+  // a preferred format (e.g. 'card' from a detected card-number iframe) wins —
+  // the relayed value can be masked/unreadable and shouldn't pick the format
+  const preferred = ctx.preferredFormat && ctx.validators.some((v) => v.id === ctx.preferredFormat)
+    ? ctx.preferredFormat
+    : undefined
+  let formatId = preferred ?? ctx.remembered ?? ctx.suggestions[0] ??
     (/^[\d\s().+-]*$/.test(field.value) ? 'generic-number' : 'generic-text')
   let firstEntry = '' // input mode: the value typed from the source
   let lastDiagnosis: Diagnosis | null = null

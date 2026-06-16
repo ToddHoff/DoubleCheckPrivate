@@ -97,8 +97,8 @@ export type RuntimeMessage =
   | { kind: 'dc-scan-page' }
   | { kind: 'dc-audit-page' }
   | { kind: 'dc-activate-from-popup'; tabId: number }
-  | { kind: 'dc-verify-iframe'; tabId: number }
-  | { kind: 'dc-open-with-value'; value: string | null; host?: string }
+  | { kind: 'dc-verify-iframe'; tabId: number; format?: string }
+  | { kind: 'dc-open-with-value'; value: string | null; host?: string; format?: string }
   | { kind: 'dc-sealed-hint'; host: string }
   | { kind: 'dc-pill-iframe'; origin: string }
   | { kind: 'dc-open-options'; section?: string }
