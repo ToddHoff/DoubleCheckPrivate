@@ -15,7 +15,7 @@ declare global {
   }
 }
 
-async function buildContext(field: CheckableField, standalone = false): Promise<CardContext> {
+async function buildContext(field: CheckableField): Promise<CardContext> {
   const [settings, userSpecs, siteMemory, dualSign, license] = await Promise.all([
     getSettings(),
     getUserValidatorSpecs(),
@@ -40,18 +40,8 @@ async function buildContext(field: CheckableField, standalone = false): Promise<
     remembered: validators.some((v) => v.id === remembered) ? remembered : undefined,
     settings,
     license: lic,
-    requireDualSign: !standalone && !!dualSign[fieldKey],
-    standalone,
+    requireDualSign: !!dualSign[fieldKey],
   }
-}
-
-// field-less "verify a value" card: mount on a detached scratch input we never
-// attach to the page, so there's no field to read/write/badge. Used when the
-// real field is unreachable (cross-origin payment iframe, PDF, etc.).
-function openStandalone(): void {
-  if (window !== window.top) return // mount once, in the top frame only
-  const field = document.createElement('input')
-  void buildContext(field, true).then((ctx) => mountCard(field, ctx))
 }
 
 function openOn(field: CheckableField): void {
@@ -92,7 +82,6 @@ if (!window.__doubleCheckLoaded) {
   window.__doubleCheckLoaded = true
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg?.kind === 'dc-activate') sendResponse({ mounted: activate() })
-    else if (msg?.kind === 'dc-activate-standalone') { openStandalone(); sendResponse({ ok: true }) }
     else if (msg?.kind === 'dc-scan-page') sendResponse({ ok: true, count: scanPage() })
     else if (msg?.kind === 'dc-audit-page') sendResponse({ ok: true, count: auditPage() })
   })
