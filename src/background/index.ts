@@ -186,10 +186,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (tabId == null) { sendResponse({ ok: false }); return }
     void (async () => {
       if (await chrome.permissions.contains({ origins: [`${msg.origin}/*`] })) {
-        await verifyIframe(tabId) // already granted → read + verify
+        await verifyIframe(tabId) // already granted → read + verify, like the popup button
       } else {
-        // can't request permission here (needs the popup); point the user there
-        await sendWithRetry(tabId, { kind: 'dc-sealed-hint', host: new URL(msg.origin).host })
+        // first grant can only come from an extension page — open the popup so
+        // its Grant-access button is one tap away; fall back to an on-page hint
+        // if the browser won't open the popup programmatically
+        try {
+          await chrome.action.openPopup()
+        } catch {
+          await sendWithRetry(tabId, { kind: 'dc-sealed-hint', host: new URL(msg.origin).host })
+        }
       }
       sendResponse({ ok: true })
     })()
