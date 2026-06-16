@@ -20,9 +20,12 @@ app.innerHTML = `
 // reads as a dead feature, not a reassuring one.
 void getStats().then((s) => {
   const caught = s.mismatchesCaught + s.badValuesCaught + s.accountChangeWarnings + s.pageProblemsFound
-  if (caught <= 0) return
+  if (s.checked <= 0 && caught <= 0) return
+  const parts: string[] = []
+  if (s.checked > 0) parts.push(`${s.checked} value${s.checked === 1 ? '' : 's'} checked`)
+  if (caught > 0) parts.push(`${caught} issue${caught === 1 ? '' : 's'} caught`)
   const el = document.getElementById('wins')!
-  el.textContent = `✓ ${caught} issue${caught === 1 ? '' : 's'} caught for you so far`
+  el.textContent = `✓ ${parts.join(' · ')} so far`
   el.removeAttribute('hidden')
 })
 
