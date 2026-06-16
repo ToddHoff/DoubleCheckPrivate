@@ -66,10 +66,18 @@ async function sendWithRetry<T>(tabId: number, msg: RuntimeMessage): Promise<T |
   return null
 }
 
+type FocusedIframe = { origin: string; crossOrigin: boolean }
+
+// executeScript func: is focus inside an <iframe>, and is it cross-origin?
+function detectFocusedIframe(): FocusedIframe | null {
+  const el = document.activeElement as HTMLIFrameElement | null
+  if (!el || el.tagName !== 'IFRAME') return null
+  let crossOrigin = false
+  try { crossOrigin = !el.contentDocument } catch { crossOrigin = true }
+  try { return { origin: new URL(el.src).origin, crossOrigin } } catch { return null }
+}
+
 async function injectCard(tabId: number) {
-  // Why: top frame first; if the focused field lives in a subframe the top
-  // instance reports "not here" and we retry allFrames (cross-origin frames
-  // that activeTab can't reach are skipped by Chrome, not fatal).
   try {
     await chrome.scripting.executeScript({ target: { tabId }, files: [contentScript] })
   } catch {
@@ -77,14 +85,25 @@ async function injectCard(tabId: number) {
   }
   const res = await sendWithRetry<{ mounted: boolean }>(tabId, { kind: 'dc-activate' })
   if (res?.mounted) return
+  // top frame had no reachable field — the focus may be inside a subframe. Don't
+  // mount inside the frame (a payment iframe is ~50px tall and would clip the
+  // card); instead read the value out and render the card in the TOP frame.
+  let info: FocusedIframe | null = null
   try {
-    await chrome.scripting.executeScript({
-      target: { tabId, allFrames: true },
-      files: [contentScript],
-    })
-    await sendWithRetry(tabId, { kind: 'dc-activate' })
+    const [r] = await chrome.scripting.executeScript({ target: { tabId }, func: detectFocusedIframe })
+    info = (r?.result as FocusedIframe | null) ?? null
   } catch {
-    /* subframes unreachable under activeTab — top-frame card already offered */
+    return
+  }
+  if (!info) return // nothing focused / not an iframe — do nothing, as before
+  if (!info.crossOrigin) {
+    await verifyIframe(tabId) // same-origin subframe — always readable
+    return
+  }
+  // cross-origin: only proceed if the user already granted this origin; the
+  // first grant must come from the popup (content/SW can't call permissions.request)
+  if (await chrome.permissions.contains({ origins: [`${info.origin}/*`] })) {
+    await verifyIframe(tabId)
   }
 }
 
