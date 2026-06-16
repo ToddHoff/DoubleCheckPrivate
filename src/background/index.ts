@@ -1,5 +1,6 @@
 import contentScript from '../content/index?script'
 import { getSettings, purgeLog } from '../shared/storage'
+import type { RuntimeMessage } from '../shared/types'
 import { getLicenseStatus, handlePaymentAction, startLicensing } from './license'
 
 startLicensing()
@@ -56,7 +57,7 @@ const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
 // A single immediate sendMessage loses that race on first invocation (the bug
 // where the first try silently did nothing and the second worked). We retry
 // until the listener answers — null means "not up yet", an object means it did.
-async function sendWithRetry<T>(tabId: number, msg: { kind: string }): Promise<T | null> {
+async function sendWithRetry<T>(tabId: number, msg: RuntimeMessage): Promise<T | null> {
   for (let i = 0; i < 30; i++) {
     const res = (await chrome.tabs.sendMessage(tabId, msg).catch(() => null)) as T | null
     if (res) return res
@@ -87,6 +88,35 @@ async function injectCard(tabId: number) {
   }
 }
 
+// Solution B: the user granted per-host access to a cross-origin frame holding
+// a sealed field (e.g. a card number in a payment iframe). Read that field's
+// value from whichever now-permitted frame has focus, then open the verify card
+// in the top frame. The value is relayed locally only — never stored, never
+// sent to the network. See RuntimeMessage note on dc-open-with-value.
+async function verifyIframe(tabId: number) {
+  let value: string | null = null
+  try {
+    const results = await chrome.scripting.executeScript({
+      target: { tabId, allFrames: true },
+      func: () => {
+        const el = document.activeElement
+        return el && (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) && el.value.trim()
+          ? el.value
+          : null
+      },
+    })
+    value = results.map((r) => r.result as string | null).find((v) => typeof v === 'string' && v.trim()) ?? null
+  } catch {
+    /* the granted frame may not have a focused input anymore — fall through to input mode */
+  }
+  try {
+    await chrome.scripting.executeScript({ target: { tabId }, files: [contentScript] })
+  } catch {
+    return // restricted page
+  }
+  await sendWithRetry(tabId, { kind: 'dc-open-with-value', value })
+}
+
 async function injectPage(tabId: number, kind: 'dc-scan-page' | 'dc-audit-page') {
   try {
     await chrome.scripting.executeScript({ target: { tabId }, files: [contentScript] })
@@ -113,6 +143,10 @@ async function ensureOffscreen(): Promise<void> {
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg?.kind === 'dc-activate-from-popup' && typeof msg.tabId === 'number') {
     void injectCard(msg.tabId).then(() => sendResponse({ ok: true }))
+    return true // async response
+  }
+  if (msg?.kind === 'dc-verify-iframe' && typeof msg.tabId === 'number') {
+    void verifyIframe(msg.tabId).then(() => sendResponse({ ok: true }))
     return true // async response
   }
   if (msg?.kind === 'dc-ocr' && typeof msg.imageDataUrl === 'string') {

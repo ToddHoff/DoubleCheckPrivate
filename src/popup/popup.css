@@ -25,6 +25,11 @@ button.primary:hover {
   color: #6b7280;
   font-size: 12px;
 }
+#iframefield:not([hidden]) {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
 kbd {
   font: 600 11px ui-monospace, Menlo, monospace;
   background: #f9fafb;

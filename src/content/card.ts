@@ -23,6 +23,12 @@ export interface CardContext {
   settings: Settings
   license: LicenseStatus
   requireDualSign: boolean
+  /** the card isn't bound to a writable page field — its `field` is a detached
+   * scratch input holding a value relayed out of a cross-origin frame. No
+   * badge, no per-site memory, no write-back. */
+  detached?: boolean
+  /** host of the cross-origin frame the value came from (for labeling) */
+  relayHost?: string
 }
 
 type Step = 'verify-entry' | 'input-first' | 'input-confirm' | 'match' | 'mismatch' | 'done'
@@ -71,6 +77,9 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
   // ---- state ----
   const startedAt = Date.now()
+  // detached: the value was relayed out of a cross-origin frame into a scratch
+  // input. No real page field, so no badge / per-site memory / write-back.
+  const detached = !!ctx.detached
   // Why: the site masked this field on purpose (open-office shoulder-surfing).
   // The match screen's big bold value is the highest-exposure moment, so we
   // keep it masked behind an explicit reveal toggle rather than un-masking
@@ -180,7 +189,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   closeBtn.addEventListener('click', () => destroy(true))
   const header = h('div', { class: 'hd' },
     h('span', { class: 'logo', 'aria-hidden': 'true' }),
-    h('span', { class: 'title' }, 'Double Check'),
+    h('span', { class: 'title' }, detached ? 'Verify the field' : 'Double Check'),
     select, closeBtn,
   )
   const body = h('div', { class: 'bd', 'aria-live': 'polite' })
@@ -207,7 +216,22 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   // Submit Guard toggle, right where the user is working: enabling it arms
   // the guard on this page instantly (we ARE the content script). Hidden on
   // the extension's own pages, where guarding has nothing to protect.
-  if (location.protocol !== 'chrome-extension:') {
+  // optional note, kept in the unobtrusive options strip at the bottom. Free
+  // text the user controls, so the placeholder reminds them not to put the
+  // value itself here — the value is never stored.
+  const noteRow = (() => {
+    if (location.protocol === 'chrome-extension:') return null
+    const noteInput = h('textarea', {
+      class: 'notefield', rows: '3',
+      placeholder: 'Where it came from, how it was calculated — not the value itself.',
+    }) as HTMLTextAreaElement
+    noteEl = noteInput
+    return h('div', { class: 'noterow' }, h('div', { class: 'lbl' }, 'Note (optional)'), noteInput)
+  })()
+  // Submit Guard toggle, right where the user is working: enabling it arms
+  // the guard on this page instantly (we ARE the content script). Hidden on
+  // the extension's own pages, and on the detached card (no real field/site).
+  if (location.protocol !== 'chrome-extension:' && !detached) {
     // per-field "two signatures" requirement, remembered for this field on this
     // site. Sits right above Submit Guard; toggling it re-renders the
     // attestation so the second signature line appears/disappears immediately.
@@ -237,19 +261,9 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       if (box.checked) await installSubmitGuard(ctx.settings.submitGuardOrigins)
       else box.title = 'Off — this page stays guarded until reloaded'
     })
-    // optional note, kept in the unobtrusive options strip at the bottom. Free
-    // text the user controls, so the placeholder reminds them not to put the
-    // value itself here — the value is never stored.
-    const noteInput = h('textarea', {
-      class: 'notefield', rows: '3',
-      placeholder: 'Where it came from, how it was calculated — not the value itself.',
-    }) as HTMLTextAreaElement
-    noteEl = noteInput
-    const noteRow = h('div', { class: 'noterow' },
-      h('div', { class: 'lbl' }, 'Note (optional)'), noteInput)
 
     card.append(header, body,
-      noteRow,
+      noteRow!,
       dualRow,
       h('label', { class: 'guardrow' },
         box,
@@ -261,7 +275,8 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       ),
       footer)
   } else {
-    card.append(header, body, footer)
+    // extension page (no guard) or detached card (no real field): note only
+    card.append(header, body, ...(noteRow ? [noteRow] : []), footer)
   }
 
   // ---- shared view pieces ----
@@ -565,7 +580,9 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       id: crypto.randomUUID(),
       at: new Date().toISOString(),
       origin: location.origin,
-      fieldLabel: fieldDescription(field),
+      fieldLabel: detached
+        ? `Secure-frame field${ctx.relayHost ? ` (${ctx.relayHost})` : ''}`
+        : fieldDescription(field),
       format: formatId,
       methods: [
         'double-entry',
@@ -587,7 +604,10 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     if (ctx.settings.hmacFingerprint) entry.fingerprint = await fingerprintValue(r.normalized)
     await appendLogEntry(entry)
     await bumpStats(mismatchSeen)
-    await rememberFormat(location.origin, fieldSignature(field), formatId)
+    // a detached card has no real field → no per-site memory and no badge
+    if (!detached) {
+      await rememberFormat(location.origin, fieldSignature(field), formatId)
+    }
     // remember/refresh the trusted account: the payee the user named, or the
     // one this value was already recognized as (bumps its use count)
     const trustedLabel = payeeLabel.trim() || recognizedLabel
@@ -599,15 +619,17 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         origin: location.origin,
       })
     }
-    badges.get(field)?.remove()
-    markVerified(field)
-    // for amounts, the badge shows the verified interpretation — "12345" in
-    // a money field doesn't speak for itself the way a routing number does
-    const detail = formatId === 'currency-amount' ? r.formatted.split(' — ')[0] : undefined
-    badges.set(field, attachBadge(field, () => {
-      markTampered(field)
-      void markLogEntryStale(entry.id)
-    }, detail))
+    if (!detached) {
+      badges.get(field)?.remove()
+      markVerified(field)
+      // for amounts, the badge shows the verified interpretation — "12345" in
+      // a money field doesn't speak for itself the way a routing number does
+      const detail = formatId === 'currency-amount' ? r.formatted.split(' — ')[0] : undefined
+      badges.set(field, attachBadge(field, () => {
+        markTampered(field)
+        void markLogEntryStale(entry.id)
+      }, detail))
+    }
     step = 'done'
     render()
     setTimeout(() => destroy(true), 1600)
@@ -938,6 +960,12 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
   // ---- positioning ----
   function position(): void {
+    if (detached) {
+      // no real field to anchor to — pin near the top center of the viewport
+      card.style.left = `${Math.max(8, (window.innerWidth - card.offsetWidth) / 2)}px`
+      card.style.top = '24px'
+      return
+    }
     const r = field.getBoundingClientRect()
     const ch = card.offsetHeight
     const below = r.bottom + 8 + ch <= window.innerHeight || r.top - 8 - ch < 0

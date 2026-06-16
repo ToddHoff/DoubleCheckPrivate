@@ -15,7 +15,7 @@ declare global {
   }
 }
 
-async function buildContext(field: CheckableField): Promise<CardContext> {
+async function buildContext(field: CheckableField, detached = false, relayHost?: string): Promise<CardContext> {
   const [settings, userSpecs, siteMemory, dualSign, license] = await Promise.all([
     getSettings(),
     getUserValidatorSpecs(),
@@ -40,13 +40,25 @@ async function buildContext(field: CheckableField): Promise<CardContext> {
     remembered: validators.some((v) => v.id === remembered) ? remembered : undefined,
     settings,
     license: lic,
-    requireDualSign: !!dualSign[fieldKey],
+    requireDualSign: !detached && !!dualSign[fieldKey],
+    detached,
+    relayHost,
   }
 }
 
 function openOn(field: CheckableField): void {
   if (isCardMounted(field)) return
   void buildContext(field).then((ctx) => mountCard(field, ctx))
+}
+
+// open the card on a value relayed out of a cross-origin frame (Solution B):
+// a detached scratch input holds the value; the card runs in the top frame in
+// normal verify mode. Empty value → input mode (the read found nothing).
+function openWithValue(value: string | null, host?: string): void {
+  if (window !== window.top) return // render once, in the top frame
+  const field = document.createElement('input')
+  if (value) field.value = value
+  void buildContext(field, true, host).then((ctx) => mountCard(field, ctx))
 }
 
 function activate(): boolean {
@@ -82,6 +94,7 @@ if (!window.__doubleCheckLoaded) {
   window.__doubleCheckLoaded = true
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg?.kind === 'dc-activate') sendResponse({ mounted: activate() })
+    else if (msg?.kind === 'dc-open-with-value') { openWithValue(msg.value, msg.host); sendResponse({ ok: true }) }
     else if (msg?.kind === 'dc-scan-page') sendResponse({ ok: true, count: scanPage() })
     else if (msg?.kind === 'dc-audit-page') sendResponse({ ok: true, count: auditPage() })
   })

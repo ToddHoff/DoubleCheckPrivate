@@ -7,6 +7,7 @@ export {}
 const app = document.getElementById('app')!
 
 app.innerHTML = `
+  <div id="iframefield" hidden></div>
   <button class="primary" id="check">Check focused field</button>
   <p class="hint">Tip: focus the field on the page, then press
   <span id="kbd">the keyboard shortcut</span> (<a href="#" id="shortcuts">change it</a>).</p>
@@ -45,6 +46,70 @@ document.getElementById('check')!.addEventListener('click', async () => {
     window.close()
   }
 })
+
+// Solution B: detect when the focused field is sealed inside a cross-origin
+// frame (a card number in a payment iframe). The grant must come from this
+// extension page — content scripts can't call permissions.request.
+type IframeField = { origin: string; host: string; isCard: boolean }
+
+function detectIframeField(): IframeField | null {
+  const el = document.activeElement as HTMLElement | null
+  if (!el || el.tagName !== 'IFRAME') return null
+  const iframe = el as HTMLIFrameElement
+  let crossOrigin = false
+  try { crossOrigin = !iframe.contentDocument } catch { crossOrigin = true }
+  if (!crossOrigin || !iframe.src) return null
+  try {
+    const u = new URL(iframe.src)
+    const hint = `${iframe.id} ${iframe.name} ${iframe.title} ${iframe.src}`.toLowerCase()
+    return { origin: u.origin, host: u.host, isCard: /cc|card|credit|number|payment/.test(hint) }
+  } catch {
+    return null
+  }
+}
+
+void (async () => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  if (!tab?.id) return
+  let detected: IframeField | null = null
+  try {
+    const [res] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: detectIframeField })
+    detected = (res?.result as IframeField | null) ?? null
+  } catch {
+    return // restricted page (chrome://, web store) — can't inspect
+  }
+  if (!detected) return
+
+  const origins = [`${detected.origin}/*`]
+  const granted = await chrome.permissions.contains({ origins })
+  const label = detected.isCard ? 'card field' : 'field'
+  const box = document.getElementById('iframefield')!
+  box.hidden = false
+
+  const verify = async () => {
+    await chrome.runtime.sendMessage({ kind: 'dc-verify-iframe', tabId: tab.id })
+    window.close()
+  }
+
+  const btn = document.createElement('button')
+  btn.className = 'primary'
+  btn.textContent = `Verify the ${label} on ${detected.host}`
+  const note = document.createElement('p')
+  note.className = 'hint'
+  box.append(btn, note)
+
+  if (granted) {
+    note.textContent = 'This field is inside a secure frame — access already granted.'
+    btn.addEventListener('click', () => void verify())
+  } else {
+    note.textContent = `It's inside a secure frame. You'll be asked once to allow Double Check on ${detected.host}.`
+    btn.addEventListener('click', async () => {
+      // must be the first await in the gesture so the user-activation survives
+      const ok = await chrome.permissions.request({ origins })
+      if (ok) await verify()
+    })
+  }
+})()
 
 document.getElementById('options')!.addEventListener('click', (e) => {
   e.preventDefault()
