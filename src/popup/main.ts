@@ -56,7 +56,10 @@ document.getElementById('check')!.addEventListener('click', async () => {
 type IframeField = { origin: string; host: string; isCard: boolean }
 
 function detectIframeField(): IframeField | null {
-  const re = /cc|card|credit|number|payment|cvv|cvc|secur|stripe|braintree|adyen|checkout|safeweb/i
+  // card-NUMBER field only — exclude expiry/CVV (processors split them into
+  // separate iframes sharing the same origin)
+  const numberRe = /ccnumber|card.?number|account.?number|\bpan\b|number/i
+  const notNumberRe = /\bexp|expir|cvv|cvc|cvn|security.?code/i
   const consider = (f: HTMLIFrameElement): IframeField | null => {
     let crossOrigin = false
     try { crossOrigin = !f.contentDocument } catch { crossOrigin = true }
@@ -64,7 +67,7 @@ function detectIframeField(): IframeField | null {
     try {
       const u = new URL(f.src)
       const hint = `${f.id} ${f.name} ${f.title} ${f.src}`.toLowerCase()
-      return { origin: u.origin, host: u.host, isCard: re.test(hint) }
+      return { origin: u.origin, host: u.host, isCard: numberRe.test(hint) && !notNumberRe.test(hint) }
     } catch {
       return null
     }
@@ -75,8 +78,8 @@ function detectIframeField(): IframeField | null {
     const r = consider(ae as HTMLIFrameElement)
     if (r) return r
   }
-  // otherwise look for a payment-looking cross-origin iframe on the page, so the
-  // grant button still shows after a scan pill sent the user to the toolbar
+  // otherwise look for the card-number iframe on the page, so the grant button
+  // still shows after a scan pill sent the user to the toolbar
   for (const f of Array.from(document.querySelectorAll('iframe'))) {
     const r = consider(f as HTMLIFrameElement)
     if (r?.isCard) return r

@@ -57,16 +57,22 @@ function checkableFields(): CheckableField[] {
   )
 }
 
-// cross-origin iframes that look like a payment/card field (CollectJS, Stripe,
-// Braintree, Adyen, etc.) — fields the input-scan can't see into
-const CARD_IFRAME_RE = /cc|card|credit|number|payment|cvv|cvc|secur|stripe|braintree|adyen|checkout|safeweb/i
+// cross-origin iframes that look like the card-NUMBER field specifically.
+// Why so narrow: processors split number/expiry/CVV into separate iframes that
+// all share the processor origin (and params like enableCardBrandPreviews), so
+// a broad "card" match tags all three. We want only the number field, and
+// explicitly exclude expiry/CVV.
+const CARD_NUMBER_RE = /ccnumber|card.?number|account.?number|\bpan\b|number/i
+const NOT_NUMBER_RE = /\bexp|expir|cvv|cvc|cvn|security.?code/i
+function isCardNumberFrame(f: HTMLIFrameElement): boolean {
+  let crossOrigin = false
+  try { crossOrigin = !f.contentDocument } catch { crossOrigin = true }
+  if (!crossOrigin) return false
+  const hint = `${f.id} ${f.name} ${f.title} ${f.src}`.toLowerCase()
+  return CARD_NUMBER_RE.test(hint) && !NOT_NUMBER_RE.test(hint)
+}
 function paymentIframes(): HTMLIFrameElement[] {
-  return [...document.querySelectorAll('iframe')].filter((f): f is HTMLIFrameElement => {
-    let crossOrigin = false
-    try { crossOrigin = !f.contentDocument } catch { crossOrigin = true }
-    if (!crossOrigin) return false
-    return CARD_IFRAME_RE.test(`${f.id} ${f.name} ${f.title} ${f.src}`.toLowerCase())
-  })
+  return [...document.querySelectorAll('iframe')].filter(isCardNumberFrame)
 }
 
 // the grant/verify flow for a sealed card field has to run through the service
