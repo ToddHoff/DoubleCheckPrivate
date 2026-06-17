@@ -165,6 +165,5 @@ Productivity → Workflow & Planning
   to the custom domain.)
 
 LIVE since June 2026: https://chromewebstore.google.com/detail/double-check/mnkfkinaakgknifodgbcakgflnaelhpe
-The site's index.html CTAs link to it (done). Still pending for the
-verified-publisher badge: verify possibility.com (or the subdomain) in Google
-Search Console, then set the verified site in the CWS dashboard account settings.
+The site's index.html CTAs link to it (done). Verified-publisher badge:
+domain verified and set as the verified site in the CWS dashboard (done).
