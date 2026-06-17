@@ -115,6 +115,10 @@ export interface LicenseStatus {
   trialDaysLeft: number
   /** true when status came from the offline grace cache */
   cached: boolean
+  /** true once the user has ever started a trial or paid. Distinguishes a
+   * brand-new user (must start the free trial to use it) from one whose trial
+   * has expired (core double-entry keeps working). */
+  started: boolean
 }
 
 export type UserValidatorSpec = ValidatorSpec

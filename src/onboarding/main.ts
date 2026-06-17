@@ -43,6 +43,24 @@ shell.append(
   ),
 )
 
+// pinning — Chrome hides new extensions behind the puzzle-piece menu, so the
+// toolbar icon people expect isn't there until they pin it
+shell.append(
+  h('section', { class: 'step' },
+    h('h2', {}, h('span', { class: 'num' }, '📌'), 'Pin Double Check to your toolbar'),
+    h('p', {},
+      'Chrome tucks new extensions away behind a puzzle-piece icon, so Double Check’s button isn’t in ' +
+      'your toolbar yet. To put it there:'),
+    h('ol', {},
+      h('li', {}, 'Click the puzzle-piece icon (🧩 Extensions) at the top-right of Chrome.'),
+      h('li', {}, 'Find ', h('strong', {}, 'Double Check'), ' in the list and click the pin (📌) next to it.'),
+    ),
+    h('p', { class: 'muted' },
+      'Now its icon stays in your toolbar — click it any time to verify the focused field, or to grant ' +
+      'access to a secure payment field. You can also use the keyboard shortcut without pinning.'),
+  ),
+)
+
 // security — surface the two things people never discover on their own:
 // (1) the extension has no access until invoked, (2) the right-click page tools
 shell.append(
@@ -340,7 +358,7 @@ async function openCardOnPractice(): Promise<void> {
     validators: BUILTIN_VALIDATORS,
     suggestions: suggestFormats(fieldSignals(practiceField), BUILTIN_VALIDATORS),
     settings,
-    license: { active: true, trial: false, trialDaysLeft: -1, cached: false },
+    license: { active: true, trial: false, trialDaysLeft: -1, cached: false, started: true },
     requireDualSign: false,
   })
   practiceStatus.textContent = ''

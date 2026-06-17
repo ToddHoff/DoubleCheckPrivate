@@ -25,7 +25,7 @@ async function buildContext(field: CheckableField, detached = false, relayHost?:
       .sendMessage({ kind: 'dc-license-status' })
       .catch(() => null) as Promise<LicenseStatus | null>,
   ])
-  const lic = license ?? { active: true, trial: false, trialDaysLeft: -1, cached: true }
+  const lic = license ?? { active: true, trial: false, trialDaysLeft: -1, cached: true, started: true }
   // custom formats are a paid feature; built-ins always work
   const userValidators = lic.active
     ? userSpecs.map(fromUserSpec).filter((v): v is Validator => v !== null)

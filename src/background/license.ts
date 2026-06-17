@@ -26,12 +26,14 @@ interface ExtPayUser {
 }
 
 function computeStatus(user: ExtPayUser): LicenseStatus {
-  if (user.paid) return { active: true, trial: false, trialDaysLeft: -1, cached: false }
+  const started = user.paid || !!user.trialStartedAt
+  if (user.paid) return { active: true, trial: false, trialDaysLeft: -1, cached: false, started: true }
   if (user.trialStartedAt) {
     const left = TRIAL_DAYS - (Date.now() - user.trialStartedAt.getTime()) / 86_400_000
-    if (left > 0) return { active: true, trial: true, trialDaysLeft: Math.ceil(left), cached: false }
+    if (left > 0) return { active: true, trial: true, trialDaysLeft: Math.ceil(left), cached: false, started: true }
   }
-  return { active: false, trial: false, trialDaysLeft: -1, cached: false }
+  // never started, or trial expired — `started` tells them apart
+  return { active: false, trial: false, trialDaysLeft: -1, cached: false, started }
 }
 
 async function refreshStatus(): Promise<LicenseStatus> {
@@ -52,7 +54,7 @@ export async function getLicenseStatus(): Promise<LicenseStatus> {
   if (isUnpackedInstall()) {
     const obj = await chrome.storage.local.get(STORAGE_KEYS.devLicense)
     if (obj[STORAGE_KEYS.devLicense] === true) {
-      return { active: true, trial: false, trialDaysLeft: -1, cached: false }
+      return { active: true, trial: false, trialDaysLeft: -1, cached: false, started: true }
     }
   }
   try {
@@ -64,7 +66,7 @@ export async function getLicenseStatus(): Promise<LicenseStatus> {
     if (cached && Date.now() - cached.at < GRACE_MS) {
       return { ...cached.status, cached: true }
     }
-    return { active: false, trial: false, trialDaysLeft: -1, cached: true }
+    return { active: false, trial: false, trialDaysLeft: -1, cached: true, started: false }
   }
 }
 

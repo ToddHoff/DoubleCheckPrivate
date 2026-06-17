@@ -959,7 +959,36 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     body.append(h('div', { class: 'done' }, '✓ Verified, attested, and logged'))
   }
 
+  function renderTrialGate(): void {
+    card.className = 'card'
+    body.textContent = ''
+    const start = h('button', { class: 'btn primary' }, 'Start my free 7-day trial')
+    start.addEventListener('click', () =>
+      void chrome.runtime.sendMessage({ kind: 'dc-payment-action', action: 'trial' }))
+    const login = h('a', { style: 'cursor:pointer;text-decoration:underline;font-size:12px;color:#4b5563' }, 'Already paid? Log in')
+    login.addEventListener('click', () =>
+      void chrome.runtime.sendMessage({ kind: 'dc-payment-action', action: 'login' }))
+    body.append(
+      h('div', { class: 'lbl' }, 'Start your free trial to use Double Check'),
+      h('div', { class: 'hint' },
+        'It’s genuinely free for 7 days — no card, no charge, cancel anytime. ' +
+        'One click to begin, then the shortcut works on any field.'),
+      h('div', { class: 'btnrow' }, start),
+      h('div', { style: 'margin-top:8px' }, login),
+    )
+    if (focusOnRender) start.focus()
+  }
+
   function render(): void {
+    // brand-new users (never trialed, not paid) must start the free trial first —
+    // show that instead of the verify UI, so invoking isn't a dead end. Expired
+    // trials have started===true and fall through to the normal (core) card.
+    if (!ctx.license.started) {
+      renderTrialGate()
+      host.setAttribute('data-dc-step', 'trial')
+      position()
+      return
+    }
     switch (step) {
       case 'verify-entry': renderVerifyEntry(); break
       case 'input-first': renderInputFirst(); break
