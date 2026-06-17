@@ -87,7 +87,7 @@ function pickIframe(f: HTMLIFrameElement): void {
 
 function renderFlags(
   flags: Flag[],
-  banner: { tone: Tone | 'none'; text: string },
+  banner: { tone: Tone | 'none'; text: string } | null,
 ): number {
   clearScanTags()
 
@@ -126,17 +126,19 @@ function renderFlags(
     positioners.push(position)
   }
 
-  const bar = document.createElement('div')
-  bar.className = `banner ${banner.tone}`
-  const label = document.createElement('span')
-  label.textContent = banner.text
-  const dismiss = document.createElement('button')
-  dismiss.textContent = 'Dismiss'
-  dismiss.addEventListener('click', clearScanTags)
-  bar.append(label, dismiss)
-  root.appendChild(bar)
+  if (banner) {
+    const bar = document.createElement('div')
+    bar.className = `banner ${banner.tone}`
+    const label = document.createElement('span')
+    label.textContent = banner.text
+    const dismiss = document.createElement('button')
+    dismiss.textContent = 'Dismiss'
+    dismiss.addEventListener('click', clearScanTags)
+    bar.append(label, dismiss)
+    root.appendChild(bar)
+    if (!flags.length) setTimeout(() => { if (activeHost === host) clearScanTags() }, 4000)
+  }
   for (const p of positioners) p() // re-place now that widths are known
-  if (!flags.length) setTimeout(() => { if (activeHost === host) clearScanTags() }, 4000)
 
   const reposition = () => requestAnimationFrame(() => positioners.forEach((p) => p()))
   window.addEventListener('scroll', reposition, { capture: true, passive: true })
@@ -177,6 +179,26 @@ export function scanAndTag(validators: Validator[], onPick: (field: CheckableFie
       ? `Double Check flagged ${flags.length} field${flags.length === 1 ? '' : 's'} worth verifying — click a tag.`
       : 'Double Check found no high-value fields on this page.',
   })
+}
+
+/**
+ * Mark sealed card-number fields (in cross-origin payment frames) the moment
+ * the user invokes Double Check anywhere on the page — discovery without
+ * standing access, since we only run once invoked. A quiet pill (no banner)
+ * next to each; clicking it starts the grant/verify flow. No-op when the page
+ * has no such field. Top frame only (iframe rects live there).
+ */
+export function markSealedFields(): number {
+  if (window !== window.top) return 0
+  const frames = paymentIframes()
+  if (!frames.length) return 0
+  const flags: Flag[] = frames.map((f) => ({
+    el: f,
+    text: '🔒 Double-check this card field',
+    tone: 'ok' as Tone,
+    action: () => pickIframe(f),
+  }))
+  return renderFlags(flags, null)
 }
 
 /** audit filled fields for detectable problems; red pills with the issue */

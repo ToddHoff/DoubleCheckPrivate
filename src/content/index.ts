@@ -7,7 +7,7 @@ import type { LicenseStatus } from '../shared/types'
 import { fieldSignals, fieldSignature, findFocusedField, type CheckableField } from './field'
 import { isCardMounted, mountCard, type CardContext } from './card'
 import { installSubmitGuard } from './submit-guard'
-import { auditAndFlag, scanAndTag } from './scan'
+import { auditAndFlag, markSealedFields, scanAndTag } from './scan'
 
 declare global {
   interface Window {
@@ -122,6 +122,9 @@ function activate(): boolean {
   // persists). Subframes still require real focus so only the frame the
   // user is working in mounts a card.
   if (!document.hasFocus() && window !== window.top) return false
+  // on any invocation, surface sealed card fields on the page (cross-origin
+  // payment frames the shortcut can't reach) — discovery without standing access
+  markSealedFields()
   const field = findFocusedField()
   if (!field) return false
   openOn(field)
