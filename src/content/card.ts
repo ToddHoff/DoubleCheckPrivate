@@ -301,15 +301,24 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     return row
   }
 
-  const entryInput = (placeholder: string): HTMLInputElement => {
+  // Returns the input plus the element to append: the bare input normally, or
+  // (for a masked/password field) the input wrapped with a show/hide toggle —
+  // masked by default so it isn't exposed, revealable so the user can check
+  // their typing.
+  const entryInput = (placeholder: string): { input: HTMLInputElement; el: HTMLElement } => {
     const input = h('input', {
-      // Why password when sensitive: the site masked this field on purpose, so
-      // re-typing it into our card must stay masked too — otherwise we'd reveal
-      // in our own UI exactly what the site hid.
       class: 'entry', type: sensitive ? 'password' : 'text', placeholder,
       autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': placeholder,
     })
-    return input
+    if (!sensitive) return { input, el: input }
+    const toggle = h('button', { class: 'btn reveal', type: 'button', 'aria-label': 'Show or hide the value' }, '👁')
+    toggle.addEventListener('click', () => {
+      const masked = input.type === 'password'
+      input.type = masked ? 'text' : 'password'
+      toggle.textContent = masked ? '🙈' : '👁'
+      input.focus()
+    })
+    return { input, el: h('div', { class: 'entryrow' }, input, toggle) }
   }
 
   // per-card, click-to-speak: each read-aloud is an explicit opt-in, so no
@@ -662,7 +671,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       void bumpStat('badValuesCaught')
     }
     card.className = 'card'
-    const input = entryInput('Re-type the value here')
+    const { input, el: inputEl } = entryInput('Re-type the value here')
     const hint = h('div', { class: 'hint' }, 'Read it from your source — not from the field. Press Enter to compare.')
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') compare(input.value)
@@ -677,7 +686,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     body.append(
       chipRow(r),
       h('div', { class: 'lbl' }, 'Re-type the value from your source'),
-      input, hint, rowEl,
+      inputEl, hint, rowEl,
       ocrSection(),
     )
     if (focusOnRender) input.focus()
@@ -889,7 +898,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   function renderInputFirst(): void {
     card.className = 'card'
     body.textContent = ''
-    const input = entryInput('Type the value from your source')
+    const { input, el: inputEl } = entryInput('Type the value from your source')
     if (firstEntry) input.value = firstEntry
     const liveChips = h('div', {})
     const next = h('button', { class: 'btn primary', disabled: '' }, 'Continue to step 2') as HTMLButtonElement
@@ -925,7 +934,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     // only path and the image/voice options below were a separate thing.
     body.append(
       h('div', { class: 'steplbl' }, 'Step 1 of 2 — enter the value from your source'),
-      input, liveChips,
+      inputEl, liveChips,
       ocrSection((value) => {
         input.value = value
         update()
@@ -940,7 +949,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   function renderInputConfirm(): void {
     card.className = 'card'
     body.textContent = ''
-    const input = entryInput('Re-type the same value, without looking')
+    const { input, el: inputEl } = entryInput('Re-type the same value, without looking')
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') compare(input.value)
     })
@@ -948,7 +957,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     compareBtn.addEventListener('click', () => compare(input.value))
     body.append(
       h('div', { class: 'steplbl' }, 'Step 2 of 2 — type it again to confirm'),
-      input,
+      inputEl,
       h('div', { class: 'hint' }, 'Read from your source again — your first entry stays hidden on purpose.'),
       h('div', { class: 'btnrow' }, compareBtn),
       ocrSection(),

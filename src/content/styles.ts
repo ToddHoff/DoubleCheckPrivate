@@ -49,6 +49,8 @@ export const CARD_CSS = `
   background: #fff;
 }
 .entry:focus { outline: none; border-color: #166534; }
+.entryrow { display: flex; gap: 6px; align-items: stretch; }
+.entryrow .entry { flex: 1; width: auto; min-width: 0; }
 .card.state-match .entry, .entry.good { border-color: #16a34a; background: #f0fdf4; }
 .card.state-mismatch .entry, .entry.bad { border-color: #dc2626; background: #fef2f2; }
 .entry.ok-shape { border-color: #2563eb; background: #eff6ff; }
