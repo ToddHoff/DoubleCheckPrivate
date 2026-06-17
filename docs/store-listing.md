@@ -164,7 +164,7 @@ Productivity → Workflow & Planning
   links to those and they remain canonical. toddhoff.github.io redirects
   to the custom domain.)
 
-After the listing is public: replace CHROME_STORE_URL_TODO in the site's
-index.html (two places) with the real store URL. For the verified-publisher
-badge: verify possibility.com (or the subdomain) in Google Search Console,
-then set the verified site in the CWS dashboard account settings.
+LIVE since June 2026: https://chromewebstore.google.com/detail/double-check/mnkfkinaakgknifodgbcakgflnaelhpe
+The site's index.html CTAs link to it (done). Still pending for the
+verified-publisher badge: verify possibility.com (or the subdomain) in Google
+Search Console, then set the verified site in the CWS dashboard account settings.
