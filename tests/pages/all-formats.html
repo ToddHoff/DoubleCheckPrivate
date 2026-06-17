@@ -157,6 +157,21 @@
         </div>
       </div>
 
+      <h2>Masked fields (type=password)</h2>
+      <p class="hint" style="margin:0 0 10px">Sites mask high-stakes values (a "re-enter account number" or a PIN). Double Check should treat these as sensitive: the match screen stays masked behind a Reveal toggle, the re-type box is masked too, and read-aloud is disabled — so nothing the site hid is shown in our card either.</p>
+      <div class="grid">
+        <div class="f">
+          <label for="masked-account">Confirm account number (masked, prefilled)</label>
+          <input id="masked-account" name="account_number" type="password" inputmode="numeric" value="021000021" />
+          <div class="hint">prefilled + masked → verify mode; match screen masks the value behind Reveal, re-type box shows dots</div>
+        </div>
+        <div class="f">
+          <label for="masked-pin">Set a PIN (masked, empty)</label>
+          <input id="masked-pin" name="pin" type="password" inputmode="numeric" />
+          <div class="hint">empty + masked → two-step input mode; both entries stay masked</div>
+        </div>
+      </div>
+
       <h2>Safety checks — look-alike &amp; hidden characters</h2>
       <p class="hint" style="margin:0 0 10px">Copy each sample below (the imposter character is invisible to the eye) into the field, then open Double Check — it should warn even though nothing looks wrong.</p>
       <div class="grid">

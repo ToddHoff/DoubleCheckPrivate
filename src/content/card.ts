@@ -303,7 +303,10 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
   const entryInput = (placeholder: string): HTMLInputElement => {
     const input = h('input', {
-      class: 'entry', type: 'text', placeholder,
+      // Why password when sensitive: the site masked this field on purpose, so
+      // re-typing it into our card must stay masked too — otherwise we'd reveal
+      // in our own UI exactly what the site hid.
+      class: 'entry', type: sensitive ? 'password' : 'text', placeholder,
       autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': placeholder,
     })
     return input
