@@ -43,6 +43,35 @@ shell.append(
   ),
 )
 
+// security — surface the two things people never discover on their own:
+// (1) the extension has no access until invoked, (2) the right-click page tools
+shell.append(
+  h('section', { class: 'step' },
+    h('h2', {}, h('span', { class: 'num' }, '✓'), 'Security: it can’t see your data until you ask'),
+    h('p', {},
+      'Double Check has no standing access to any website. It is not running in the background on the ' +
+      'pages you visit — there is no script watching your typing, no analytics, no telemetry. It wakes ' +
+      'up on a page only when you invoke it (the keyboard shortcut, the toolbar icon, or the right-click ' +
+      'menu), reads only the field you point it at, and runs every check — including OCR and voice — on ' +
+      'your device. Nothing is transmitted.'),
+    h('p', {},
+      'There is one exception, and it is opt-in and per-site: to verify a value sealed inside a payment ' +
+      'processor’s secure frame (a card number, for example), you grant access to that one site. You ' +
+      'approve it, one site at a time, and you can see and revoke every grant under the Site access tab.'),
+    h('h3', { style: 'margin:18px 0 6px' }, 'Right-click to check a whole page'),
+    h('p', {}, 'Right-click anywhere on a page and Double Check gives you two commands:'),
+    h('ul', {},
+      h('li', {}, h('strong', {}, 'Find fields to double-check'),
+        ' — marks every high-value field (account and routing numbers, amounts, IDs, card fields) so you ' +
+        'can see at a glance what is worth verifying before you submit.'),
+      h('li', {}, h('strong', {}, 'Check this page for problems'),
+        ' — audits every filled field and flags the ones with a real issue: a failed checksum, a wrong ' +
+        'country code, a hidden or look-alike character — each one a click away from fixing.'),
+    ),
+    h('p', { class: 'muted' }, 'Both run only when you choose them — on that page, in that moment, never before.'),
+  ),
+)
+
 // feature tour — everything it can do, at a glance
 function feat(title: string, body: string, tag?: string): HTMLElement {
   const heading = h('h3', {}, title)
