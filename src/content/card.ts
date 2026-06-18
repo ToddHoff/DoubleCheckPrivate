@@ -1,5 +1,5 @@
 import type { Diagnosis, ValidationResult, Validator } from '../engine'
-import { classifyPayee, diagnose, extractCandidates, groupValue, normalizeSpoken, recognize, validate } from '../engine'
+import { classifyPayee, diagnose, extractCandidates, groupValue, looksMasked, normalizeSpoken, recognize, validate } from '../engine'
 import { fileToDataUrl } from './capture'
 import type { LicenseStatus, LogEntry, Settings } from '../shared/types'
 import {
@@ -93,7 +93,12 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   // harmless boolean (field type only, never the value) so automation can
   // confirm masking engaged without piercing the closed shadow root
   if (sensitive) host.setAttribute('data-dc-sensitive', '')
-  let step: Step = field.value.trim() ? 'verify-entry' : 'input-first'
+  // Why: some sites replace what you type with mask glyphs in the visible field
+  // (IRS Direct Pay → "XXX-XX-XXXX") and keep the real value hidden. The value we
+  // can read is then all X's, so we must NOT "compare" against it — fall back to
+  // double-entry (verify the value you intend) instead.
+  const fieldMasked = looksMasked(field.value)
+  let step: Step = field.value.trim() && !fieldMasked ? 'verify-entry' : 'input-first'
   let inputMode = step === 'input-first'
   // suppress the field listener during our own programmatic writes, or
   // input mode would reset itself the moment it fills the field on match
@@ -145,7 +150,9 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   // comparison result is stale and restarts
   const onFieldInput = () => {
     if (suppressFieldEvents || step === 'done') return
-    const hasValue = !!field.value.trim()
+    // a masked field reads as all-X even after typing — treat it as no readable
+    // value so we stay in double-entry mode rather than "comparing" against X's
+    const hasValue = !!field.value.trim() && !looksMasked(field.value)
     focusOnRender = false
     if (!hasValue === inputMode && (step === 'verify-entry' || step === 'input-first')) {
       if (step === 'verify-entry') render() // refresh chips for the new value
@@ -742,7 +749,9 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       body.append(chipRow(r))
     }
 
-    if (inputMode) {
+    // don't write back into a masked field — the site keeps the real value in a
+    // hidden input and our write would only fight its masking
+    if (inputMode && !fieldMasked) {
       writeField(firstEntry.trim())
     }
 
@@ -934,6 +943,11 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     // only path and the image/voice options below were a separate thing.
     body.append(
       h('div', { class: 'steplbl' }, 'Step 1 of 2 — enter the value from your source'),
+      ...(fieldMasked
+        ? [h('div', { class: 'hint' },
+            'This site hides the value as you type it, so Double Check can’t read the field. ' +
+            'Enter it here to verify the number you mean to use, then check it matches the field.')]
+        : []),
       inputEl, liveChips,
       ocrSection((value) => {
         input.value = value

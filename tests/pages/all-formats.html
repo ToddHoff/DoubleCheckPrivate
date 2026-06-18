@@ -170,6 +170,11 @@
           <input id="masked-pin" name="pin" type="password" inputmode="numeric" />
           <div class="hint">empty + masked → two-step input mode; both entries stay masked</div>
         </div>
+        <div class="f">
+          <label for="ssn-xmask">SSN replaced with X glyphs (IRS-style)</label>
+          <input id="ssn-xmask" name="identitySsn" inputmode="numeric" value="XXX-XX-XXXX" />
+          <div class="hint">value reads as all X’s (real digits live in a hidden field) → Double Check should NOT compare, it should switch to double-entry</div>
+        </div>
       </div>
 
       <h2>Safety checks — look-alike &amp; hidden characters</h2>
