@@ -98,6 +98,7 @@ export type RuntimeMessage =
   | { kind: 'dc-audit-page' }
   | { kind: 'dc-activate-from-popup'; tabId: number }
   | { kind: 'dc-scan-from-popup'; tabId: number }
+  | { kind: 'dc-audit-from-popup'; tabId: number }
   | { kind: 'dc-verify-iframe'; tabId: number; format?: string }
   | { kind: 'dc-open-with-value'; value: string | null; host?: string; format?: string }
   | { kind: 'dc-sealed-hint'; host: string }

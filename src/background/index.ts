@@ -197,6 +197,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     void injectPage(msg.tabId, 'dc-scan-page').then(() => sendResponse({ ok: true }))
     return true // async response
   }
+  if (msg?.kind === 'dc-audit-from-popup' && typeof msg.tabId === 'number') {
+    void injectPage(msg.tabId, 'dc-audit-page').then(() => sendResponse({ ok: true }))
+    return true // async response
+  }
   if (msg?.kind === 'dc-verify-iframe' && typeof msg.tabId === 'number') {
     void verifyIframe(msg.tabId, msg.format).then(() => sendResponse({ ok: true }))
     return true // async response

@@ -11,8 +11,9 @@ app.innerHTML = `
   <button class="primary" id="check">Check focused field</button>
   <p class="hint">Tip: focus the field on the page, then press
   <span id="kbd">the keyboard shortcut</span> (<a href="#" id="shortcuts">change it</a>).</p>
-  <button id="scan">Check all fields on this page</button>
-  <p class="hint">Tags every high-value field (account/routing numbers, amounts, IDs, card numbers) so you can see what’s worth verifying.</p>
+  <button id="scan">Find fields to double-check</button>
+  <button id="audit">Check this page for problems</button>
+  <p class="hint">Scan the whole page: tag the high-value fields worth verifying, or flag any with a problem (failed checksum, wrong country code, look-alike character).</p>
   <div id="license" class="hint"></div>
   <p class="wins" id="wins" hidden></p>
   <p class="links"><a href="#" id="options">Settings &amp; log</a> · <a href="#" id="help">Help</a></p>
@@ -56,6 +57,14 @@ document.getElementById('scan')!.addEventListener('click', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
   if (tab?.id) {
     await chrome.runtime.sendMessage({ kind: 'dc-scan-from-popup', tabId: tab.id })
+    window.close()
+  }
+})
+
+document.getElementById('audit')!.addEventListener('click', async () => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  if (tab?.id) {
+    await chrome.runtime.sendMessage({ kind: 'dc-audit-from-popup', tabId: tab.id })
     window.close()
   }
 })

@@ -20,9 +20,9 @@ button.primary {
 button.primary:hover {
   background: #14532d;
 }
-button#scan {
+button#scan, button#audit {
   width: 100%;
-  margin-top: 12px;
+  margin-top: 8px;
   padding: 8px 12px;
   border: 1px solid #166534;
   border-radius: 8px;
@@ -32,7 +32,8 @@ button#scan {
   font-weight: 600;
   cursor: pointer;
 }
-button#scan:hover {
+button#scan { margin-top: 12px; }
+button#scan:hover, button#audit:hover {
   background: #f0fdf4;
 }
 .hint {
