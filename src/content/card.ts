@@ -467,7 +467,10 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     const wrap = h('div', { class: 'ocr' })
     const status = h('div', { class: 'hint' })
     const cands = h('div', { class: 'chips' })
-    const setStatus = (t: string) => { status.textContent = t; status.classList.remove('working') }
+    const setStatus = (t: string) => { status.textContent = t; status.className = 'hint' }
+    // a failure (no value found, OCR error, wrong paste) must read as a problem,
+    // not a quiet gray note — prominent red with a ⚠
+    const setError = (t: string) => { status.textContent = `⚠ ${t}`; status.className = 'ocr-fail' }
     let expectingPaste = false // armed by the Paste image button
 
     async function handleText(text: string, source: 'ocr' | 'voice'): Promise<void> {
@@ -502,7 +505,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         return
       }
       if (nears.length) {
-        setStatus(`Nothing ${source === 'voice' ? 'heard' : 'in the image'} passes ${v.name} validation. Close-but-failing reads:`)
+        setError(`No valid ${v.name} ${source === 'voice' ? 'heard' : 'found in the image'} — these are close but failed its check:`)
         for (const n of nears) {
           const chip = h('button', { class: 'chip err cand' }, n)
           chip.addEventListener('click', () => useCandidate(n))
@@ -510,9 +513,9 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         }
         return
       }
-      setStatus(source === 'voice'
-        ? `Couldn’t hear a ${v.name} — try reading it digit by digit.`
-        : `Couldn’t find a ${v.name} in the image — try a tighter crop.`)
+      setError(source === 'voice'
+        ? `Didn’t catch a ${v.name} — read it again slowly, digit by digit.`
+        : `No ${v.name} found in the image. Make sure the value is fully visible and not cut off, then paste a tighter, clearer crop.`)
     }
 
     const setWorking = (t: string) => {
@@ -529,7 +532,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
           .sendMessage({ kind: 'dc-ocr', imageDataUrl })
           .catch(() => null)
         if (!res?.ok) {
-          setStatus(res?.error ? `OCR failed: ${res.error}` : 'OCR failed')
+          setError(res?.error ? `Couldn’t read the image: ${res.error}` : 'Couldn’t read the image. Try a clearer or tighter screenshot.')
           return
         }
         await handleText(res.text as string, 'ocr')
@@ -558,7 +561,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       }
       if (expectingPaste) {
         expectingPaste = false
-        setStatus('That paste didn’t contain an image. Copy a screenshot (not text), then paste again.')
+        setError('That paste wasn’t an image. Copy a screenshot or photo (not text), then paste again.')
       }
     }
 

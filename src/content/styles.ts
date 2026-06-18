@@ -143,6 +143,10 @@ button.btn.rate { flex: none; width: 40px; font-variant-numeric: tabular-nums; }
 .ft a { color: #166534; cursor: pointer; text-decoration: underline; }
 .done { text-align: center; padding: 6px 0; color: #166534; font-weight: 650; }
 .hint { font-size: 11.5px; color: #6b7280; }
+.ocr-fail {
+  font-size: 12.5px; font-weight: 600; color: #b91c1c;
+  background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 8px 10px;
+}
 @media (prefers-color-scheme: dark) {
   .card { background: #1f2937; color: #f3f4f6; border-color: #4b5563; }
   .hd { border-color: #374151; }
@@ -179,5 +183,6 @@ button.btn.rate { flex: none; width: 40px; font-variant-numeric: tabular-nums; }
   .ft { border-color: #374151; color: #9ca3af; }
   .ft a { color: #86efac; }
   .hint { color: #9ca3af; }
+  .ocr-fail { color: #fca5a5; background: #450a0a; border-color: #b91c1c; }
 }
 `
