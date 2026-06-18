@@ -308,6 +308,60 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     return row
   }
 
+  // Resolve the actual value behind a field the user can't read on the page:
+  // a password field's value is already the real data; a glyph-masked field
+  // (IRS-style X's) keeps the real value in a hidden input we can read off the
+  // page. Returns null when there's nothing readable to reveal.
+  function resolveReadableValue(): { value: string; source: 'field' | 'hidden' } | null {
+    const raw = field.value
+    if (raw.trim() && !looksMasked(raw)) return { value: raw, source: 'field' }
+    // glyph-masked: look for the real value stashed in a hidden input. Only for
+    // a specific (non-generic) format, and only a value that validates against
+    // it, so we don't surface an unrelated hidden field by accident.
+    if (looksMasked(raw) && !formatId.startsWith('generic-')) {
+      const v = validator()
+      const hit = [...document.querySelectorAll('input[type=hidden]')]
+        .map((i) => (i as HTMLInputElement).value)
+        .find((val) => val && val.trim() && !looksMasked(val) && validate(v, val).valid)
+      if (hit) return { value: hit, source: 'hidden' }
+    }
+    return null
+  }
+
+  // "Show value" — only offered when the user can't read the value on the page
+  // (a password mask or a glyph mask). Reveals the resolved value in the card.
+  function revealValueRow(): HTMLElement | null {
+    if (!sensitive && !fieldMasked) return null
+    const out = h('div', { class: 'reveal-out' })
+    out.setAttribute('hidden', '')
+    const btn = h('button', { class: 'btn', type: 'button' }, '👁 Show this field’s value')
+    let shown = false
+    btn.addEventListener('click', () => {
+      if (shown) {
+        out.setAttribute('hidden', '')
+        btn.textContent = '👁 Show this field’s value'
+        shown = false
+        return
+      }
+      out.textContent = ''
+      const resolved = resolveReadableValue()
+      if (resolved) {
+        out.append(h('div', { class: 'reveal-val' },
+          groupValue(validate(validator(), resolved.value).normalized, validator().grouping)))
+        if (resolved.source === 'hidden') {
+          out.append(h('div', { class: 'hint' }, 'Read from a hidden field on this page — the value the form will submit.'))
+        }
+      } else {
+        out.append(h('div', { class: 'hint' },
+          'Double Check can’t read this value — the site keeps it hidden. Enter it below to verify the number you intend.'))
+      }
+      out.removeAttribute('hidden')
+      btn.textContent = '🙈 Hide value'
+      shown = true
+    })
+    return h('div', { class: 'reveal-row' }, btn, out)
+  }
+
   // Returns the input plus the element to append: the bare input normally, or
   // (for a masked/password field) the input wrapped with a show/hide toggle —
   // masked by default so it isn't exposed, revealable so the user can check
@@ -690,8 +744,10 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     rowEl.append(compareBtn)
     const speak = speakButton(() => r.normalized)
     if (speak) rowEl.append(speak)
+    const reveal = revealValueRow()
     body.append(
       chipRow(r),
+      ...(reveal ? [reveal] : []),
       h('div', { class: 'lbl' }, 'Re-type the value from your source'),
       inputEl, hint, rowEl,
       ocrSection(),
@@ -948,6 +1004,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
             'This site hides the value as you type it, so Double Check can’t read the field. ' +
             'Enter it here to verify the number you mean to use, then check it matches the field.')]
         : []),
+      ...((() => { const rv = revealValueRow(); return rv ? [rv] : [] })()),
       inputEl, liveChips,
       ocrSection((value) => {
         input.value = value

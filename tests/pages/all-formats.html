@@ -173,7 +173,8 @@
         <div class="f">
           <label for="ssn-xmask">SSN replaced with X glyphs (IRS-style)</label>
           <input id="ssn-xmask" name="identitySsn" inputmode="numeric" value="XXX-XX-XXXX" />
-          <div class="hint">value reads as all X’s (real digits live in a hidden field) → Double Check should NOT compare, it should switch to double-entry</div>
+          <input type="hidden" name="identitySsnx" value="123456789" />
+          <div class="hint">value reads as all X’s; real digits live in the hidden identitySsnx field → Double Check switches to double-entry, and "Show value" recovers the real value from the hidden field</div>
         </div>
       </div>
 

@@ -51,6 +51,13 @@ export const CARD_CSS = `
 .entry:focus { outline: none; border-color: #166534; }
 .entryrow { display: flex; gap: 6px; align-items: stretch; }
 .entryrow .entry { flex: 1; width: auto; min-width: 0; }
+.reveal-row { margin: 6px 0; }
+.reveal-row .btn { flex: none; font-size: 12px; padding: 5px 12px; }
+.reveal-out { margin-top: 6px; }
+.reveal-val {
+  font: 18px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700;
+  color: #166534; word-break: break-all; padding: 6px 0;
+}
 .card.state-match .entry, .entry.good { border-color: #16a34a; background: #f0fdf4; }
 .card.state-mismatch .entry, .entry.bad { border-color: #dc2626; background: #fef2f2; }
 .entry.ok-shape { border-color: #2563eb; background: #eff6ff; }
@@ -153,6 +160,7 @@ button.btn.rate { flex: none; width: 40px; font-variant-numeric: tabular-nums; }
   .hint.trusted-ok { color: #86efac; }
   .hint.trusted-warn { background: #450a0a; border-color: #b91c1c; color: #fecaca; }
   .big.good { background: #052e16; color: #bbf7d0; border-color: #166534; }
+  .reveal-val { color: #4ade80; }
   .words { color: #d1d5db; }
   .panel.bad { background: #450a0a; border-color: #b91c1c; color: #fecaca; }
   .diff .tag { color: #9ca3af; }
