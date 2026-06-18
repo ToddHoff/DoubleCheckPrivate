@@ -16,7 +16,7 @@ app.innerHTML = `
   <p class="hint">Scan the whole page: tag the high-value fields worth verifying, or flag any with a problem (failed checksum, wrong country code, look-alike character).</p>
   <div id="license" class="hint"></div>
   <p class="wins" id="wins" hidden></p>
-  <p class="links"><a href="#" id="options">Settings &amp; log</a> · <a href="#" id="help">Help</a></p>
+  <p class="links"><a href="#" id="options">Settings &amp; log</a> · <a href="#" id="help">Help</a> · <a href="#" id="community">Community</a></p>
 `
 
 // Why: only surface the counter once there's a real win — "0 issues caught"
@@ -154,6 +154,11 @@ void (async () => {
 document.getElementById('options')!.addEventListener('click', (e) => {
   e.preventDefault()
   void chrome.runtime.openOptionsPage()
+})
+
+document.getElementById('community')!.addEventListener('click', (e) => {
+  e.preventDefault()
+  void chrome.tabs.create({ url: 'https://www.reddit.com/r/DoubleCheck/' })
 })
 
 document.getElementById('help')!.addEventListener('click', (e) => {

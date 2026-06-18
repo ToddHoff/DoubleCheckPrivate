@@ -6,6 +6,11 @@
 
 Questions, bug reports, feature requests: **tmh@possibility.com**
 
+Or join the community at **[r/DoubleCheck](https://www.reddit.com/r/DoubleCheck/)** —
+ask questions, request formats and features, and share what Double Check caught
+for you. Please don't post real account numbers, card numbers, or other
+sensitive values.
+
 When reporting a problem, please include your Chrome version
 (`chrome://version`), what you clicked or pressed, and what you expected to
 happen — never include the actual values you were verifying. A screenshot

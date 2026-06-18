@@ -314,6 +314,15 @@ function trouble(question: string, ...answers: string[]): HTMLElement {
 shell.append(
   h('section', { class: 'trouble', id: 'help' },
     h('h2', {}, 'Help'),
+    (() => {
+      const p = h('p', {},
+        'Stuck, want a new format, or caught something worth sharing? Email ',
+        h('a', { href: 'mailto:tmh@possibility.com' }, 'tmh@possibility.com'),
+        ' or join the community at ',
+        h('a', { href: 'https://www.reddit.com/r/DoubleCheck/', target: '_blank', rel: 'noopener' }, 'r/DoubleCheck'),
+        '. Please don’t post real values in either place.')
+      return p
+    })(),
     trouble('The keyboard shortcut does nothing',
       'Check it’s actually bound: <code>chrome://extensions/shortcuts</code> — Chrome silently leaves it blank if another extension claimed the combo. On a Mac, also make sure macOS itself doesn’t own it (System Settings → Keyboard → Keyboard Shortcuts).',
       'The shortcut can’t work on Chrome’s own pages (<code>chrome://…</code>, the Web Store) — use the toolbar button there. For files opened from disk, enable “Allow access to file URLs” on the extension’s card in <code>chrome://extensions</code>.'),

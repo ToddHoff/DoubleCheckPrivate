@@ -214,6 +214,9 @@ configuration, this works without storing any past values.</p>
 <a href="https://github.com/ToddHoff/DoubleCheckPublic/blob/main/support.md" target="_blank" rel="noopener">support</a>.
 When reporting a problem, never include the actual values you were verifying.
 </p>
+<p>Questions, feature and format requests, or just want to share a catch? Join the community at
+<a href="https://www.reddit.com/r/DoubleCheck/" target="_blank" rel="noopener">r/DoubleCheck</a>
+— please don’t post real values there either.</p>
 
 <h2>Responsibility</h2>
 <p>Double Check is an assistive tool. It helps you verify; it does not and
