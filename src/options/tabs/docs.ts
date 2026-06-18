@@ -150,6 +150,35 @@ the field requires it, who signed). It does not record the value. It is
 evidence of diligence — that the verification happened — not a guarantee the
 value was objectively correct.</p>
 
+<h2>Formats verified out of the box</h2>
+<p>Two checks apply to every format: blind double-entry, and look-alike /
+hidden-character detection. On top of that:</p>
+<h3>Mathematically checksummed — a single wrong character is caught instantly</h3>
+<ul>
+  <li><strong>US routing number (ABA)</strong> — ABA mod-10 check digit.</li>
+  <li><strong>IBAN</strong> — ISO 13616 mod-97 check; verifies country length and names the destination country.</li>
+  <li><strong>Payment card number</strong> — Luhn check digit; identifies the card network.</li>
+  <li><strong>CLABE (Mexico)</strong> — CLABE mod-10 weighted check digit.</li>
+  <li><strong>CUSIP</strong> and <strong>ISIN</strong> — security-ID check digits (CUSIP mod-10; ISIN Luhn over the letter-expanded value).</li>
+  <li><strong>VIN</strong> — mod-11 check digit with the standard transliteration.</li>
+  <li><strong>Bitcoin address</strong> — Base58Check (legacy) and Bech32/Bech32m (SegWit).</li>
+  <li><strong>Ethereum address</strong> — EIP-55 mixed-case checksum (when checksum-cased).</li>
+</ul>
+<h3>Structurally validated — impossible values rejected</h3>
+<ul>
+  <li><strong>US Social Security number</strong> — rejects never-issued ranges (000/666/900+ area, 00 group, 0000 serial).</li>
+  <li><strong>US EIN</strong> — rejects prefixes the IRS never issues.</li>
+  <li><strong>SWIFT / BIC</strong> — validates the ISO country code and names the bank's country.</li>
+  <li><strong>IP address (v4/v6)</strong> — full structural validity.</li>
+  <li><strong>Date</strong> (MM/DD/YYYY, DD/MM/YYYY, YYYY-MM-DD) — real-calendar validity.</li>
+  <li><strong>Currency amount</strong> — parses US/European separators, refuses ambiguous ones, confirms the value in words.</li>
+</ul>
+<h3>Shape-checked — double-entry is the real check</h3>
+<ul>
+  <li><strong>US bank account number</strong> (flagged as having no public checksum), <strong>UK sort code</strong>,
+  <strong>Phone number</strong>, <strong>Email address</strong>, <strong>Number (any)</strong>, <strong>Text (exact match)</strong>.</li>
+</ul>
+
 <h2>Custom formats</h2>
 <p>The Formats tab lets you define your own: clean-up steps, a pattern, a
 length range, digit grouping, and a checksum chosen from a menu of standard
