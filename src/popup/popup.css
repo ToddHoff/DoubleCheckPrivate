@@ -20,6 +20,21 @@ button.primary {
 button.primary:hover {
   background: #14532d;
 }
+button#scan {
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px 12px;
+  border: 1px solid #166534;
+  border-radius: 8px;
+  background: #fff;
+  color: #166534;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+button#scan:hover {
+  background: #f0fdf4;
+}
 .hint {
   margin-top: 10px;
   color: #6b7280;
