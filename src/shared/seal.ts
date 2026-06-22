@@ -33,6 +33,8 @@ export function canonicalEntry(e: LogEntry): string {
     // present keeps the canonical form of older note-less entries byte-for-byte
     // identical, so their existing seals still verify.
     ...(e.note != null ? [e.note] : []),
+    // same reasoning for the log-cleared marker fields, added later still
+    ...(e.event != null ? [e.event, e.clearedCount ?? 0] : []),
   ])
 }
 

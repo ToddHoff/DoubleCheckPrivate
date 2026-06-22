@@ -59,6 +59,7 @@ button.btn.danger:hover { background: #fef2f2; }
 .chip.warn { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
 .logfeed { display: flex; flex-direction: column; gap: 10px; }
 .le { border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; }
+.le-event { background: #fffbeb; border-color: #fcd34d; }
 .le-top { display: flex; align-items: center; gap: 10px; }
 .le-when { color: var(--muted); font-size: 12.5px; }
 .le-fmt { margin-left: auto; color: var(--muted); font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }

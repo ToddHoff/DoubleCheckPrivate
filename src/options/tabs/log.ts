@@ -3,7 +3,7 @@ import { clearLog, getLog, verifyLogIntegrity } from '../../shared/storage'
 import type { LogEntry } from '../../shared/types'
 
 function toCsv(entries: LogEntry[]): string {
-  const cols = ['at', 'origin', 'fieldLabel', 'format', 'methods', 'result', 'attested', 'valueLength', 'durationMs', 'stale', 'signatures', 'note', 'fingerprint', 'seal'] as const
+  const cols = ['at', 'event', 'origin', 'fieldLabel', 'format', 'methods', 'result', 'attested', 'valueLength', 'durationMs', 'stale', 'signatures', 'note', 'clearedCount', 'fingerprint', 'seal'] as const
   const esc = (s: string) => (/[",\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s)
   const cell = (e: LogEntry, c: typeof cols[number]): string => {
     if (c === 'methods') return e.methods.join('+')
@@ -24,7 +24,7 @@ export async function renderLogTab(rootEl: HTMLElement): Promise<void> {
     downloadText('double-check-log.json', 'application/json', JSON.stringify(await getLog(), null, 2)))
   const clear = h('button', { class: 'btn danger' }, 'Clear log')
   clear.addEventListener('click', async () => {
-    if (confirm('Delete all log entries? This cannot be undone.')) {
+    if (confirm('Clear the verification log?\n\nThe individual entries are removed, but a permanent, sealed "log cleared" record is kept — it can’t be deleted from here, so a clear is never silent. Continue?')) {
       await clearLog()
       rootEl.textContent = ''
       await renderLogTab(rootEl)
@@ -75,6 +75,17 @@ function resultChip(e: LogEntry): HTMLElement {
 // one stacked card per check — notes and signatures get their own full-width
 // line instead of being squeezed into table columns
 function entryEl(e: LogEntry): HTMLElement {
+  if (e.event === 'log-cleared') {
+    const n = e.clearedCount ?? 0
+    return h('div', { class: 'le le-event' },
+      h('div', { class: 'le-top' },
+        h('span', { class: 'chip warn' }, '🧹 Log cleared'),
+        h('span', { class: 'le-when' }, new Date(e.at).toLocaleString()),
+      ),
+      h('div', { class: 'le-meta' },
+        `${n} verification ${n === 1 ? 'entry' : 'entries'} removed · permanent, sealed record — can’t be deleted`),
+    )
+  }
   const parts: (Node | string)[] = [
     h('div', { class: 'le-top' },
       resultChip(e),

@@ -36,6 +36,11 @@ export interface LogEntry {
   signatures?: string[]
   /** optional free-text note about the value (where it came from, how derived) */
   note?: string
+  /** a system audit event rather than a verification — currently only a log
+   * clear. These markers are never removed by the app (clearing keeps them). */
+  event?: 'log-cleared'
+  /** for a 'log-cleared' event: how many verification entries were removed */
+  clearedCount?: number
   /** tamper-evident seal: keyed HMAC over this entry, chained to the previous */
   seal?: string
   /** the previous entry's seal at write time — the chain link */

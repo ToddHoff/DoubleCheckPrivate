@@ -121,6 +121,31 @@ describe('tamper-evident seal chain', () => {
     expect(r.ok).toBe(true)
   })
 
+  it('seals a log-cleared marker so its count can’t be quietly altered', async () => {
+    const log = await sealed(entry('1', { event: 'log-cleared', clearedCount: 7 }))
+    let r = await verifyChain(log, fakeHmac)
+    expect(r.ok).toBe(true)
+    log[0].clearedCount = 0 // tamper: pretend nothing was cleared
+    r = await verifyChain(log, fakeHmac)
+    expect(r.ok).toBe(false)
+  })
+
+  it('keeps event-less seals valid (marker fields added to canonical only when present)', async () => {
+    const log = await sealed(entry('1'), entry('2'))
+    expect(log[0].event).toBeUndefined()
+    expect((await verifyChain(log, fakeHmac)).ok).toBe(true)
+  })
+
+  it('detects removal of a clear-marker from a markers-only chain', async () => {
+    const log = await sealed(
+      entry('1', { event: 'log-cleared', clearedCount: 3 }),
+      entry('2', { event: 'log-cleared', clearedCount: 5 }),
+      entry('3', { event: 'log-cleared', clearedCount: 2 }),
+    )
+    log.splice(1, 1) // remove the middle clear-marker
+    expect((await verifyChain(log, fakeHmac)).ok).toBe(false)
+  })
+
   it('reports legacy unsealed entries without flagging tampering', async () => {
     const legacy = entry('1') // no seal (created before sealing existed)
     const log = [legacy, ...(await sealed(entry('2'), entry('3')))]

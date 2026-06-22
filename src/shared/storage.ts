@@ -96,14 +96,53 @@ export async function purgeLog(retentionDays: number): Promise<number> {
   if (retentionDays <= 0) return 0
   const log = await get<LogEntry[]>(STORAGE_KEYS.log, [])
   const cutoff = Date.now() - retentionDays * 86_400_000
-  const kept = log.filter((e) => Date.parse(e.at) >= cutoff)
+  // clear-markers are permanent — retention never ages them out, or a low
+  // retention would become a back door for silently erasing the clear record
+  const kept = log.filter((e) => e.event === 'log-cleared' || Date.parse(e.at) >= cutoff)
   const purged = log.length - kept.length
-  if (purged > 0) await chrome.storage.local.set({ [STORAGE_KEYS.log]: kept })
+  if (purged > 0) {
+    await resealChain(kept)
+    await chrome.storage.local.set({ [STORAGE_KEYS.log]: kept })
+  }
   return purged
 }
 
+// Re-seal a list as a fresh linear chain after a legitimate removal of entries
+// between sealed ones (a clear, or a retention purge). The survivors stay a
+// valid, tamper-evident chain; an out-of-band deletion of one still breaks it.
+async function resealChain(chain: LogEntry[]): Promise<void> {
+  let prevSeal: string | null = null
+  for (const e of chain) {
+    e.prevSeal = prevSeal
+    e.seal = await computeSeal(e, hmacHex)
+    prevSeal = e.seal
+  }
+}
+
+// Clearing does NOT wipe the log. It removes the verification entries but leaves
+// a permanent, sealed "log cleared" marker (and every prior marker) — so a clear
+// can never be silent. The app offers no way to delete these markers; the seal
+// chain makes any out-of-band deletion show up in Verify integrity.
 export async function clearLog(): Promise<void> {
-  await chrome.storage.local.set({ [STORAGE_KEYS.log]: [] })
+  const log = await get<LogEntry[]>(STORAGE_KEYS.log, [])
+  const kept = log.filter((e) => e.event === 'log-cleared')
+  const removed = log.length - kept.length
+  kept.push({
+    id: crypto.randomUUID(),
+    at: new Date().toISOString(),
+    origin: '',
+    fieldLabel: `Log cleared — ${removed} ${removed === 1 ? 'entry' : 'entries'} removed`,
+    format: '',
+    methods: [],
+    result: 'match',
+    attested: false,
+    valueLength: 0,
+    durationMs: 0,
+    event: 'log-cleared',
+    clearedCount: removed,
+  })
+  await resealChain(kept)
+  await chrome.storage.local.set({ [STORAGE_KEYS.log]: kept })
 }
 
 // ---- local-only stats (the "412 values double-checked" counter) ----
