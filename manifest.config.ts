@@ -6,7 +6,7 @@ import pkg from './package.json'
 // the card on demand. This is the privacy story AND the fast-review track.
 export default defineManifest({
   manifest_version: 3,
-  name: 'Double Check',
+  name: 'Double Check - Wire, IBAN & Crypto Verifier',
   version: pkg.version,
   // Why this exact wording: Chrome Web Store caps the manifest description
   // (the listing summary) at 132 characters; longer uploads are rejected.

@@ -33,7 +33,7 @@ Click into the field and press the keyboard shortcut (or right-click → "Double
 
 REAL VALIDATION, NOT JUST PATTERNS
 
-• 23 built-in formats: US routing numbers (ABA), IBAN, payment cards, SSN, EIN, SWIFT/BIC, UK sort codes, CLABE, CUSIP, ISIN, VIN, Bitcoin and Ethereum addresses, phone numbers, email, dates, and currency amounts
+• Built-in checks for the values that hurt most to get wrong — bank and wire details, payment cards, government and tax IDs, securities and vehicle identifiers, crypto wallet addresses, and contact and currency fields. Each is verified the way its format is actually defined, not matched against a loose pattern.
 • Formats with check digits are verified mathematically — a single wrong digit in a routing number, IBAN, or card number is caught instantly, often before you re-type anything
 • Trusted accounts: name a payee once and Double Check warns when an account doesn't match the one you saved for them — the check that catches fake "our bank details changed" (BEC) fraud, which no checksum can. Stores a one-way fingerprint, never the value.
 • Currency amounts parse US and European separators, refuse genuinely ambiguous ones ("1,234" could be two different numbers — Double Check won't guess), and confirm in words: 1,200,000.00 — one million two hundred thousand and 00/100
