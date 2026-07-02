@@ -101,6 +101,13 @@ test('full check flow on the practice form, with privacy regression', async () =
 
   // privacy: nothing left the machine
   expect(externalRequests).toEqual([])
+
+  // badge lifecycle: detaching the field (what a client-side/SPA navigation does
+  // to the old page's DOM) must remove the badge promptly — not orphan it on
+  // documentElement over the next view. toHaveCount(0) polls, covering the
+  // one-frame reattach grace.
+  await page.locator('#practice').evaluate((el) => el.remove())
+  await expect(page.locator('[data-double-check-badge]')).toHaveCount(0)
 })
 
 test('OCR pipeline works end-to-end (offscreen Tesseract, WASM CSP)', async () => {

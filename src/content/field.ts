@@ -142,16 +142,38 @@ export function attachBadge(el: CheckableField, onTamper: () => void, verifiedDe
   }
   el.addEventListener('input', watch)
 
+  let removed = false
+  const remove = () => {
+    if (removed) return
+    removed = true
+    el.removeEventListener('input', watch)
+    window.removeEventListener('scroll', reposition, { capture: true })
+    window.removeEventListener('resize', reposition)
+    window.removeEventListener('pagehide', remove)
+    detachWatch.disconnect()
+    host.remove()
+  }
+
+  // Why: the badge is anchored to one field, but its host lives on
+  // documentElement and outlives the field on a client-side (SPA) navigation —
+  // the field detaches with no real reload, and position() runs only on
+  // scroll/resize/input (and merely hides, never removes), so the chip lingered
+  // over the next page. Tear down the instant the field leaves the document,
+  // and on full-page hide / bfcache.
+  const detachWatch = new MutationObserver(() => {
+    if (el.isConnected) return
+    // One frame's grace: a framework re-render can detach then reattach the same
+    // node; only remove if it's still gone next frame.
+    requestAnimationFrame(() => { if (!el.isConnected) remove() })
+  })
+  detachWatch.observe(document.documentElement, { childList: true, subtree: true })
+  window.addEventListener('pagehide', remove)
+
   return {
     invalidate() {
       tampered = true
       watch()
     },
-    remove() {
-      el.removeEventListener('input', watch)
-      window.removeEventListener('scroll', reposition, { capture: true })
-      window.removeEventListener('resize', reposition)
-      host.remove()
-    },
+    remove,
   }
 }

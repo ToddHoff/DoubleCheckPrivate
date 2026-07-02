@@ -47,6 +47,7 @@ const IS_MAC = /mac/i.test(
     navigator.platform ||
     navigator.userAgent,
 )
+const PASTE_KEY = IS_MAC ? '⌘V' : 'Ctrl+V'
 const PASTE_HINT = IS_MAC
   ? 'To paste an image, copy it to the clipboard first — press Shift+Control+Command+4 and drag — then press Paste image and ⌘V.'
   : 'To paste an image, copy it to the clipboard first — press Win+Shift+S and drag — then press Paste image and Ctrl+V.'
@@ -565,12 +566,35 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       }
     }
 
-    const paste = h('button', { class: 'btn' }, '🖼 Paste image')
-    paste.addEventListener('click', () => {
+    const armManualPaste = (msg: string) => {
       expectingPaste = true
-      setStatus('Now press ⌘V (Ctrl+V on Windows) — paste a screenshot or photo of the value.')
+      setStatus(msg)
       ;(root.querySelector('.entry') as HTMLElement | null)?.focus()
-    })
+    }
+    // Why: users expect a "Paste image" button to actually paste, so on click we
+    // try to read the image straight off the clipboard. navigator.clipboard.read()
+    // is gated (needs clipboard-read permission + document focus, and isn't
+    // available on every page a content script lands in), so ANY failure falls
+    // back to the native ⌘V paste path, which needs no permission and always works.
+    async function pasteFromClipboard(): Promise<void> {
+      try {
+        for (const item of await navigator.clipboard.read()) {
+          const type = item.types.find((t) => t.startsWith('image/'))
+          if (type) {
+            expectingPaste = false
+            setWorking('Reading image locally')
+            const blob = await item.getType(type)
+            void fileToDataUrl(blob).then((dataUrl) => runOcr(dataUrl))
+            return
+          }
+        }
+        armManualPaste(`No image on the clipboard yet — copy a screenshot or photo, then press ${PASTE_KEY}.`)
+      } catch {
+        armManualPaste(`Now press ${PASTE_KEY} — paste a screenshot or photo of the value.`)
+      }
+    }
+    const paste = h('button', { class: 'btn' }, `🖼 Paste image (${PASTE_KEY})`)
+    paste.addEventListener('click', () => { void pasteFromClipboard() })
 
     const LISTENING_MSG = 'Listening — read the value out loud, digit by digit. Tap again to stop.'
     let listening = false
