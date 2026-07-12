@@ -132,32 +132,68 @@ function renderFlags(
   return flags.length
 }
 
-/** flag high-value fields worth verifying (by field signals), green pills */
-export function scanAndTag(validators: Validator[], onPick: (field: CheckableField) => void): number {
+// Red flags for secrets sitting in filled fields — shared by BOTH page passes,
+// so a seed phrase on the page is surfaced no matter which command the user
+// ran. Covers inputs/textareas and rich-text composers (ChatGPT, Slack, …),
+// which are contenteditable, not input/textarea. Composer reads are read-only
+// — we never write into an editor's document model; the pill just focuses it.
+function secretFlags(onPick: (field: CheckableField) => void): Flag[] {
   const flags: Flag[] = []
   for (const field of checkableFields()) {
+    if (!field.value.trim()) continue
+    const hit = detectSecrets(field.value)[0]
+    if (hit) {
+      flags.push({ el: field, text: `Looks like a ${hit.label} — don’t send it`, tone: 'bad', action: () => onPick(field) })
+    }
+  }
+  for (const el of document.querySelectorAll<HTMLElement>('[contenteditable]')) {
+    if (!el.isContentEditable) continue // contenteditable="false"
+    if (el.parentElement?.closest<HTMLElement>('[contenteditable]')?.isContentEditable) continue // nested node of the same editor
+    const text = el.innerText
+    if (!text?.trim()) continue
+    const hit = detectSecrets(text)[0]
+    if (hit) {
+      flags.push({ el, text: `Looks like a ${hit.label} — don’t send it`, tone: 'bad', action: () => el.focus() })
+    }
+  }
+  return flags
+}
+
+/** flag high-value fields worth verifying (by field signals), green pills —
+ * plus red pills for any secret already sitting on the page */
+export function scanAndTag(validators: Validator[], onPick: (field: CheckableField) => void): number {
+  const flags = secretFlags(onPick)
+  const secretCount = flags.length
+  const flagged = new Set(flags.map((f) => f.el))
+  for (const field of checkableFields()) {
+    if (flagged.has(field)) continue // the red secret pill outranks the green one
     const candidate = highValueCandidate(fieldSignals(field), validators)
     if (!candidate) continue
     const name = validators.find((v) => v.id === candidate.id)?.name ?? 'value'
     flags.push({ el: field, text: `Double-check: ${name}?`, tone: 'ok', action: () => onPick(field) })
   }
+  if (secretCount) void bumpStat('pageProblemsFound', secretCount)
+  const worth = flags.length - secretCount
   return renderFlags(flags, {
-    tone: flags.length ? 'ok' : 'none',
-    text: flags.length
-      ? `Double Check flagged ${flags.length} field${flags.length === 1 ? '' : 's'} worth verifying — click a tag.`
-      : 'Double Check found no high-value fields on this page.',
+    tone: secretCount ? 'bad' : worth ? 'ok' : 'none',
+    text: secretCount
+      ? `Double Check found ${secretCount} possible secret${secretCount === 1 ? '' : 's'} on this page — don’t send ${secretCount === 1 ? 'it' : 'them'}.${worth ? ` Plus ${worth} field${worth === 1 ? '' : 's'} worth verifying.` : ''}`
+      : worth
+        ? `Double Check flagged ${worth} field${worth === 1 ? '' : 's'} worth verifying — click a tag.`
+        : 'Double Check found no high-value fields on this page.',
   })
 }
 
 /** audit filled fields for detectable problems; red pills with the issue */
 export function auditAndFlag(validators: Validator[], onPick: (field: CheckableField) => void): number {
-  const flags: Flag[] = []
+  // secrets first — sending a credential is graver than a failed checksum
+  const flags = secretFlags(onPick)
+  const flagged = new Set(flags.map((f) => f.el))
   for (const field of checkableFields()) {
     const raw = field.value
-    if (!raw.trim()) continue // nothing entered to check
+    if (!raw.trim() || flagged.has(field)) continue // secret pill already on it
 
-    // secrets first — sending a credential is graver than a failed checksum
-    const problems: string[] = detectSecrets(raw).map((s) => `Looks like a ${s.label} — don’t send it`)
+    const problems: string[] = []
     const candidate = highValueCandidate(fieldSignals(field), validators)
     if (candidate) {
       // a strongly-identified field whose entered value doesn't hold up.
@@ -172,20 +208,6 @@ export function auditAndFlag(validators: Validator[], onPick: (field: CheckableF
       problems.push(...suspiciousChars(raw))
     }
     if (problems.length) flags.push({ el: field, text: problems[0], tone: 'bad', action: () => onPick(field) })
-  }
-  // rich-text composers (ChatGPT, Slack, …) are contenteditable, not
-  // input/textarea, so the loop above can't see them. Read-only scan of their
-  // text for secrets — we never write into an editor's document model. The
-  // pill just focuses the composer; removing the secret is the user's edit.
-  for (const el of document.querySelectorAll<HTMLElement>('[contenteditable]')) {
-    if (!el.isContentEditable) continue // contenteditable="false"
-    if (el.parentElement?.closest<HTMLElement>('[contenteditable]')?.isContentEditable) continue // nested node of the same editor
-    const text = el.innerText
-    if (!text?.trim()) continue
-    const hit = detectSecrets(text)[0]
-    if (hit) {
-      flags.push({ el, text: `Looks like a ${hit.label} — don’t send it`, tone: 'bad', action: () => el.focus() })
-    }
   }
   if (flags.length) void bumpStat('pageProblemsFound', flags.length)
   return renderFlags(flags, {

@@ -100,10 +100,11 @@ intercept — the attestation, not the guard, is the real control.</p>
 
 <h2>Secrets — caught before they leave</h2>
 <p>Pasting an API key, a private key, or a crypto wallet seed phrase into a
-chat box or form is one of the most expensive mistakes there is. <em>Check
-this page for problems</em> flags any field — including rich chat composers
-like ChatGPT's or Slack's — whose text contains one, and the check card warns
-if the value you're verifying looks like one. Detection is deliberately
+chat box or form is one of the most expensive mistakes there is. Both page
+commands — <em>Find fields to double-check</em> and <em>Check this page for
+problems</em> — flag any field — including rich chat composers like ChatGPT's
+or Slack's — whose text contains one, and the check card warns if the value
+you're verifying looks like one. Detection is deliberately
 narrow: it anchors on real structure (a vendor prefix such as
 <code>AKIA…</code> or <code>ghp_…</code>, a PEM private-key header, twelve or
 more consecutive words from the fixed seed-phrase word list) so ordinary text,
