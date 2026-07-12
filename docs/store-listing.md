@@ -64,6 +64,7 @@ MADE FOR REAL WORK
 • Define your own formats (vendor IDs, policy numbers, internal account schemes) with clean-up rules, patterns, and standard checksum algorithms — plus an optional expected amount range that warns (without blocking) when a value is unusually large or small for the field; share them with your team as files
 • See what it's caught: a running, local-only tally of the mismatches, bad values, account-change warnings, and page problems Double Check has flagged for you — real events, never an estimated dollar figure
 • Submit Guard (beta): optionally block a site's forms from submitting while a field you normally double-check there is unverified
+• Catch a secret before it leaves: the page audit also flags an API key, private key, or crypto seed phrase sitting in a field — including chat composers like ChatGPT's — and Submit Guard blocks a form carrying one (override with a second click; you stay in charge). Detection anchors on real structure, so git hashes and ordinary text are never flagged, and the secret itself is never stored or logged
 • Keyboard-first: invoke, verify, and attest without touching the mouse
 
 PRIVACY IS THE ARCHITECTURE, NOT A POLICY

@@ -8,6 +8,7 @@
 // after Double Check has been opened on the page. The human attestation is
 // the primary control; this is a seatbelt, not a wall.
 
+import { detectSecrets } from '../engine'
 import { fieldSignature, isCheckable, type CheckableField } from './field'
 import { getSiteMemory, siteMemoryKey } from '../shared/storage'
 
@@ -63,6 +64,40 @@ function block(e: Event, field: CheckableField): void {
   field.scrollIntoView({ block: 'center', behavior: 'smooth' })
 }
 
+// ---- secret block: don't let a form carrying a credential leave ----
+
+// Why overridable: a blocking tool's false positive eats someone's legitimate
+// submit — worse than the miss. First attempt blocks and warns; submitting
+// again within the window proceeds. A seatbelt, not a wall.
+const SECRET_OVERRIDE_MS = 10_000
+let secretWarnedAt = 0
+
+function firstSecretField(form: HTMLFormElement): { field: CheckableField; label: string } | null {
+  for (const el of form.querySelectorAll('input, textarea')) {
+    if (!isCheckable(el) || !el.value.trim()) continue
+    const hit = detectSecrets(el.value)[0]
+    if (hit) return { field: el, label: hit.label }
+  }
+  return null
+}
+
+/** true when the submit should be blocked (secret present, not yet overridden) */
+function blockSecret(e: Event, form: HTMLFormElement): boolean {
+  const hit = firstSecretField(form)
+  if (!hit) {
+    secretWarnedAt = 0
+    return false
+  }
+  if (Date.now() - secretWarnedAt < SECRET_OVERRIDE_MS) return false // user chose to send anyway
+  secretWarnedAt = Date.now()
+  e.preventDefault()
+  e.stopImmediatePropagation()
+  toast(`Double Check: this looks like a ${hit.label} — submit again within 10s to send anyway`)
+  hit.field.focus()
+  hit.field.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  return true
+}
+
 export async function installSubmitGuard(guardOrigins: string[]): Promise<void> {
   if (installed || !guardOrigins.includes(location.origin)) return
   installed = true
@@ -78,7 +113,8 @@ export async function installSubmitGuard(guardOrigins: string[]): Promise<void> 
       const form = e.target
       if (!(form instanceof HTMLFormElement)) return
       const missing = firstUnverified(form)
-      if (missing) block(e, missing)
+      if (missing) { block(e, missing); return }
+      blockSecret(e, form)
     },
     true,
   )
@@ -96,7 +132,8 @@ export async function installSubmitGuard(guardOrigins: string[]): Promise<void> 
       const type = btn instanceof HTMLButtonElement ? (btn.type || 'submit') : 'submit'
       if (type !== 'submit') return
       const missing = firstUnverified(form)
-      if (missing) block(e, missing)
+      if (missing) { block(e, missing); return }
+      blockSecret(e, form)
     },
     true,
   )

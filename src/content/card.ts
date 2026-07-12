@@ -1,5 +1,5 @@
 import type { Diagnosis, ValidationResult, Validator } from '../engine'
-import { classifyPayee, diagnose, extractCandidates, groupValue, looksMasked, normalizeSpoken, recognize, validate } from '../engine'
+import { classifyPayee, detectSecrets, diagnose, extractCandidates, groupValue, looksMasked, normalizeSpoken, recognize, validate } from '../engine'
 import { fileToDataUrl } from './capture'
 import type { LicenseStatus, LogEntry, Settings } from '../shared/types'
 import {
@@ -101,6 +101,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   // Why: stats are catch *events*, not per-render. Guard each so the counter
   // bumps once per card session even though the verify screen re-renders.
   let badSeen = false
+  let secretSeen = false // secret warning counted once per card session
   let changeWarned = false
   let requireDualSign = ctx.requireDualSign
   // the optional note input lives in the bottom chrome (created below when on a
@@ -279,11 +280,20 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   }
 
   // ---- shared view pieces ----
-  const chipRow = (r: ValidationResult): HTMLElement => {
+  // rawText: the pre-normalization value, scanned for secrets (normalization
+  // can strip the spaces a seed phrase or the casing a key prefix depends on)
+  const chipRow = (r: ValidationResult, rawText?: string): HTMLElement => {
     const row = h('div', { class: 'chips' })
     if (r.valid && r.checksumPassed) row.appendChild(h('span', { class: 'chip ok' }, '✓ Checksum valid'))
     else if (r.valid && !r.hasChecksum) row.appendChild(h('span', { class: 'chip ok' }, '✓ Format valid'))
     else if (r.valid) row.appendChild(h('span', { class: 'chip warn' }, 'Format valid — checksum not verifiable'))
+    for (const s of rawText ? detectSecrets(rawText) : []) {
+      row.appendChild(h('span', { class: 'chip err' }, `✕ Looks like a ${s.label} — don’t send it`))
+      if (!secretSeen) {
+        secretSeen = true
+        void bumpStat('badValuesCaught')
+      }
+    }
     for (const e of r.errors) row.appendChild(h('span', { class: 'chip err' }, `✕ ${e}`))
     for (const w of r.warnings) row.appendChild(h('span', { class: 'chip warn' }, `⚠ ${w}`))
     for (const i of r.info) row.appendChild(h('span', { class: 'chip info' }, i))
@@ -741,7 +751,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     if (speak) rowEl.append(speak)
     const reveal = revealValueRow()
     body.append(
-      chipRow(r),
+      chipRow(r, subjectRaw()),
       ...(reveal ? [reveal] : []),
       h('div', { class: 'lbl' }, 'Re-type the value from your source'),
       inputEl, hint, rowEl,
@@ -793,11 +803,11 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
         reveal.textContent = shown ? '🙈 Hide' : '👁 Reveal'
         wordsEl.textContent = shown ? words : ''
       })
-      body.append(big, h('div', { class: 'btnrow' }, reveal), wordsEl, chipRow(r))
+      body.append(big, h('div', { class: 'btnrow' }, reveal), wordsEl, chipRow(r, subjectRaw()))
     } else {
       body.append(h('div', { class: 'big good' }, bigText))
       if (words) body.append(h('div', { class: 'words' }, words))
-      body.append(chipRow(r))
+      body.append(chipRow(r, subjectRaw()))
     }
 
     // don't write back into a masked field — the site keeps the real value in a
@@ -965,7 +975,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     const update = () => {
       const r = validate(validator(), input.value)
       liveChips.textContent = ''
-      if (input.value.trim()) liveChips.appendChild(chipRow(r))
+      if (input.value.trim()) liveChips.appendChild(chipRow(r, input.value))
       if (r.valid) {
         // Why blue, not green: green means "verified" everywhere else in this
         // product. Step 1 only means "format looks right" — the value isn't

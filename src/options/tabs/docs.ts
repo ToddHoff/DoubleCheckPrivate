@@ -98,6 +98,24 @@ Double Check is active on the page (the toggle arms the current page
 immediately), and some single-page apps submit in ways no extension can
 intercept — the attestation, not the guard, is the real control.</p>
 
+<h2>Secrets — caught before they leave</h2>
+<p>Pasting an API key, a private key, or a crypto wallet seed phrase into a
+chat box or form is one of the most expensive mistakes there is. <em>Check
+this page for problems</em> flags any field — including rich chat composers
+like ChatGPT's or Slack's — whose text contains one, and the check card warns
+if the value you're verifying looks like one. Detection is deliberately
+narrow: it anchors on real structure (a vendor prefix such as
+<code>AKIA…</code> or <code>ghp_…</code>, a PEM private-key header, twelve or
+more consecutive words from the fixed seed-phrase word list) so ordinary text,
+git commit hashes, and UUIDs are never flagged. Like every check, it runs
+entirely on your device, only when you invoke it, and the secret itself is
+never stored or logged — only its kind.</p>
+<p>With Submit Guard on for a site, a form containing a detected secret is
+blocked with a warning naming what was found; submitting again within ten
+seconds sends it anyway — Double Check warns, you decide. Chat composers
+that send without a form submit can't be blocked this way; there the audit
+flag is the warning.</p>
+
 <h2>Two signatures (for the highest-stakes fields)</h2>
 <p>When one person signing off isn't enough, tick <em>Require two signatures
 for this field</em> on the check card (just above Submit Guard). That choice is

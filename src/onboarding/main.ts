@@ -180,6 +180,12 @@ shell.append(
         'A toggle at the bottom of the check card, naming the site you’re on. Forms there won’t submit ' +
         'while a field you normally double-check is unverified or was edited after checking. A seatbelt ' +
         'on top of the workflow, honest about its limits.', 'beta'),
+      feat('Secrets caught before they leave',
+        'Check this page for problems also spots an API key, private key, or wallet seed phrase sitting ' +
+        'in a field — including chat composers like ChatGPT’s. Detection anchors on real structure ' +
+        '(vendor prefixes, PEM headers, the seed-phrase word list), so commit hashes and ordinary text ' +
+        'are never flagged. With Submit Guard on, a form carrying a secret is blocked — warn first, ' +
+        'you decide.'),
     ),
   ),
 )

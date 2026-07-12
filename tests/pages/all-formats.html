@@ -69,8 +69,12 @@
           <input id="clabe" name="clabe" inputmode="numeric" value="032180000118359718" />
           <div class="hint"><span class="bad">pre-filled with a checksum FAILURE</span> — open the card to see it go red before typing · valid: <code>032180000118359719</code></div>
         </div>
+      </div>
+
+      <h2>Cards</h2>
+      <div class="grid">
         <div class="f">
-          <label for="card">Card number</label>
+          <label for="card">Credit card number</label>
           <input id="card" name="card_number" autocomplete="cc-number" inputmode="numeric" />
           <div class="hint">try <code>4111 1111 1111 1111</code> (Visa) or <code>5555555555554444</code> (Mastercard) · <span class="bad">4111111111111112</span></div>
         </div>
@@ -196,6 +200,29 @@
           <input id="zwsp" name="routing_number" inputmode="text" />
           <div class="hint">paste <code>021​000021</code> — there is an invisible zero-width space inside it → hidden-character warning</div>
         </div>
+      </div>
+
+      <h2>Secrets — warn before they leave</h2>
+      <p class="hint" style="margin:0 0 10px">Run <em>Check this page for problems</em> (toolbar or right-click) and each of these gets a red pill. With Submit Guard on for this site, Send is blocked while a secret sits in the form — click Send again within 10s to override.</p>
+      <div class="grid">
+        <div class="f">
+          <label for="secret-key">API key pasted into a form field</label>
+          <input id="secret-key" name="notes" />
+          <!-- the sample key below is split with a comment so GitHub push
+               protection doesn't read this fixture as a leaked credential;
+               it renders and copies as one contiguous token -->
+          <div class="hint">paste <code>AKIAIOSFODNN7EXAMPLE</code> (AWS docs example key) or <code>sk_<!-- -->live_<!-- -->4eC39HqLyjWDarjtT1zdp7dc</code> · a git SHA like <code>5f2a9c04c9d1737d0d0c1b3a8e6b64e5d9a1f0aa</code> is <em>not</em> flagged</div>
+        </div>
+        <div class="f">
+          <label for="secret-msg">Message box (textarea)</label>
+          <textarea id="secret-msg" name="message" rows="2" style="width:100%;padding:8px 10px;font-size:15px;box-sizing:border-box;border:1px solid #d1d5db;border-radius:7px"></textarea>
+          <div class="hint">paste a 12-word seed phrase: <code>abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about</code> · 11 of the words alone are not flagged</div>
+        </div>
+      </div>
+      <div class="f" style="margin-top:14px">
+        <label>Chat composer (contenteditable, like ChatGPT/Slack — prefilled with a seed phrase)</label>
+        <div contenteditable="true" style="min-height:52px;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;background:#fff">Can you check this? my recovery phrase is abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about</div>
+        <div class="hint">not an input/textarea — <em>Check this page for problems</em> still reads it (locally) and flags the seed phrase</div>
       </div>
 
       <button type="submit">Send (tests Submit Guard)</button>

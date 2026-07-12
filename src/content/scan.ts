@@ -5,7 +5,7 @@
 //                  bad country codes, hidden/look-alike characters)
 // Both read locally and never transmit anything. Clicking a pill opens the
 // card on that field; Esc or Dismiss clears them.
-import { highValueCandidate, suspiciousChars, validate } from '../engine'
+import { detectSecrets, highValueCandidate, suspiciousChars, validate } from '../engine'
 import type { Validator } from '../engine'
 import { bumpStat } from '../shared/storage'
 import { fieldSignals, isCheckable, type CheckableField } from './field'
@@ -156,7 +156,8 @@ export function auditAndFlag(validators: Validator[], onPick: (field: CheckableF
     const raw = field.value
     if (!raw.trim()) continue // nothing entered to check
 
-    const problems: string[] = []
+    // secrets first — sending a credential is graver than a failed checksum
+    const problems: string[] = detectSecrets(raw).map((s) => `Looks like a ${s.label} — don’t send it`)
     const candidate = highValueCandidate(fieldSignals(field), validators)
     if (candidate) {
       // a strongly-identified field whose entered value doesn't hold up.
@@ -171,6 +172,20 @@ export function auditAndFlag(validators: Validator[], onPick: (field: CheckableF
       problems.push(...suspiciousChars(raw))
     }
     if (problems.length) flags.push({ el: field, text: problems[0], tone: 'bad', action: () => onPick(field) })
+  }
+  // rich-text composers (ChatGPT, Slack, …) are contenteditable, not
+  // input/textarea, so the loop above can't see them. Read-only scan of their
+  // text for secrets — we never write into an editor's document model. The
+  // pill just focuses the composer; removing the secret is the user's edit.
+  for (const el of document.querySelectorAll<HTMLElement>('[contenteditable]')) {
+    if (!el.isContentEditable) continue // contenteditable="false"
+    if (el.parentElement?.closest<HTMLElement>('[contenteditable]')?.isContentEditable) continue // nested node of the same editor
+    const text = el.innerText
+    if (!text?.trim()) continue
+    const hit = detectSecrets(text)[0]
+    if (hit) {
+      flags.push({ el, text: `Looks like a ${hit.label} — don’t send it`, tone: 'bad', action: () => el.focus() })
+    }
   }
   if (flags.length) void bumpStat('pageProblemsFound', flags.length)
   return renderFlags(flags, {
