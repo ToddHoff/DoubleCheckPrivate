@@ -66,103 +66,13 @@ async function sendWithRetry<T>(tabId: number, msg: RuntimeMessage): Promise<T |
   return null
 }
 
-type FocusedIframe = { origin: string; crossOrigin: boolean; isCard: boolean }
-
-// executeScript func: is focus inside an <iframe>, is it cross-origin, and does
-// it look like the card-NUMBER field (so we can force the 'card' format)?
-function detectFocusedIframe(): FocusedIframe | null {
-  const el = document.activeElement as HTMLIFrameElement | null
-  if (!el || el.tagName !== 'IFRAME') return null
-  let crossOrigin = false
-  try { crossOrigin = !el.contentDocument } catch { crossOrigin = true }
-  try {
-    const hint = `${el.id} ${el.name} ${el.title} ${el.src}`.toLowerCase()
-    const isCard = /ccnumber|card.?number|account.?number|\bpan\b|number/.test(hint) &&
-      !/\bexp|expir|cvv|cvc|cvn|security.?code/.test(hint)
-    return { origin: new URL(el.src).origin, crossOrigin, isCard }
-  } catch {
-    return null
-  }
-}
-
 async function injectCard(tabId: number) {
   try {
     await chrome.scripting.executeScript({ target: { tabId }, files: [contentScript] })
   } catch {
     return // restricted page (chrome://, web store) — nothing we can do
   }
-  const res = await sendWithRetry<{ mounted: boolean }>(tabId, { kind: 'dc-activate' })
-  if (res?.mounted) return
-  // top frame had no reachable field — the focus may be inside a subframe. Don't
-  // mount inside the frame (a payment iframe is ~50px tall and would clip the
-  // card); instead read the value out and render the card in the TOP frame.
-  let info: FocusedIframe | null = null
-  try {
-    const [r] = await chrome.scripting.executeScript({ target: { tabId }, func: detectFocusedIframe })
-    info = (r?.result as FocusedIframe | null) ?? null
-  } catch {
-    return
-  }
-  if (!info) return // nothing focused / not an iframe — do nothing, as before
-  const fmt = info.isCard ? 'card' : undefined
-  if (!info.crossOrigin) {
-    await verifyIframe(tabId, fmt) // same-origin subframe — always readable
-    return
-  }
-  // cross-origin: only proceed if the user already granted this origin. The
-  // first grant must come from the popup (content/SW can't call
-  // permissions.request), so point the user there with an on-page hint.
-  if (await chrome.permissions.contains({ origins: [`${info.origin}/*`] })) {
-    await verifyIframe(tabId, fmt)
-  } else {
-    await sendWithRetry(tabId, { kind: 'dc-sealed-hint', host: new URL(info.origin).host })
-  }
-}
-
-// Solution B: the user granted per-host access to a cross-origin frame holding
-// a sealed field (e.g. a card number in a payment iframe). Read that field's
-// value from whichever now-permitted frame has focus, then open the verify card
-// in the top frame. The value is relayed locally only — never stored, never
-// sent to the network. See RuntimeMessage note on dc-open-with-value.
-async function verifyIframe(tabId: number, format?: string) {
-  let value: string | null = null
-  try {
-    const results = await chrome.scripting.executeScript({
-      target: { tabId, allFrames: true },
-      // Read the FOCUSED element first — processors like CollectJS use custom
-      // fields that querySelectorAll('input') misses but activeElement catches
-      // (per-frame activeElement persists even when top-frame focus moves). Only
-      // accept a card-number-shaped value (12–19 digits) so we never grab a
-      // giant hidden token/state input by mistake.
-      func: () => {
-        const cardish = (s: string | null | undefined) => {
-          const d = (s || '').replace(/\D/g, '')
-          return d.length >= 12 && d.length <= 19
-        }
-        const ae = document.activeElement as HTMLInputElement | null
-        if (ae && typeof ae.value === 'string' && cardish(ae.value)) return ae.value
-        for (const e of Array.from(document.querySelectorAll('input, textarea'))) {
-          const v = (e as HTMLInputElement).value
-          if (cardish(v)) return v
-        }
-        return null
-      },
-    })
-    // the sealed field is in a sub-frame — skip the TOP frame, whose own hidden
-    // inputs (checkout tokens, CSRF, page state) can be card-shaped by accident
-    value = results
-      .filter((r) => r.frameId !== 0)
-      .map((r) => r.result as string | null)
-      .find((v): v is string => typeof v === 'string' && v.trim().length > 0) ?? null
-  } catch {
-    /* the granted frame may not be readable — fall through to input mode */
-  }
-  try {
-    await chrome.scripting.executeScript({ target: { tabId }, files: [contentScript] })
-  } catch {
-    return // restricted page
-  }
-  await sendWithRetry(tabId, { kind: 'dc-open-with-value', value, format })
+  await sendWithRetry<{ mounted: boolean }>(tabId, { kind: 'dc-activate' })
 }
 
 async function injectPage(tabId: number, kind: 'dc-scan-page' | 'dc-audit-page') {
@@ -188,7 +98,7 @@ async function ensureOffscreen(): Promise<void> {
   })
 }
 
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg?.kind === 'dc-activate-from-popup' && typeof msg.tabId === 'number') {
     void injectCard(msg.tabId).then(() => sendResponse({ ok: true }))
     return true // async response
@@ -200,32 +110,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg?.kind === 'dc-audit-from-popup' && typeof msg.tabId === 'number') {
     void injectPage(msg.tabId, 'dc-audit-page').then(() => sendResponse({ ok: true }))
     return true // async response
-  }
-  if (msg?.kind === 'dc-verify-iframe' && typeof msg.tabId === 'number') {
-    void verifyIframe(msg.tabId, msg.format).then(() => sendResponse({ ok: true }))
-    return true // async response
-  }
-  // a scan pill on a sealed card field was clicked (sender is the page)
-  if (msg?.kind === 'dc-pill-iframe' && typeof msg.origin === 'string') {
-    const tabId = sender.tab?.id
-    if (tabId == null) { sendResponse({ ok: false }); return }
-    void (async () => {
-      if (await chrome.permissions.contains({ origins: [`${msg.origin}/*`] })) {
-        await verifyIframe(tabId, 'card') // pill only fires for card-number frames
-
-      } else {
-        // first grant can only come from an extension page — open the popup so
-        // its Grant-access button is one tap away; fall back to an on-page hint
-        // if the browser won't open the popup programmatically
-        try {
-          await chrome.action.openPopup()
-        } catch {
-          await sendWithRetry(tabId, { kind: 'dc-sealed-hint', host: new URL(msg.origin).host })
-        }
-      }
-      sendResponse({ ok: true })
-    })()
-    return true
   }
   if (msg?.kind === 'dc-ocr' && typeof msg.imageDataUrl === 'string') {
     // relay content → offscreen; the image stays inside the extension process

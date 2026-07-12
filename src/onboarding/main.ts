@@ -56,8 +56,8 @@ shell.append(
       h('li', {}, 'Find ', h('strong', {}, 'Double Check'), ' in the list and click the pin (📌) next to it.'),
     ),
     h('p', { class: 'muted' },
-      'Now its icon stays in your toolbar — click it any time to verify the focused field, or to grant ' +
-      'access to a secure payment field. You can also use the keyboard shortcut without pinning.'),
+      'Now its icon stays in your toolbar — click it any time to verify the focused field, scan a page, ' +
+      'or check a page for problems. You can also use the keyboard shortcut without pinning.'),
   ),
 )
 
@@ -73,9 +73,9 @@ shell.append(
       'menu), reads only the field you point it at, and runs every check — including OCR and voice — on ' +
       'your device. Nothing is transmitted.'),
     h('p', {},
-      'There is one exception, and it is opt-in and per-site: to verify a value sealed inside a payment ' +
-      'processor’s secure frame (a card number, for example), you grant access to that one site. You ' +
-      'approve it, one site at a time, and you can see and revoke every grant under the Site access tab.'),
+      'There are no exceptions and nothing to configure: Double Check never asks for access to a website, ' +
+      'so there is no standing permission for a page — or anyone else — to abuse. It only ever sees the ' +
+      'one field you point it at, at the moment you point it there.'),
     h('h3', { style: 'margin:18px 0 6px' }, 'Right-click to check a whole page'),
     h('p', {}, 'Right-click anywhere on a page and Double Check gives you two commands:'),
     h('ul', {},
@@ -180,10 +180,6 @@ shell.append(
         'A toggle at the bottom of the check card, naming the site you’re on. Forms there won’t submit ' +
         'while a field you normally double-check is unverified or was edited after checking. A seatbelt ' +
         'on top of the workflow, honest about its limits.', 'beta'),
-      feat('Card numbers in secure payment frames',
-        'A card number usually sits inside the processor’s own cross-origin frame the shortcut can’t reach. ' +
-        'Grant Double Check access to that one site (per-site, on your click, revocable under Site access) ' +
-        'and it verifies the field in place — read and checked locally, never stored or sent.'),
     ),
   ),
 )

@@ -88,14 +88,8 @@ export const STORAGE_KEYS = {
  * runtime messages — NOTE: messages stay inside the extension's own contexts
  * and nothing here is ever sent to the network. dc-ocr carries image bytes,
  * discarded after local OCR. Voice transcripts never appear here: recognition
- * runs inside the content script (see content/voice-rec.ts).
- *
- * One deliberate exception: dc-open-with-value. When the user EXPLICITLY grants
- * per-host access to verify a field sealed in a cross-origin frame (a card
- * number in a payment processor's iframe), that field's value is relayed
- * locally — frame → service worker → top frame — so the check can run. It is
- * never written to storage and never sent off the device; it lives only for the
- * duration of that one relay. Without that opt-in grant, no value ever travels.
+ * runs inside the content script (see content/voice-rec.ts). No message ever
+ * carries a value being verified.
  */
 export type RuntimeMessage =
   | { kind: 'dc-activate' }
@@ -104,10 +98,6 @@ export type RuntimeMessage =
   | { kind: 'dc-activate-from-popup'; tabId: number }
   | { kind: 'dc-scan-from-popup'; tabId: number }
   | { kind: 'dc-audit-from-popup'; tabId: number }
-  | { kind: 'dc-verify-iframe'; tabId: number; format?: string }
-  | { kind: 'dc-open-with-value'; value: string | null; host?: string; format?: string }
-  | { kind: 'dc-sealed-hint'; host: string }
-  | { kind: 'dc-pill-iframe'; origin: string }
   | { kind: 'dc-open-options'; section?: string }
   | { kind: 'dc-license-status' }
   | { kind: 'dc-payment-action'; action: string }

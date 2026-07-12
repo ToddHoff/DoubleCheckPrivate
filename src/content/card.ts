@@ -23,17 +23,6 @@ export interface CardContext {
   settings: Settings
   license: LicenseStatus
   requireDualSign: boolean
-  /** the card isn't bound to a writable page field — its `field` is a detached
-   * scratch input holding a value relayed out of a cross-origin frame. No
-   * badge, no per-site memory, no write-back. */
-  detached?: boolean
-  /** host of the cross-origin frame the value came from (for labeling) */
-  relayHost?: string
-  /** the iframe element to anchor the detached card/badge next to */
-  relayAnchor?: HTMLElement
-  /** format to default to (e.g. 'card' when we detected a card-number iframe),
-   * since the relayed value can be unreadable/masked and shouldn't decide it */
-  preferredFormat?: string
 }
 
 type Step = 'verify-entry' | 'input-first' | 'input-confirm' | 'match' | 'mismatch' | 'done'
@@ -83,9 +72,6 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
   // ---- state ----
   const startedAt = Date.now()
-  // detached: the value was relayed out of a cross-origin frame into a scratch
-  // input. No real page field, so no badge / per-site memory / write-back.
-  const detached = !!ctx.detached
   // Why: the site masked this field on purpose (open-office shoulder-surfing).
   // The match screen's big bold value is the highest-exposure moment, so we
   // keep it masked behind an explicit reveal toggle rather than un-masking
@@ -106,12 +92,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   let suppressFieldEvents = false
   // don't yank focus into the card while the user is typing in the field
   let focusOnRender = true
-  // a preferred format (e.g. 'card' from a detected card-number iframe) wins —
-  // the relayed value can be masked/unreadable and shouldn't pick the format
-  const preferred = ctx.preferredFormat && ctx.validators.some((v) => v.id === ctx.preferredFormat)
-    ? ctx.preferredFormat
-    : undefined
-  let formatId = preferred ?? ctx.remembered ?? ctx.suggestions[0] ??
+  let formatId = ctx.remembered ?? ctx.suggestions[0] ??
     (/^[\d\s().+-]*$/.test(field.value) ? 'generic-number' : 'generic-text')
   let firstEntry = '' // input mode: the value typed from the source
   let lastDiagnosis: Diagnosis | null = null
@@ -207,7 +188,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   closeBtn.addEventListener('click', () => destroy(true))
   const header = h('div', { class: 'hd' },
     h('span', { class: 'logo', 'aria-hidden': 'true' }),
-    h('span', { class: 'title' }, detached ? 'Verify the field' : 'Double Check'),
+    h('span', { class: 'title' }, 'Double Check'),
     select, closeBtn,
   )
   const body = h('div', { class: 'bd', 'aria-live': 'polite' })
@@ -248,8 +229,8 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
   })()
   // Submit Guard toggle, right where the user is working: enabling it arms
   // the guard on this page instantly (we ARE the content script). Hidden on
-  // the extension's own pages, and on the detached card (no real field/site).
-  if (location.protocol !== 'chrome-extension:' && !detached) {
+  // the extension's own pages, where guarding has nothing to protect.
+  if (location.protocol !== 'chrome-extension:') {
     // per-field "two signatures" requirement, remembered for this field on this
     // site. Sits right above Submit Guard; toggling it re-renders the
     // attestation so the second signature line appears/disappears immediately.
@@ -293,7 +274,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       ),
       footer)
   } else {
-    // extension page (no guard) or detached card (no real field): note only
+    // extension page (no guard, no real site): note only
     card.append(header, body, ...(noteRow ? [noteRow] : []), footer)
   }
 
@@ -690,9 +671,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       id: crypto.randomUUID(),
       at: new Date().toISOString(),
       origin: location.origin,
-      fieldLabel: detached
-        ? `Secure-frame field${ctx.relayHost ? ` (${ctx.relayHost})` : ''}`
-        : fieldDescription(field),
+      fieldLabel: fieldDescription(field),
       format: formatId,
       methods: [
         'double-entry',
@@ -714,10 +693,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
     if (ctx.settings.hmacFingerprint) entry.fingerprint = await fingerprintValue(r.normalized)
     await appendLogEntry(entry)
     await bumpStats(mismatchSeen)
-    // a detached card has no real field → no per-site memory and no badge
-    if (!detached) {
-      await rememberFormat(location.origin, fieldSignature(field), formatId)
-    }
+    await rememberFormat(location.origin, fieldSignature(field), formatId)
     // remember/refresh the trusted account: the payee the user named, or the
     // one this value was already recognized as (bumps its use count)
     const trustedLabel = payeeLabel.trim() || recognizedLabel
@@ -730,22 +706,14 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
       })
     }
     const detail = formatId === 'currency-amount' ? r.formatted.split(' — ')[0] : undefined
-    if (!detached) {
-      badges.get(field)?.remove()
-      markVerified(field)
-      // for amounts, the badge shows the verified interpretation — "12345" in
-      // a money field doesn't speak for itself the way a routing number does
-      badges.set(field, attachBadge(field, () => {
-        markTampered(field)
-        void markLogEntryStale(entry.id)
-      }, detail))
-    } else if (ctx.relayAnchor) {
-      // detached: pin a "✓ Double-Checked" marker next to the cross-origin field.
-      // Why cast: attachBadge positions by getBoundingClientRect (works on the
-      // iframe element); its value-watch is inert there — and we can't watch a
-      // cross-origin field anyway — so it's purely a confirmation marker.
-      attachBadge(ctx.relayAnchor as unknown as CheckableField, () => {}, detail)
-    }
+    badges.get(field)?.remove()
+    markVerified(field)
+    // for amounts, the badge shows the verified interpretation — "12345" in
+    // a money field doesn't speak for itself the way a routing number does
+    badges.set(field, attachBadge(field, () => {
+      markTampered(field)
+      void markLogEntryStale(entry.id)
+    }, detail))
     step = 'done'
     render()
     setTimeout(() => destroy(true), 1600)
@@ -1115,9 +1083,7 @@ export function mountCard(field: CheckableField, ctx: CardContext): void {
 
   // ---- positioning ----
   function position(): void {
-    // detached card with no anchor (shouldn't normally happen) → top center
-    const anchorEl = detached ? ctx.relayAnchor : field
-    const r = anchorEl?.getBoundingClientRect()
+    const r = field.getBoundingClientRect()
     if (!r || (r.width === 0 && r.height === 0)) {
       card.style.left = `${Math.max(8, (window.innerWidth - card.offsetWidth) / 2)}px`
       card.style.top = '24px'

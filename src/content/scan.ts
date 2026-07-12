@@ -38,7 +38,7 @@ const FLAG_CSS = `
 
 type Tone = 'ok' | 'bad'
 interface Flag {
-  el: HTMLElement // positioning anchor: an input/textarea or a payment iframe
+  el: HTMLElement // positioning anchor: an input/textarea
   text: string
   tone: Tone
   action: () => void // what clicking the pill does
@@ -55,34 +55,6 @@ function checkableFields(): CheckableField[] {
   return [...document.querySelectorAll('input, textarea')].filter((el): el is CheckableField =>
     isCheckable(el),
   )
-}
-
-// cross-origin iframes that look like the card-NUMBER field specifically.
-// Why so narrow: processors split number/expiry/CVV into separate iframes that
-// all share the processor origin (and params like enableCardBrandPreviews), so
-// a broad "card" match tags all three. We want only the number field, and
-// explicitly exclude expiry/CVV.
-const CARD_NUMBER_RE = /ccnumber|card.?number|account.?number|\bpan\b|number/i
-const NOT_NUMBER_RE = /\bexp|expir|cvv|cvc|cvn|security.?code/i
-function isCardNumberFrame(f: HTMLIFrameElement): boolean {
-  let crossOrigin = false
-  try { crossOrigin = !f.contentDocument } catch { crossOrigin = true }
-  if (!crossOrigin) return false
-  const hint = `${f.id} ${f.name} ${f.title} ${f.src}`.toLowerCase()
-  return CARD_NUMBER_RE.test(hint) && !NOT_NUMBER_RE.test(hint)
-}
-function paymentIframes(): HTMLIFrameElement[] {
-  return [...document.querySelectorAll('iframe')].filter(isCardNumberFrame)
-}
-
-// the grant/verify flow for a sealed card field has to run through the service
-// worker (and, for the first grant, the popup) — content can't request perms
-function pickIframe(f: HTMLIFrameElement): void {
-  try {
-    void chrome.runtime.sendMessage({ kind: 'dc-pill-iframe', origin: new URL(f.src).origin })
-  } catch {
-    /* iframe has no usable src/origin */
-  }
 }
 
 function renderFlags(
@@ -169,36 +141,12 @@ export function scanAndTag(validators: Validator[], onPick: (field: CheckableFie
     const name = validators.find((v) => v.id === candidate.id)?.name ?? 'value'
     flags.push({ el: field, text: `Double-check: ${name}?`, tone: 'ok', action: () => onPick(field) })
   }
-  // sealed card fields the input-scan can't see into — tag the iframe itself
-  for (const f of paymentIframes()) {
-    flags.push({ el: f, text: '🔒 Verify card field (secure frame)', tone: 'ok', action: () => pickIframe(f) })
-  }
   return renderFlags(flags, {
     tone: flags.length ? 'ok' : 'none',
     text: flags.length
       ? `Double Check flagged ${flags.length} field${flags.length === 1 ? '' : 's'} worth verifying — click a tag.`
       : 'Double Check found no high-value fields on this page.',
   })
-}
-
-/**
- * Mark sealed card-number fields (in cross-origin payment frames) the moment
- * the user invokes Double Check anywhere on the page — discovery without
- * standing access, since we only run once invoked. A quiet pill (no banner)
- * next to each; clicking it starts the grant/verify flow. No-op when the page
- * has no such field. Top frame only (iframe rects live there).
- */
-export function markSealedFields(): number {
-  if (window !== window.top) return 0
-  const frames = paymentIframes()
-  if (!frames.length) return 0
-  const flags: Flag[] = frames.map((f) => ({
-    el: f,
-    text: '🔒 Double-check this card field',
-    tone: 'ok' as Tone,
-    action: () => pickIframe(f),
-  }))
-  return renderFlags(flags, null)
 }
 
 /** audit filled fields for detectable problems; red pills with the issue */

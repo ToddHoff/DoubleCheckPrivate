@@ -39,13 +39,10 @@ export default defineManifest({
   },
   // Why no 'tts': read-aloud uses the page's speechSynthesis (local voices
   // only) from the content script, so the value never crosses contexts.
+  // Why no host permissions at all: the extension installs with NO access to
+  // any website. It reads a page only via activeTab, on a user gesture, and
+  // never holds standing access to anything.
   permissions: ['activeTab', 'scripting', 'storage', 'offscreen', 'alarms', 'contextMenus'],
-  // Why optional (not in host_permissions): the extension installs with NO host
-  // access and NO scary warning. We request a SINGLE specific origin at runtime,
-  // on a user gesture, only when the user opts to verify a field inside that
-  // site's cross-origin frame (e.g. a card number in a payment processor's
-  // iframe). The grant is per-host and revocable; default access stays zero.
-  optional_host_permissions: ['https://*/*'],
   // Why: MV3's DEFAULT extension CSP lacks 'wasm-unsafe-eval', so the bundled
   // Tesseract WASM can't even instantiate without declaring it. This is the
   // only loosening MV3 permits and it covers wasm only — no JS eval.
